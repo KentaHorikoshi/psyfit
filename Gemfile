@@ -18,7 +18,13 @@ gem "stimulus-rails"
 gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
+
+# PII encryption with AES-256-GCM
+gem "attr_encrypted", "~> 4.0"
+
+# Rate limiting for authentication endpoints
+gem "rack-attack", "~> 6.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -52,6 +58,10 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # TDD dependencies
+  gem "factory_bot_rails", "~> 6.4"
+  gem "faker", "~> 3.2"
 end
 
 group :development do
@@ -63,4 +73,16 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+
+  # Test coverage reporting
+  gem "simplecov", require: false
+
+  # Better test output formatting
+  gem "minitest-reporters", "~> 1.6"
+
+  # Clean test database between runs
+  gem "database_cleaner-active_record", "~> 2.1"
+
+  # Time manipulation for session timeout tests
+  gem "timecop", "~> 0.9"
 end

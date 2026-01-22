@@ -11,8 +11,8 @@ class CreateUsersTest < ActiveSupport::TestCase
   end
 
   test "users table has id primary key" do
-    assert ActiveRecord::Base.connection.column_exists?(:users, :id, :integer),
-           "Expected users table to have id column"
+    assert ActiveRecord::Base.connection.column_exists?(:users, :id, :uuid),
+           "Expected users table to have UUID id column"
   end
 
   test "users table has encrypted PII fields" do

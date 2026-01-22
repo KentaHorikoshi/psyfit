@@ -11,17 +11,17 @@ class CreateAuditLogsTest < ActiveSupport::TestCase
   end
 
   test "audit_logs table has id primary key" do
-    assert ActiveRecord::Base.connection.column_exists?(:audit_logs, :id, :integer),
-           "Expected audit_logs table to have id column"
+    assert ActiveRecord::Base.connection.column_exists?(:audit_logs, :id, :uuid),
+           "Expected audit_logs table to have UUID id column"
   end
 
   test "audit_logs table has user_id for tracking user actions" do
-    assert ActiveRecord::Base.connection.column_exists?(:audit_logs, :user_id, :integer),
+    assert ActiveRecord::Base.connection.column_exists?(:audit_logs, :user_id, :uuid),
            "Expected user_id column to track user actions"
   end
 
   test "audit_logs table has staff_id for tracking staff actions" do
-    assert ActiveRecord::Base.connection.column_exists?(:audit_logs, :staff_id, :integer),
+    assert ActiveRecord::Base.connection.column_exists?(:audit_logs, :staff_id, :uuid),
            "Expected staff_id column to track staff actions"
   end
 

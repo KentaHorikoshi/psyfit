@@ -9,6 +9,22 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # API v1 routes
+  namespace :api do
+    namespace :v1 do
+      # Health check for connection testing
+      get 'health', to: 'health#show'
+
+      # Authentication
+      scope :auth do
+        post 'login', to: 'auth#login'
+        post 'staff/login', to: 'auth#staff_login'
+        delete 'logout', to: 'auth#logout'
+        get 'me', to: 'auth#me'
+      end
+    end
+  end
+
   # Defines the root path route ("/")
   # root "posts#index"
 end

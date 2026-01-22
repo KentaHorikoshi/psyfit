@@ -3,6 +3,7 @@
 #
 # Security Features:
 # - PII encryption (email, name, name_kana, birth_date) with AES-256-GCM
+# - Blind index for email (enables search and uniqueness validation)
 # - Password hashing with bcrypt
 # - Account lockout after 5 failed login attempts (30 minutes)
 # - Soft delete support
@@ -13,12 +14,23 @@ class User < ApplicationRecord
   # Encrypt PII fields
   encrypts_pii :email, :name, :name_kana, :birth_date
 
+  # Enable blind index for email (search and uniqueness validation)
+  blind_index :email
+
   # Password authentication with bcrypt
   has_secure_password
 
+  # Relationships
+  has_many :patient_exercises, dependent: :destroy
+  has_many :exercises, through: :patient_exercises
+  has_many :exercise_records, dependent: :destroy
+  has_many :daily_conditions, dependent: :destroy
+  has_many :measurements, dependent: :destroy
+  has_many :audit_logs, dependent: :nullify
+
   # Validations
   validates :user_code, presence: true, uniqueness: true
-  validates :email_encrypted, presence: true, uniqueness: true
+  validates :email_bidx, presence: true, uniqueness: { message: 'has already been taken' }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
   validate :password_complexity, if: :password_digest_changed?

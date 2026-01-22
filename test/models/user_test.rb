@@ -25,7 +25,7 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.errors[:email], "is invalid"
   end
 
-  test "duplicate email is rejected" do
+  test "duplicate email is rejected via blind index" do
     # Create first user
     User.create!(
       user_code: "U003",
@@ -43,7 +43,28 @@ class UserTest < ActiveSupport::TestCase
     )
 
     assert_not duplicate_user.valid?, "Expected duplicate email to be rejected"
-    assert_includes duplicate_user.errors[:email], "has already been taken"
+    assert_includes duplicate_user.errors[:email_bidx], "has already been taken"
+  end
+
+  test "duplicate email with different case is rejected" do
+    # Create first user
+    User.create!(
+      user_code: "U003a",
+      email: "CASETEST@example.com",
+      name: "山田太郎",
+      password: "Password123!"
+    )
+
+    # Try to create second user with same email in different case
+    duplicate_user = User.new(
+      user_code: "U003b",
+      email: "casetest@example.com",
+      name: "田中花子",
+      password: "Password123!"
+    )
+
+    assert_not duplicate_user.valid?, "Expected case-insensitive duplicate email to be rejected"
+    assert_includes duplicate_user.errors[:email_bidx], "has already been taken"
   end
 
   test "email is stored encrypted in database" do
@@ -327,5 +348,99 @@ class UserTest < ActiveSupport::TestCase
     user.unlock_account!
     assert_not user.locked?, "Account should be unlocked after unlock_account!"
     assert_equal 0, user.failed_login_count, "Failed login count should be reset on unlock"
+  end
+
+  # Blind Index tests
+
+  test "email blind index is computed on create" do
+    user = User.create!(
+      user_code: "U023",
+      email: "blindindex@example.com",
+      name: "山田太郎",
+      password: "Password123!"
+    )
+
+    assert_not_nil user.email_bidx, "Expected email_bidx to be computed"
+    assert_equal 64, user.email_bidx.length, "Blind index should be SHA256 hex (64 chars)"
+  end
+
+  test "email blind index is deterministic" do
+    # Same email should always produce the same blind index
+    user1 = User.create!(
+      user_code: "U024",
+      email: "deterministic@example.com",
+      name: "山田太郎",
+      password: "Password123!"
+    )
+
+    expected_bidx = User.compute_blind_index("deterministic@example.com")
+    assert_equal expected_bidx, user1.email_bidx, "Blind index should be deterministic"
+  end
+
+  test "email blind index is case insensitive" do
+    bidx1 = User.compute_blind_index("Test@Example.com")
+    bidx2 = User.compute_blind_index("test@example.com")
+    bidx3 = User.compute_blind_index("TEST@EXAMPLE.COM")
+
+    assert_equal bidx1, bidx2, "Blind index should be case insensitive"
+    assert_equal bidx2, bidx3, "Blind index should be case insensitive"
+  end
+
+  test "find_by_email uses blind index" do
+    user = User.create!(
+      user_code: "U025",
+      email: "findbyemail@example.com",
+      name: "山田太郎",
+      password: "Password123!"
+    )
+
+    # Should find user by email using blind index
+    found_user = User.find_by_email("findbyemail@example.com")
+    assert_equal user.id, found_user.id, "Should find user by email"
+
+    # Should also work with different case
+    found_user_case = User.find_by_email("FINDBYEMAIL@example.com")
+    assert_equal user.id, found_user_case.id, "Should find user by email (case insensitive)"
+  end
+
+  test "find_by_email returns nil for non-existent email" do
+    found_user = User.find_by_email("nonexistent@example.com")
+    assert_nil found_user, "Should return nil for non-existent email"
+  end
+
+  test "find_by_email! raises error for non-existent email" do
+    assert_raises(ActiveRecord::RecordNotFound) do
+      User.find_by_email!("nonexistent@example.com")
+    end
+  end
+
+  test "by_email scope works" do
+    user = User.create!(
+      user_code: "U026",
+      email: "scopetest@example.com",
+      name: "山田太郎",
+      password: "Password123!"
+    )
+
+    # Should find user using scope
+    found_users = User.by_email("scopetest@example.com")
+    assert_includes found_users, user, "Scope should find user by email"
+  end
+
+  test "blind index is updated when email changes" do
+    user = User.create!(
+      user_code: "U027",
+      email: "original@example.com",
+      name: "山田太郎",
+      password: "Password123!"
+    )
+
+    original_bidx = user.email_bidx
+
+    # Update email
+    user.update!(email: "updated@example.com")
+
+    assert_not_equal original_bidx, user.email_bidx, "Blind index should change when email changes"
+    assert_equal User.compute_blind_index("updated@example.com"), user.email_bidx
   end
 end

@@ -11,8 +11,8 @@ class CreateStaffTest < ActiveSupport::TestCase
   end
 
   test "staff table has id primary key" do
-    assert ActiveRecord::Base.connection.column_exists?(:staff, :id, :integer),
-           "Expected staff table to have id column"
+    assert ActiveRecord::Base.connection.column_exists?(:staff, :id, :uuid),
+           "Expected staff table to have UUID id column"
   end
 
   test "staff table has staff_id for identification" do

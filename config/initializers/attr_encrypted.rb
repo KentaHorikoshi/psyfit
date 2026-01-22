@@ -24,3 +24,23 @@ end
 if ENCRYPTION_KEY.bytesize != 64
   raise "ATTR_ENCRYPTED_KEY must be 64 hex characters (32 bytes) for AES-256-GCM, got #{ENCRYPTION_KEY.bytesize}"
 end
+
+# Blind Index Key Configuration
+# Used for HMAC-SHA256 hashing to enable search and uniqueness validation on encrypted fields
+# This MUST be a separate key from the encryption key for security
+BLIND_INDEX_KEY = if Rails.env.test?
+  # Fixed key for testing (32 bytes = 64 hex characters)
+  'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2'
+elsif Rails.env.development?
+  ENV.fetch('BLIND_INDEX_KEY') do
+    'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2'
+  end
+else
+  ENV.fetch('BLIND_INDEX_KEY') do
+    raise 'BLIND_INDEX_KEY environment variable must be set in production'
+  end
+end
+
+if BLIND_INDEX_KEY.bytesize != 64
+  raise "BLIND_INDEX_KEY must be 64 hex characters (32 bytes), got #{BLIND_INDEX_KEY.bytesize}"
+end

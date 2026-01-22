@@ -1,6 +1,6 @@
 class CreateStaff < ActiveRecord::Migration[8.1]
   def change
-    create_table :staff do |t|
+    create_table :staff, id: :uuid do |t|
       # Staff identification
       t.string :staff_id, null: false
 

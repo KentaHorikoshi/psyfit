@@ -1,10 +1,10 @@
 class CreateAuditLogs < ActiveRecord::Migration[8.1]
   def change
-    create_table :audit_logs do |t|
+    create_table :audit_logs, id: :uuid do |t|
       # Polymorphic association to track both users and staff
       t.string :user_type
-      t.integer :user_id
-      t.integer :staff_id
+      t.uuid :user_id
+      t.uuid :staff_id
 
       # Action details
       t.string :action, null: false

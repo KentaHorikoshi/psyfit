@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { ConnectionTest } from './components/ConnectionTest'
 
 // Placeholder components - to be implemented
 function Login() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/connection-test" element={<ConnectionTest />} />
           {/* TODO: Add remaining routes
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/exercise-menu" element={<ExerciseMenu />} />

@@ -16,12 +16,17 @@ module Psyfit
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
-    # Configuration for the application, engines, and railties goes here.
-    #
-    # These settings can be overridden in specific environments using the files
-    # in config/environments, which are processed later.
-    #
-    # config.time_zone = "Central Time (US & Canada)"
-    # config.eager_load_paths << Rails.root.join("extras")
+    # Time zone for Japan
+    config.time_zone = 'Tokyo'
+
+    # Default locale
+    config.i18n.default_locale = :ja
+    config.i18n.available_locales = [:ja, :en]
+
+    # Generators configuration
+    config.generators do |g|
+      g.orm :active_record, primary_key_type: :uuid
+      g.test_framework :minitest, fixture: false
+    end
   end
 end

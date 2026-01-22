@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_21_140042) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_21_140600) do
   create_table "audit_logs", force: :cascade do |t|
     t.string "action", null: false
     t.text "additional_info"
@@ -28,6 +28,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_140042) do
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
     t.index ["user_type", "user_id"], name: "index_audit_logs_on_user_type_and_user_id"
   end
+
+# Could not dump table "daily_conditions" because of following StandardError
+#   Unknown type 'uuid' for column 'id'
+
+
+# Could not dump table "exercise_records" because of following StandardError
+#   Unknown type 'uuid' for column 'exercise_id'
+
+
+# Could not dump table "exercises" because of following StandardError
+#   Unknown type 'uuid' for column 'id'
+
+
+# Could not dump table "measurements" because of following StandardError
+#   Unknown type 'uuid' for column 'id'
+
+
+# Could not dump table "patient_exercises" because of following StandardError
+#   Unknown type 'uuid' for column 'assigned_by_staff_id'
+
 
   create_table "staff", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -68,4 +88,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_140042) do
     t.index ["failed_login_count"], name: "index_users_on_failed_login_count"
     t.index ["user_code"], name: "index_users_on_user_code", unique: true
   end
+
+# Could not dump table "videos" because of following StandardError
+#   Unknown type 'uuid' for column 'exercise_id'
+
+
+  add_foreign_key "daily_conditions", "users"
+  add_foreign_key "exercise_records", "exercises"
+  add_foreign_key "exercise_records", "users"
+  add_foreign_key "measurements", "staff", column: "measured_by_staff_id"
+  add_foreign_key "measurements", "users"
+  add_foreign_key "patient_exercises", "exercises"
+  add_foreign_key "patient_exercises", "staff", column: "assigned_by_staff_id"
+  add_foreign_key "patient_exercises", "users"
+  add_foreign_key "videos", "exercises"
 end

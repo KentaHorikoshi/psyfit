@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  /* PsyFit Design System Colors */
+  --color-primary: #1E40AF;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1E3A8A;
+
+  --color-green: #10B981;
+  --color-green-light: #34D399;
+  --color-green-dark: #059669;
+
+  --color-amber: #F59E0B;
+  --color-amber-light: #FBBF24;
+  --color-amber-dark: #D97706;
+
+  --color-red: #EF4444;
+  --color-red-light: #F87171;
+  --color-red-dark: #DC2626;
+
+  /* Background Colors */
+  --color-background: #FFFFFF;
+  --color-background-secondary: #F3F4F6;
+  --color-background-tertiary: #E5E7EB;
+
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+
+  /* Border Colors */
+  --color-border: #E5E7EB;
+  --color-border-focus: #1E40AF;
+
+  /* Status Badge Colors */
+  --color-status-acute-bg: #FEE2E2;
+  --color-status-acute-text: #B91C1C;
+  --color-status-recovery-bg: #FEF3C7;
+  --color-status-recovery-text: #B45309;
+  --color-status-maintenance-bg: #D1FAE5;
+  --color-status-maintenance-text: #047857;
+
+  /* Spacing */
+  --spacing-tap-target: 44px;
+
+  /* Font Sizes (minimum 16px for accessibility) */
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+}
+
+/* Base Styles */
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Noto Sans JP', system-ui, sans-serif;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  line-height: 1.6;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Ensure tap targets are accessible */
+button,
+a,
+input,
+select,
+textarea {
+  min-height: var(--spacing-tap-target);
+}

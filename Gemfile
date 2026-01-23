@@ -62,6 +62,9 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
+  # RSpec for TDD
+  gem "rspec-rails", "~> 7.0"
+
   # TDD dependencies
   gem "factory_bot_rails", "~> 6.4"
   gem "faker", "~> 3.2"
@@ -88,4 +91,7 @@ group :test do
 
   # Time manipulation for session timeout tests
   gem "timecop", "~> 0.9"
+
+  # RSpec matchers for validations and associations
+  gem "shoulda-matchers", "~> 6.0"
 end

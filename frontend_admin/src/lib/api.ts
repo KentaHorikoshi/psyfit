@@ -1,12 +1,13 @@
 // API client for communication with Rails backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
+import type {
+  ApiResponse,
+  Staff,
+  StaffLoginRequest,
+  StaffLoginResponse,
+  LogoutResponse,
+} from './api-types'
 
-interface ApiResponse<T> {
-  status: 'success' | 'error'
-  data?: T
-  message?: string
-  errors?: Record<string, string[]>
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
 
 interface HealthResponse {
   health_status: string
@@ -45,13 +46,16 @@ class ApiClient {
     }
 
     const response = await fetch(url, mergedOptions)
-    const data = await response.json()
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new AuthenticationError('認証が必要です')
+      }
+      const data = await response.json().catch(() => ({}))
       throw new ApiError(data.message || 'API request failed', response.status, data.errors)
     }
 
-    return data
+    return response.json()
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
@@ -74,6 +78,19 @@ class ApiClient {
     const response = await this.get<HealthResponse>('/health')
     return response.data!
   }
+
+  // Staff Authentication
+  async staffLogin(credentials: StaffLoginRequest): Promise<ApiResponse<StaffLoginResponse>> {
+    return this.post<StaffLoginResponse>('/auth/staff/login', credentials)
+  }
+
+  async logout(): Promise<ApiResponse<LogoutResponse>> {
+    return this.delete<LogoutResponse>('/auth/logout')
+  }
+
+  async getCurrentStaff(): Promise<ApiResponse<Staff>> {
+    return this.get<Staff>('/staff/me')
+  }
 }
 
 export class ApiError extends Error {
@@ -85,6 +102,13 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.status = status
     this.errors = errors
+  }
+}
+
+export class AuthenticationError extends Error {
+  constructor(message: string = '認証が必要です') {
+    super(message)
+    this.name = 'AuthenticationError'
   }
 }
 

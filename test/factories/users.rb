@@ -18,5 +18,14 @@ FactoryBot.define do
     trait :with_failed_attempts do
       failed_login_count { 3 }
     end
+
+    trait :lock_expired do
+      failed_login_count { 5 }
+      locked_until { 1.minute.ago }
+    end
+
+    trait :deleted do
+      deleted_at { 1.day.ago }
+    end
   end
 end

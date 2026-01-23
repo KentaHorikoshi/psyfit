@@ -36,5 +36,15 @@ FactoryBot.define do
     trait :password_change do
       action { "password_change" }
     end
+
+    trait :login_success do
+      action { "login" }
+      status { "success" }
+    end
+
+    trait :login_failure do
+      action { "login_failed" }
+      status { "failure" }
+    end
   end
 end

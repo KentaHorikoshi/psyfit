@@ -182,3 +182,39 @@ export interface ReportResponse {
   report_url: string
   filename: string
 }
+
+// Staff Management Types (S-08)
+export interface StaffMember {
+  id: string
+  staff_id: string
+  name: string
+  name_kana: string
+  email: string
+  role: 'manager' | 'staff'
+  department: string
+  created_at: string
+}
+
+export interface StaffListResponse {
+  staff: StaffMember[]
+  meta: {
+    total: number
+    page: number
+    per_page: number
+    total_pages: number
+  }
+}
+
+export interface CreateStaffRequest {
+  staff_id: string
+  name: string
+  name_kana: string
+  email: string
+  password: string
+  role: 'manager' | 'staff'
+  department: string
+}
+
+export interface CreateStaffResponse {
+  staff: StaffMember
+}

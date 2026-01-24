@@ -12,6 +12,9 @@ import type {
   ExerciseMastersResponse,
   BatchExerciseAssignmentRequest,
   ExerciseAssignmentsResponse,
+  StaffListResponse,
+  CreateStaffRequest,
+  CreateStaffResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
@@ -173,6 +176,15 @@ class ApiClient {
     }
 
     return response.blob()
+  }
+
+  // Staff Management endpoints (S-08)
+  async getStaffList(): Promise<ApiResponse<StaffListResponse>> {
+    return this.get<StaffListResponse>('/staff')
+  }
+
+  async createStaff(data: CreateStaffRequest): Promise<ApiResponse<CreateStaffResponse>> {
+    return this.post<CreateStaffResponse>('/staff', data)
   }
 }
 

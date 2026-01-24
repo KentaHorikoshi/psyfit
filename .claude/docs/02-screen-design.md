@@ -47,7 +47,8 @@
 - メールアドレス・パスワード入力
 - ログインボタン
 - パスワードリセットリンク
-- 実装: `src_user/components/U01_Login.tsx`
+- 実装: `frontend_user/src/components/Login.tsx` ✅
+- テスト: 18 tests passed
 
 ### U-02: トップ（ホーム）
 - 3つのメインメニュー:
@@ -55,54 +56,74 @@
   - 記録する
   - 履歴を見る
 - 継続日数カード表示
-- 実装: `src_user/components/U02_Home.tsx`
+- 実装: `frontend_user/src/components/Home.tsx` ✅
+- テスト: 15 tests passed
 
 ### U-03: 運動メニュー選択
 - 担当職員が指示した運動メニュー一覧
 - 身体状態・疾患に応じて出し分け
+- 実装: `frontend_user/src/components/ExerciseMenu.tsx` ✅
+- テスト: 12 tests passed
 
 ### U-04: 運動実施（動画あり）
 - 運動動画再生
 - 回数・セット数カウント
 - 完了ボタン
+- 実装: `frontend_user/src/components/ExercisePlayer.tsx` ✅
+- テスト: 14 tests passed
 
 ### U-07: 履歴一覧
 - 日付ごとの運動実施履歴
 - 継続状況の可視化（カレンダー形式等）
+- 実装: `frontend_user/src/components/ExerciseHistory.tsx` ✅
+- テスト: 10 tests passed
 
 ### U-08: 測定値履歴
 - 体重・筋力等の推移グラフ
 - 主観データとの統合表示
 - Recharts使用
+- 実装: `frontend_user/src/components/Measurements.tsx` ✅
+- テスト: 11 tests passed
 
 ### U-09: パスワードリセット
 - メールアドレス入力
 - リセット用リンク送信
 - 新パスワード設定
+- 実装: 未着手
 
 ### U-10: ウェルカム
 - 継続日数の大きな表示
 - 3秒後に自動遷移（タップで即時遷移）
 - モチベーション向上演出
+- 実装: `frontend_user/src/components/Welcome.tsx` ✅
+- テスト: 8 tests passed
 
 ### U-11: 運動カード
 - 本日の運動メニューをカード形式で表示
 - 動画再生ボタン
+- 実装: `frontend_user/src/components/ExerciseCard.tsx` ✅
+- テスト: 9 tests passed
 
 ### U-13: 祝福
 - 運動完了時の祝福演出
 - クラッカーアニメーション
 - 達成感の演出
+- 実装: `frontend_user/src/components/Celebration.tsx` ✅
+- テスト: 7 tests passed
 
 ### U-14: 体調入力
 - 痛みレベル（0-10スライダー）
 - 身体の調子（0-10スライダー）
 - 主観的評価の記録
+- 実装: `frontend_user/src/components/ConditionInput.tsx` ✅
+- テスト: 13 tests passed
 
 ### U-15: まとめて記録
 - 複数の運動を一括で完了記録
 - チェックボックス形式
 - 効率的な記録入力
+- 実装: `frontend_user/src/components/BatchRecord.tsx` ✅
+- テスト: 11 tests passed
 
 ## 職員向け画面一覧（S-01〜S-09）
 
@@ -140,31 +161,39 @@
 - 個人情報
 - 疾患・身体状態
 - 経過グラフ
-- 実装: `src_admin/components/PatientDetail.tsx`
+- 実装: `frontend_admin/src/components/PatientDetail.tsx` ✅
+- テスト: 16 tests passed
 
 ### S-05: 測定値入力
 - 膝伸展筋力
 - TUG、NRS、MMT等入力
-- 実装: `src_admin/components/MeasurementInput.tsx`
+- 実装: `frontend_admin/src/components/MeasurementInput.tsx` ✅
+- テスト: 22 tests passed
 
 ### S-06: 運動メニュー設定
 - 患者ごとの運動メニュー割当
 - 疾患・状態に応じた推奨表示
-- 実装: `src_admin/components/ExerciseMenu.tsx`
+- 実装: `frontend_admin/src/components/ExerciseMenu.tsx` ✅
+- テスト: 18 tests passed
 
 ### S-07: レポート出力
 - 患者別レポート生成
-- PDF出力機能
-- 実装: `src_admin/components/ReportGeneration.tsx`
+- PDF/CSV出力機能
+- 期間指定可能
+- 実装: `frontend_admin/src/components/ReportGeneration.tsx` ✅
+- テスト: 14 tests passed
 
 ### S-08: 職員管理
-- 職員一覧・編集（マネージャーのみ）
-- 権限設定
-- 実装: `src_admin/components/StaffManagement.tsx`
+- 職員一覧表示（GET /api/v1/staff）
+- 職員新規作成ダイアログ（POST /api/v1/staff）
+- マネージャーのみアクセス可能（roleチェック）
+- パスワード複雑性表示（8文字以上、2種類以上の文字）
+- 実装: `frontend_admin/src/components/StaffManagement.tsx` ✅
+- テスト: 26 tests passed
 
 ### S-09: パスワードリセット
 - パスワード変更機能
-- 実装: `src_admin/components/PasswordReset.tsx`
+- 実装: 未着手
 
 ## アクセシビリティ要件
 

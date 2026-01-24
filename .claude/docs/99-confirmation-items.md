@@ -3,7 +3,7 @@
 このファイルには、基本設計書から派生した確認事項やTODO項目を記録します。
 
 **最終更新**: 2026-01-24
-**ステータス**: 職員向けUI基盤実装完了（TDD）
+**ステータス**: 利用者向けUI完了、職員向けS-07まで完了（TDD）
 
 ---
 
@@ -71,11 +71,11 @@
 - [x] 患者一覧（職員） ← **2026-01-24実装完了**
 
 ### Phase 2: 拡張機能
-- [ ] 履歴グラフ表示
-- [ ] レポート出力
-- [ ] 運動メニュー割当（職員）
-- [ ] 職員管理（マネージャー）
-- [ ] まとめて記録機能
+- [x] 履歴グラフ表示 ← **実装完了**
+- [x] レポート出力 (S-07) ← **実装完了**
+- [x] 運動メニュー割当（職員）(S-06) ← **実装完了**
+- [x] 職員管理（マネージャー）(S-08) ← **実装完了**
+- [x] まとめて記録機能 (U-15) ← **実装完了**
 
 ### Phase 3: 最適化・改善
 - [ ] パフォーマンス最適化
@@ -89,12 +89,28 @@
 - [ ] モデルバリデーションテスト
 - [ ] APIエンドポイントテスト
 - [x] Reactコンポーネントテスト（職員向けUI）
-  - [x] AuthContext (7 tests, 91.66% coverage)
-  - [x] Login (19 tests, 95.54% coverage)
-  - [x] Sidebar (15 tests, 100% coverage)
-  - [x] Dashboard (22 tests, 100% coverage)
-  - [x] PatientList (29 tests, 97.9% coverage)
-  - **Total: 92 tests passed, 98.98% overall coverage**
+  - [x] AuthContext (7 tests)
+  - [x] Login (19 tests)
+  - [x] Sidebar (15 tests)
+  - [x] Dashboard (22 tests)
+  - [x] PatientList (29 tests)
+  - [x] PatientDetail (16 tests)
+  - [x] MeasurementInput (22 tests)
+  - [x] ExerciseMenu (18 tests)
+  - [x] ReportGeneration (14 tests)
+  - [x] StaffManagement (26 tests) ← **NEW**
+- [x] Reactコンポーネントテスト（利用者向けUI）
+  - [x] Login (18 tests)
+  - [x] Home (15 tests)
+  - [x] ExerciseMenu (12 tests)
+  - [x] ExercisePlayer (14 tests)
+  - [x] ExerciseHistory (10 tests)
+  - [x] Measurements (11 tests)
+  - [x] Welcome (8 tests)
+  - [x] ExerciseCard (9 tests)
+  - [x] Celebration (7 tests)
+  - [x] ConditionInput (13 tests)
+  - [x] BatchRecord (11 tests)
 
 ### 結合テスト
 - [ ] 認証フローテスト
@@ -214,11 +230,46 @@
 基本設計書に記載されているが、まだコード化されていない項目:
 
 - [ ] U-09: パスワードリセット（利用者）
-- [ ] U-15: まとめて記録
-- [ ] S-07: レポート出力
-- [ ] S-08: 職員管理
+- [x] U-15: まとめて記録 ← **実装完了**
+- [x] S-07: レポート出力 ← **実装完了**
+- [x] S-08: 職員管理 ← **実装完了**
 - [ ] S-09: パスワードリセット（職員）
 - [ ] 動画アクセス制御の実装
 - [ ] データ暗号化の実装
 - [ ] 監査ログの実装
 - [ ] レート制限の実装
+
+## 実装完了サマリー（2026-01-24）
+
+### 利用者向けUI (frontend_user)
+| 画面 | コンポーネント | テスト |
+|------|---------------|--------|
+| U-01 ログイン | Login.tsx | 18 tests ✅ |
+| U-02 ホーム | Home.tsx | 15 tests ✅ |
+| U-03 運動メニュー選択 | ExerciseMenu.tsx | 12 tests ✅ |
+| U-04 運動実施 | ExercisePlayer.tsx | 14 tests ✅ |
+| U-07 履歴一覧 | ExerciseHistory.tsx | 10 tests ✅ |
+| U-08 測定値履歴 | Measurements.tsx | 11 tests ✅ |
+| U-10 ウェルカム | Welcome.tsx | 8 tests ✅ |
+| U-11 運動カード | ExerciseCard.tsx | 9 tests ✅ |
+| U-13 祝福 | Celebration.tsx | 7 tests ✅ |
+| U-14 体調入力 | ConditionInput.tsx | 13 tests ✅ |
+| U-15 まとめて記録 | BatchRecord.tsx | 11 tests ✅ |
+
+### 職員向けUI (frontend_admin)
+| 画面 | コンポーネント | テスト |
+|------|---------------|--------|
+| S-01 ログイン | Login.tsx | 19 tests ✅ |
+| S-02 ダッシュボード | Dashboard.tsx | 22 tests ✅ |
+| S-03 患者一覧 | PatientList.tsx | 29 tests ✅ |
+| S-04 患者詳細 | PatientDetail.tsx | 16 tests ✅ |
+| S-05 測定値入力 | MeasurementInput.tsx | 22 tests ✅ |
+| S-06 運動メニュー設定 | ExerciseMenu.tsx | 18 tests ✅ |
+| S-07 レポート出力 | ReportGeneration.tsx | 14 tests ✅ |
+| S-08 職員管理 | StaffManagement.tsx | 26 tests ✅ |
+
+### 残作業
+| 画面 | 状態 |
+|------|------|
+| U-09 パスワードリセット（利用者） | 未着手 |
+| S-09 パスワードリセット（職員） | 未着手 |

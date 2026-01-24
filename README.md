@@ -147,16 +147,36 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | ExerciseRecord | ✅ | ✅ | - |
 | DailyCondition | ✅ | ✅ | - |
 | Measurement | ✅ | ✅ | - |
+| PatientStaffAssignment | ✅ | ✅ | - |
 | Video | ✅ | ✅ | - |
 | AuditLog | ✅ | ✅ | - |
 
-#### APIエンドポイント
+#### APIエンドポイント（最新更新: 2026-01-23）
 | エンドポイント | 実装 | テスト |
 |---------------|:---:|:-----:|
-| POST /api/v1/auth/login | ✅ | ⬜ |
-| DELETE /api/v1/auth/logout | ✅ | ⬜ |
-| GET /api/v1/health | ✅ | ⬜ |
-| その他のエンドポイント | ⬜ | ⬜ |
+| **認証** | | |
+| POST /api/v1/auth/login | ✅ | ✅ |
+| POST /api/v1/auth/staff/login | ✅ | ✅ |
+| DELETE /api/v1/auth/logout | ✅ | ✅ |
+| GET /api/v1/auth/me | ✅ | ✅ |
+| **運動メニュー・記録（利用者）** | | |
+| GET /api/v1/users/me/exercises | ✅ | ✅ |
+| POST /api/v1/exercise_records | ✅ | ✅ |
+| GET /api/v1/users/me/exercise_records | ✅ | ✅ |
+| **体調記録（利用者）** | | |
+| POST /api/v1/daily_conditions | ✅ | ✅ |
+| GET /api/v1/users/me/daily_conditions | ✅ | ✅ |
+| **測定値** | | |
+| POST /api/v1/patients/:id/measurements | ✅ | ✅ |
+| GET /api/v1/patients/:id/measurements | ✅ | ✅ |
+| GET /api/v1/users/me/measurements | ✅ | ✅ |
+| **患者管理（職員）** | | |
+| GET /api/v1/patients | ✅ | ✅ |
+| GET /api/v1/patients/:id | ✅ | ✅ |
+| **その他** | | |
+| GET /api/v1/health | ✅ | ✅ |
+
+**テストカバレッジ**: 86.52% (249テストケース、全パス)
 
 ### データベース
 - 全テーブルマイグレーション: ✅
@@ -166,27 +186,31 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 
 ## 開発ロードマップ
 
-### Phase 1: MVP（現在進行中）
+### Phase 1: MVP（進行中）
 - [x] UIコンポーネント作成
 - [x] データベース設計・マイグレーション
 - [x] モデル実装（バリデーション・暗号化）
-- [ ] 認証API完全実装
-- [ ] 運動メニュー表示API
-- [ ] 運動記録API
-- [ ] 体調記録API
+- [x] 認証API完全実装 ✅
+- [x] 運動メニュー表示API ✅
+- [x] 運動記録API ✅
+- [x] 体調記録API ✅
+- [x] 測定値管理API ✅
+- [x] 患者管理API ✅ (2026-01-23)
+- [x] テストカバレッジ80%達成 ✅ (86.52%)
 - [ ] フロントエンド-バックエンド接続
 
-### Phase 2: 拡張機能
-- [ ] 履歴グラフ表示
-- [ ] レポート出力（PDF/CSV）
-- [ ] 運動メニュー割当（職員）
-- [ ] 職員管理（マネージャー）
+### Phase 2: 拡張機能（次のステップ）
+- [ ] 運動メニュー割当API（職員 → 患者）
+- [ ] レポート出力API（PDF/CSV）
+- [ ] 職員管理API（マネージャー専用）
+- [ ] 履歴グラフ表示（フロントエンド）
+- [ ] フロントエンド完全実装（利用者・職員）
 
 ### Phase 3: 最適化
 - [ ] パフォーマンス最適化
 - [ ] オフライン対応（PWA）
 - [ ] プッシュ通知
-- [ ] テストカバレッジ80%達成
+- [ ] アクセシビリティ改善（WCAG 2.1 AA完全準拠）
 
 ## コマンド一覧
 
@@ -196,7 +220,9 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 bundle exec rails server              # サーバー起動
 bundle exec rails console             # コンソール起動
 bundle exec rails db:migrate          # マイグレーション実行
-bundle exec rails test                # テスト実行
+bundle exec rspec                     # テスト実行（RSpec）
+bundle exec rspec --format documentation  # テスト実行（詳細）
+bundle exec rspec --coverage          # カバレッジ付きテスト
 bundle exec brakeman                  # セキュリティスキャン
 bundle exec rubocop                   # Lintチェック
 ```

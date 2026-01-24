@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_22_100001) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_24_004213) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -110,9 +110,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_100001) do
     t.index ["user_id"], name: "index_patient_exercises_on_user_id"
   end
 
+  create_table "patient_staff_assignments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "assigned_at", null: false
+    t.datetime "created_at", null: false
+    t.boolean "is_primary", default: false, null: false
+    t.uuid "staff_id", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "user_id", null: false
+    t.index ["staff_id"], name: "index_patient_staff_assignments_on_staff_id"
+    t.index ["user_id", "is_primary"], name: "index_patient_staff_assignments_on_user_id_and_is_primary"
+    t.index ["user_id", "staff_id"], name: "index_patient_staff_assignments_on_user_id_and_staff_id", unique: true
+    t.index ["user_id"], name: "index_patient_staff_assignments_on_user_id"
+  end
+
   create_table "staff", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
+    t.string "department"
     t.string "email"
     t.string "email_bidx"
     t.string "email_encrypted"
@@ -138,24 +152,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_100001) do
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "birth_date_encrypted"
     t.string "birth_date_encrypted_iv"
+    t.string "condition", limit: 255
+    t.integer "continue_days", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "email_bidx"
     t.string "email_encrypted", null: false
     t.string "email_encrypted_iv", null: false
     t.integer "failed_login_count", default: 0, null: false
+    t.string "gender", limit: 10
+    t.datetime "last_exercise_at"
     t.datetime "locked_until"
     t.string "name_encrypted"
     t.string "name_encrypted_iv"
     t.string "name_kana_encrypted"
     t.string "name_kana_encrypted_iv"
     t.string "password_digest", null: false
+    t.string "phone", limit: 20
+    t.string "status", limit: 20, default: "維持期", null: false
     t.datetime "updated_at", null: false
     t.string "user_code", null: false
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email_bidx"], name: "index_users_on_email_bidx", unique: true
     t.index ["email_encrypted"], name: "index_users_on_email_encrypted"
     t.index ["failed_login_count"], name: "index_users_on_failed_login_count"
+    t.index ["gender"], name: "index_users_on_gender"
+    t.index ["last_exercise_at"], name: "index_users_on_last_exercise_at"
+    t.index ["status"], name: "index_users_on_status"
     t.index ["user_code"], name: "index_users_on_user_code", unique: true
   end
 
@@ -183,5 +206,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_100001) do
   add_foreign_key "patient_exercises", "exercises"
   add_foreign_key "patient_exercises", "staff", column: "assigned_by_staff_id"
   add_foreign_key "patient_exercises", "users"
+  add_foreign_key "patient_staff_assignments", "staff"
+  add_foreign_key "patient_staff_assignments", "users"
   add_foreign_key "videos", "exercises"
 end

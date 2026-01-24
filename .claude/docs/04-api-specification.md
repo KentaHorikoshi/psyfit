@@ -6,6 +6,117 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 
 **Base URL**: `/api/v1`
 
+## 実装状況
+
+| エンドポイント | ステータス | テスト |
+|---------------|-----------|--------|
+| POST /api/v1/auth/login | ✅ 実装済み | ✅ |
+| POST /api/v1/auth/staff/login | ✅ 実装済み | ✅ |
+| DELETE /api/v1/auth/logout | ✅ 実装済み | ✅ |
+| GET /api/v1/auth/me | ✅ 実装済み | ✅ |
+| GET /api/v1/users/me/exercises | ✅ 実装済み | ✅ |
+| POST /api/v1/exercise_records | ✅ 実装済み | ✅ |
+| GET /api/v1/users/me/exercise_records | ✅ 実装済み | ✅ |
+| POST /api/v1/daily_conditions | ✅ 実装済み | ✅ |
+| GET /api/v1/users/me/daily_conditions | ✅ 実装済み | ✅ |
+| GET /api/v1/exercises | ⏳ 未実装 | - |
+| GET /api/v1/patients | ✅ 実装済み | ✅ |
+| GET /api/v1/patients/:id | ✅ 実装済み | ✅ |
+| POST /api/v1/patients/:patient_id/exercises | ✅ 実装済み | ✅ |
+| POST /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
+| GET /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
+| GET /api/v1/users/me/measurements | ✅ 実装済み | ✅ |
+| GET /api/v1/patients/:patient_id/report | ✅ 実装済み | ✅ |
+| GET /api/v1/staff | ✅ 実装済み | ✅ |
+| POST /api/v1/staff | ✅ 実装済み | ✅ |
+
+## フロントエンド実装状況
+
+| 画面 | コンポーネント | ステータス | テスト |
+|------|---------------|-----------|--------|
+| U-01 ログイン | Login.tsx | ✅ 実装済み | ✅ 19件 |
+| U-02 ホーム | Home.tsx | ✅ 実装済み | ✅ 23件 |
+| U-03〜U-15 | - | ⏳ 未実装 | - |
+| S-01〜S-09 | - | ⏳ 未実装 | - |
+
+**フロントエンドテストファイル**:
+- `frontend_user/src/components/__tests__/Login.test.tsx` - ログイン画面
+- `frontend_user/src/components/__tests__/Home.test.tsx` - ホーム画面
+- `frontend_user/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト
+
+**テストカバレッジ**: 97.17%（目標80%達成）
+
+**テストファイル**:
+- `spec/requests/api/v1/auth_spec.rb` - 認証API
+- `spec/requests/api/v1/user_exercises_spec.rb` - 運動メニューAPI
+- `spec/requests/api/v1/exercise_records_spec.rb` - 運動記録API
+- `spec/requests/api/v1/daily_conditions_spec.rb` - 体調記録API
+- `spec/requests/api/v1/measurements_spec.rb` - 測定値API
+- `spec/requests/api/v1/patients_spec.rb` - 患者一覧・詳細API
+- `spec/requests/api/v1/patient_exercises_spec.rb` - 運動メニュー割当API
+- `spec/requests/api/v1/staff_spec.rb` - 職員管理API
+- `spec/requests/api/v1/patient_reports_spec.rb` - 患者レポートAPI
+- `spec/models/user_continue_days_spec.rb` - 継続日数ロジック
+
+**実装ファイル**:
+- `app/controllers/api/v1/daily_conditions_controller.rb` - 体調記録コントローラ
+- `app/controllers/api/v1/measurements_controller.rb` - 測定値コントローラ（職員用）
+- `app/controllers/api/v1/user_measurements_controller.rb` - 測定値コントローラ（利用者用）
+- `app/controllers/api/v1/patients_controller.rb` - 患者管理コントローラ（職員用）
+- `app/controllers/api/v1/patient_exercises_controller.rb` - 運動メニュー割当コントローラ（職員用）
+- `app/controllers/api/v1/staff_controller.rb` - 職員管理コントローラ（マネージャー用）
+- `app/controllers/api/v1/patient_reports_controller.rb` - 患者レポートコントローラ（職員用）
+- `app/services/patient_report_service.rb` - PDF生成サービス
+- `app/models/daily_condition.rb` - 体調記録モデル
+- `app/models/measurement.rb` - 測定値モデル
+- `app/models/patient_staff_assignment.rb` - 患者担当職員割当モデル
+
+## データベース拡張
+
+### 運動記録機能
+
+`users` テーブルに追加されたカラム:
+
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| continue_days | integer | 継続日数（デフォルト: 0） |
+| last_exercise_at | datetime | 最後に運動した日時 |
+
+マイグレーション: `db/migrate/20260123090441_add_continue_days_to_users.rb`
+
+### 患者管理機能
+
+`users` テーブルに追加されたカラム:
+
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| status | string | 病期（急性期/回復期/維持期、デフォルト: 維持期） |
+| condition | string | 疾患・身体状態 |
+| gender | string | 性別（male/female/other） |
+| phone | string | 電話番号 |
+
+マイグレーション: `db/migrate/20260123100152_add_patient_fields_to_users.rb`
+
+新規テーブル: `patient_staff_assignments`
+
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | UUID | プライマリキー |
+| user_id | UUID | 患者ID（FK: users.id） |
+| staff_id | UUID | 職員ID（FK: staff.id） |
+| assigned_at | datetime | 割当日時 |
+| is_primary | boolean | 主担当フラグ（デフォルト: false） |
+| created_at | datetime | 作成日時 |
+| updated_at | datetime | 更新日時 |
+
+インデックス:
+- `user_id`
+- `staff_id`
+- `(user_id, staff_id)` - ユニーク制約
+- `(user_id, is_primary)`
+
+マイグレーション: `db/migrate/20260123100225_create_patient_staff_assignments.rb`
+
 ## 認証
 
 セッションベース認証を使用。
@@ -14,6 +125,13 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 # ログイン後、セッションCookieが自動的に送信される
 Cookie: _psyfit_session=<session_id>
 ```
+
+### セッションタイムアウト
+
+| ユーザー種別 | タイムアウト |
+|-------------|------------|
+| 利用者 | 30分 |
+| 職員 | 15分 |
 
 ## 共通レスポンス形式
 
@@ -38,9 +156,12 @@ Cookie: _psyfit_session=<session_id>
 
 ## エンドポイント一覧
 
+---
+
 ### 認証 (Authentication)
 
-#### POST /api/v1/auth/login (利用者ログイン)
+#### POST /api/v1/auth/login (利用者ログイン) ✅
+
 ```json
 // Request
 {
@@ -62,7 +183,8 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
-#### POST /api/v1/auth/staff/login (職員ログイン)
+#### POST /api/v1/auth/staff/login (職員ログイン) ✅
+
 ```json
 // Request
 {
@@ -84,130 +206,59 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
-#### DELETE /api/v1/auth/logout
-```json
-// Response (200 OK)
-{
-  "status": "success",
-  "message": "ログアウトしました"
-}
-```
-
-### 患者 (Users/Patients)
-
-#### GET /api/v1/users/me
-現在ログイン中の利用者情報を取得。
+#### DELETE /api/v1/auth/logout ✅
 
 ```json
 // Response (200 OK)
 {
   "status": "success",
   "data": {
-    "id": "uuid",
-    "name": "田中太郎",
-    "email": "patient@example.com",
-    "continue_days": 14,
-    "status": "回復期",
-    "condition": "変形性膝関節症"
+    "message": "ログアウトしました"
   }
 }
 ```
 
-#### GET /api/v1/patients (職員用)
-患者一覧を取得。一般職員は担当患者のみ、マネージャーは全患者。
+#### GET /api/v1/auth/me ✅
+
+現在ログイン中のユーザー情報を取得。
 
 ```json
-// Query Parameters
-?page=1&per_page=20&search=田中&status=回復期
-
-// Response (200 OK)
+// Response (200 OK) - 利用者の場合
 {
   "status": "success",
   "data": {
-    "patients": [
-      {
-        "id": "uuid",
-        "name": "田中太郎",
-        "age": 65,
-        "gender": "male",
-        "status": "回復期",
-        "condition": "変形性膝関節症",
-        "assigned_staff": "山田太郎"
-      }
-    ],
-    "meta": {
-      "total": 50,
-      "page": 1,
-      "per_page": 20,
-      "total_pages": 3
+    "user": {
+      "id": "uuid",
+      "name": "田中太郎",
+      "email": "patient@example.com",
+      "continue_days": 14
+    }
+  }
+}
+
+// Response (200 OK) - 職員の場合
+{
+  "status": "success",
+  "data": {
+    "staff": {
+      "id": "uuid",
+      "staff_id": "yamada",
+      "name": "山田太郎",
+      "role": "manager"
     }
   }
 }
 ```
 
-#### GET /api/v1/patients/:id (職員用)
-患者詳細を取得。
+---
 
-```json
-// Response (200 OK)
-{
-  "status": "success",
-  "data": {
-    "id": "uuid",
-    "name": "田中太郎",
-    "name_kana": "タナカタロウ",
-    "birth_date": "1960-05-15",
-    "age": 65,
-    "gender": "male",
-    "email": "tanaka@example.com",
-    "phone": "090-1234-5678",
-    "condition": "変形性膝関節症",
-    "status": "回復期",
-    "continue_days": 14,
-    "assigned_staff": [
-      {
-        "id": "uuid",
-        "name": "山田太郎",
-        "is_primary": true
-      }
-    ]
-  }
-}
-```
+### 運動メニュー (User Exercises)
 
-### 運動 (Exercises)
+#### GET /api/v1/users/me/exercises ✅
 
-#### GET /api/v1/exercises
-運動マスタ一覧を取得。
-
-```json
-// Query Parameters
-?category=筋力&difficulty=easy
-
-// Response (200 OK)
-{
-  "status": "success",
-  "data": {
-    "exercises": [
-      {
-        "id": "uuid",
-        "name": "スクワット",
-        "description": "膝の筋力を強化する運動",
-        "category": "筋力",
-        "difficulty": "medium",
-        "recommended_reps": 10,
-        "recommended_sets": 3,
-        "video_url": "/videos/squat.mp4",
-        "thumbnail_url": "/thumbnails/squat.jpg",
-        "duration_seconds": 120
-      }
-    ]
-  }
-}
-```
-
-#### GET /api/v1/users/me/exercises
 現在の利用者に割り当てられた運動メニューを取得。
+
+**認証**: 利用者セッション必須
 
 ```json
 // Response (200 OK)
@@ -232,34 +283,27 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
-#### POST /api/v1/patients/:patient_id/exercises (職員用)
-患者に運動メニューを割り当てる。
+**レスポンスフィールド**:
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | patient_exercises.id |
+| exercise.id | UUID | exercises.id |
+| exercise.name | String | 運動名 |
+| exercise.video_url | String | 動画URL |
+| exercise.thumbnail_url | String | サムネイルURL |
+| target_reps | Integer | 目標回数 |
+| target_sets | Integer | 目標セット数 |
+| completed_today | Boolean | 本日実施済みかどうか |
 
-```json
-// Request
-{
-  "exercise_id": "uuid",
-  "target_reps": 10,
-  "target_sets": 3
-}
-
-// Response (201 Created)
-{
-  "status": "success",
-  "data": {
-    "id": "uuid",
-    "exercise_id": "uuid",
-    "target_reps": 10,
-    "target_sets": 3,
-    "assigned_at": "2026-01-21T10:00:00Z"
-  }
-}
-```
+---
 
 ### 運動記録 (Exercise Records)
 
-#### POST /api/v1/exercise_records
+#### POST /api/v1/exercise_records ✅
+
 運動記録を作成。
+
+**認証**: 利用者セッション必須
 
 ```json
 // Request
@@ -284,8 +328,28 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
-#### GET /api/v1/users/me/exercise_records
+**副作用**:
+- 継続日数 (continue_days) が自動更新される
+- 監査ログに記録される
+
+**継続日数 (continue_days) 更新ロジック**:
+
+| 条件 | 動作 |
+|------|------|
+| 初回運動 | `continue_days = 1` |
+| 前日または2日前に運動済み | `continue_days += 1`（1日スキップ許容） |
+| 当日すでに運動済み | 変更なし |
+| 3日以上の空白 | `continue_days = 1`（リセット） |
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/exercise_records_controller.rb`
+- モデル: `app/models/user.rb` (`update_continue_days!` メソッド)
+
+#### GET /api/v1/users/me/exercise_records ✅
+
 運動記録履歴を取得。
+
+**認証**: 利用者セッション必須
 
 ```json
 // Query Parameters
@@ -316,10 +380,15 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
+---
+
 ### 体調記録 (Daily Conditions)
 
-#### POST /api/v1/daily_conditions
-体調を記録。
+#### POST /api/v1/daily_conditions ✅
+
+体調を記録。同日の記録が既にある場合は更新。
+
+**認証**: 利用者セッション必須
 
 ```json
 // Request
@@ -330,20 +399,31 @@ Cookie: _psyfit_session=<session_id>
   "notes": "少し痛みがあるが調子は良い"
 }
 
-// Response (201 Created)
+// Response (201 Created / 200 OK)
 {
   "status": "success",
   "data": {
     "id": "uuid",
     "recorded_date": "2026-01-21",
     "pain_level": 3,
-    "body_condition": 7
+    "body_condition": 7,
+    "notes": "少し痛みがあるが調子は良い"
   }
 }
 ```
 
-#### GET /api/v1/users/me/daily_conditions
+**バリデーション**:
+| フィールド | ルール |
+|-----------|--------|
+| pain_level | 0-10の整数 |
+| body_condition | 0-10の整数 |
+| recorded_date | 省略時は当日 |
+
+#### GET /api/v1/users/me/daily_conditions ✅
+
 体調記録履歴を取得。
+
+**認証**: 利用者セッション必須
 
 ```json
 // Query Parameters
@@ -355,23 +435,224 @@ Cookie: _psyfit_session=<session_id>
   "data": {
     "conditions": [
       {
+        "id": "uuid",
         "recorded_date": "2026-01-21",
         "pain_level": 3,
-        "body_condition": 7
+        "body_condition": 7,
+        "notes": "少し痛みがあるが調子は良い"
       },
       {
+        "id": "uuid",
         "recorded_date": "2026-01-20",
         "pain_level": 4,
-        "body_condition": 6
+        "body_condition": 6,
+        "notes": null
       }
     ]
   }
 }
 ```
 
-### 測定値 (Measurements)
+---
 
-#### POST /api/v1/patients/:patient_id/measurements (職員用)
+### 運動マスタ (Exercises) ⏳
+
+#### GET /api/v1/exercises
+
+運動マスタ一覧を取得。
+
+```json
+// Query Parameters
+?category=筋力&difficulty=easy
+
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "exercises": [
+      {
+        "id": "uuid",
+        "name": "スクワット",
+        "description": "膝の筋力を強化する運動",
+        "category": "筋力",
+        "difficulty": "medium",
+        "recommended_reps": 10,
+        "recommended_sets": 3,
+        "video_url": "/videos/squat.mp4",
+        "thumbnail_url": "/thumbnails/squat.jpg",
+        "duration_seconds": 120
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 患者管理 (Patients) ✅
+
+#### GET /api/v1/patients (職員用) ✅
+
+患者一覧を取得。
+
+**認証**: 職員セッション必須
+
+**認可ルール**:
+- マネージャー: 全患者を閲覧可能
+- 一般職員: 担当患者のみ閲覧可能（`patient_staff_assignments` テーブルで関連付け）
+
+**クエリパラメータ**:
+| パラメータ | 型 | デフォルト | 説明 |
+|-----------|-----|-----------|------|
+| page | integer | 1 | ページ番号 |
+| per_page | integer | 20 | 1ページあたりの件数（最大100） |
+| search | string | - | 患者名で検索（部分一致） |
+| status | string | - | 病期でフィルタ（`急性期`, `回復期`, `維持期`） |
+
+```json
+// Query Parameters
+?page=1&per_page=20&search=田中&status=回復期
+
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "patients": [
+      {
+        "id": "uuid",
+        "name": "田中太郎",
+        "age": 65,
+        "gender": "male",
+        "status": "回復期",
+        "condition": "変形性膝関節症",
+        "assigned_staff": "山田太郎"
+      }
+    ],
+    "meta": {
+      "total": 50,
+      "page": 1,
+      "per_page": 20,
+      "total_pages": 3
+    }
+  }
+}
+```
+
+**副作用**:
+- 監査ログに記録される（action: 'read', status: 'success'）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `401 Unauthorized`: セッションが期限切れの場合（15分）
+
+---
+
+#### GET /api/v1/patients/:id (職員用) ✅
+
+患者詳細を取得。
+
+**認証**: 職員セッション必須
+
+**認可ルール**:
+- マネージャー: 全患者を閲覧可能
+- 一般職員: 担当患者のみ閲覧可能（`patient_staff_assignments` テーブルで関連付け）
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | 患者ID |
+
+```json
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "name": "田中太郎",
+    "name_kana": "タナカタロウ",
+    "birth_date": "1960-05-15",
+    "age": 65,
+    "gender": "male",
+    "email": "tanaka@example.com",
+    "phone": "090-1234-5678",
+    "condition": "変形性膝関節症",
+    "status": "回復期",
+    "continue_days": 14,
+    "assigned_staff": [
+      {
+        "id": "uuid",
+        "name": "山田太郎",
+        "is_primary": true
+      },
+      {
+        "id": "uuid",
+        "name": "佐藤花子",
+        "is_primary": false
+      }
+    ]
+  }
+}
+```
+
+**レスポンスフィールド**:
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | 患者ID |
+| name | string | 患者氏名（暗号化フィールド） |
+| name_kana | string | 患者氏名カナ（暗号化フィールド） |
+| birth_date | date | 生年月日（暗号化フィールド） |
+| age | integer | 年齢（birth_dateから自動計算） |
+| gender | string | 性別（`male`, `female`, `other`） |
+| email | string | メールアドレス（暗号化フィールド） |
+| phone | string | 電話番号 |
+| condition | string | 疾患・身体状態 |
+| status | string | 病期（`急性期`, `回復期`, `維持期`） |
+| continue_days | integer | 運動継続日数 |
+| assigned_staff | array | 担当職員リスト（`is_primary`で主担当を示す） |
+
+**副作用**:
+- 監査ログに記録される（action: 'read', resource_id: patient.id）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `403 Forbidden`: 一般職員が担当外の患者にアクセスした場合
+- `404 Not Found`: 患者が存在しない、または論理削除されている場合
+
+**セキュリティ**:
+- PII（name, name_kana, email, birth_date）は暗号化されてDBに保存
+- 監査ログにアクセス履歴が記録される
+
+#### POST /api/v1/patients/:patient_id/exercises (職員用)
+
+患者に運動メニューを割り当てる。
+
+```json
+// Request
+{
+  "exercise_id": "uuid",
+  "target_reps": 10,
+  "target_sets": 3
+}
+
+// Response (201 Created)
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "exercise_id": "uuid",
+    "target_reps": 10,
+    "target_sets": 3,
+    "assigned_at": "2026-01-21T10:00:00Z"
+  }
+}
+```
+
+---
+
+### 測定値 (Measurements) ✅
+
+#### POST /api/v1/patients/:patient_id/measurements (職員用) ✅
+
 測定値を入力。
 
 ```json
@@ -401,11 +682,14 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
-#### GET /api/v1/patients/:patient_id/measurements (職員用)
+#### GET /api/v1/patients/:patient_id/measurements (職員用) ✅
+
 測定値履歴を取得。
 
+**認証**: 職員セッション必須
+
 ```json
-// Query Parameters
+// Query Parameters（両方ともオプション）
 ?start_date=2026-01-01&end_date=2026-01-31
 
 // Response (200 OK)
@@ -414,24 +698,89 @@ Cookie: _psyfit_session=<session_id>
   "data": {
     "measurements": [
       {
+        "id": "uuid",
         "measured_date": "2026-01-21",
-        "weight_kg": 65.5,
-        "knee_extension_strength_left": 25.3,
-        "knee_extension_strength_right": 26.1
-        // ... 他のフィールド
+        "weight_kg": "65.5",
+        "knee_extension_strength_left": "25.3",
+        "knee_extension_strength_right": "26.1",
+        "tug_seconds": "12.5",
+        "single_leg_stance_seconds": "15.2",
+        "nrs_pain_score": 3,
+        "mmt_score": 4,
+        "notes": "前回より改善傾向"
       }
     ]
   }
 }
 ```
 
-#### GET /api/v1/users/me/measurements (利用者用)
+**クエリパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| start_date | Date | 開始日（この日以降の記録を取得） |
+| end_date | Date | 終了日（この日以前の記録を取得） |
+
+**副作用**:
+- 監査ログに記録される（action: 'read'）
+
+#### GET /api/v1/users/me/measurements (利用者用) ✅
+
 自分の測定値履歴を取得。
 
-### レポート (Reports)
+**認証**: 利用者セッション必須
 
-#### GET /api/v1/patients/:patient_id/report (職員用)
-患者レポートを生成（PDF）。
+```json
+// Query Parameters（両方ともオプション）
+?start_date=2026-01-01&end_date=2026-01-31
+
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "measurements": [
+      {
+        "id": "uuid",
+        "measured_date": "2026-01-21",
+        "weight_kg": "65.5",
+        "knee_extension_strength_left": "25.3",
+        "knee_extension_strength_right": "26.1",
+        "tug_seconds": "12.5",
+        "single_leg_stance_seconds": "15.2",
+        "nrs_pain_score": 3,
+        "mmt_score": 4,
+        "notes": "前回より改善傾向"
+      }
+    ]
+  }
+}
+```
+
+**クエリパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| start_date | Date | 開始日（この日以降の記録を取得） |
+| end_date | Date | 終了日（この日以前の記録を取得） |
+
+---
+
+### レポート (Reports) ✅
+
+#### GET /api/v1/patients/:patient_id/report (職員用) ✅
+
+患者レポートをPDFで生成。
+
+**認証**: 職員セッション必須
+
+**認可ルール**:
+- マネージャー: 全患者のレポートを生成可能
+- 一般職員: 担当患者のレポートのみ生成可能
+
+**クエリパラメータ**:
+| パラメータ | 型 | デフォルト | 説明 |
+|-----------|-----|-----------|------|
+| start_date | date | 30日前 | レポート開始日 |
+| end_date | date | 当日 | レポート終了日 |
+| format | string | pdf | 出力形式（現在はpdfのみ対応） |
 
 ```json
 // Query Parameters
@@ -439,13 +788,34 @@ Cookie: _psyfit_session=<session_id>
 
 // Response (200 OK)
 // Content-Type: application/pdf
+// Content-Disposition: attachment; filename="patient_report_<患者名>_<開始日>_<終了日>.pdf"
 // PDFファイルがダウンロードされる
 ```
 
-### 職員管理 (Staff Management)
+**レポート内容**:
+- 患者基本情報（氏名、年齢、性別、病期、疾患、継続日数）
+- 測定値推移（体重、TUG、片脚立位、NRS、MMT）
+- 運動実施状況（日別の運動記録）
+- 体調記録（痛み・調子のレベル推移）
 
-#### GET /api/v1/staff (マネージャーのみ)
+**副作用**:
+- 監査ログに記録される（action: 'read', resource_type: 'PatientReport'）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `403 Forbidden`: 一般職員が担当外の患者にアクセスした場合
+- `404 Not Found`: 患者が存在しない、または論理削除されている場合
+- `422 Unprocessable Entity`: 開始日が終了日より後の場合
+
+---
+
+### 職員管理 (Staff Management) ✅
+
+#### GET /api/v1/staff (マネージャーのみ) ✅
+
 職員一覧を取得。
+
+**認証**: 職員セッション必須（マネージャーのみ）
 
 ```json
 // Response (200 OK)
@@ -465,18 +835,29 @@ Cookie: _psyfit_session=<session_id>
 }
 ```
 
-#### POST /api/v1/staff (マネージャーのみ)
+**副作用**:
+- 監査ログに記録される（action: 'read', status: 'success'）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `403 Forbidden`: 一般職員がアクセスした場合
+
+#### POST /api/v1/staff (マネージャーのみ) ✅
+
 職員を作成。
+
+**認証**: 職員セッション必須（マネージャーのみ）
 
 ```json
 // Request
 {
   "staff_id": "sato",
   "name": "佐藤花子",
+  "name_kana": "サトウハナコ",  // オプション
   "email": "sato@example.com",
-  "password": "password123",
-  "role": "staff",
-  "department": "リハビリテーション科"
+  "password": "SecurePass123!",
+  "role": "staff",              // オプション（デフォルト: "staff"）
+  "department": "リハビリテーション科"  // オプション
 }
 
 // Response (201 Created)
@@ -486,10 +867,32 @@ Cookie: _psyfit_session=<session_id>
     "id": "uuid",
     "staff_id": "sato",
     "name": "佐藤花子",
-    "role": "staff"
+    "role": "staff",
+    "department": "リハビリテーション科"
   }
 }
 ```
+
+**バリデーション**:
+| フィールド | ルール |
+|-----------|--------|
+| staff_id | 必須、一意 |
+| name | 必須 |
+| email | オプション、一意（blind index使用） |
+| password | 必須、8文字以上、2種類以上の文字タイプ（大文字/小文字/数字/特殊文字） |
+| role | `manager` または `staff`（デフォルト: `staff`） |
+
+**セキュリティ**:
+- PII（name, name_kana, email）は暗号化されてDB保存
+- パスワードはbcryptでハッシュ化
+- 監査ログに記録される（action: 'create', status: 'success'）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `403 Forbidden`: 一般職員がアクセスした場合
+- `422 Unprocessable Entity`: バリデーションエラー
+
+---
 
 ## エラーコード
 
@@ -514,3 +917,325 @@ X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
 X-RateLimit-Reset: 1642780800
 ```
+
+---
+
+## 実装サマリー
+
+### 2026-01-23: 患者管理API実装
+
+**実装内容**:
+- `GET /api/v1/patients` - 患者一覧取得（ページネーション、検索、フィルタ対応）
+- `GET /api/v1/patients/:id` - 患者詳細取得（担当職員情報含む）
+
+**アクセス制御**:
+- マネージャー: 全患者にアクセス可能
+- 一般職員: 担当患者のみアクセス可能（`patient_staff_assignments`テーブルで管理）
+
+**データベース変更**:
+1. `users`テーブル拡張:
+   - `status` (string): 病期（急性期/回復期/維持期）
+   - `condition` (string): 疾患・身体状態
+   - `gender` (string): 性別
+   - `phone` (string): 電話番号
+
+2. `patient_staff_assignments`テーブル作成:
+   - 患者と職員の担当関係を管理
+   - `is_primary`フラグで主担当を識別
+
+**モデル変更**:
+- `User`: STATUSES/GENDERS定数、バリデーション、スコープ（`by_status`, `assigned_to`）、`age()`メソッド追加
+- `Staff`: `patient_staff_assignments`アソシエーション追加
+- `PatientStaffAssignment`: 新規モデル作成
+
+**セキュリティ**:
+- PII（name, name_kana, email, birth_date）は暗号化されてDB保存
+- 全アクセスが監査ログに記録（action: 'read'）
+- 職員セッション必須（15分タイムアウト）
+- 一般職員は担当外患者にアクセス不可（403 Forbidden）
+
+**テストカバレッジ**:
+- 36テストケース（`spec/requests/api/v1/patients_spec.rb`）
+- 全体カバレッジ: 86.52%（目標80%達成）
+- テストシナリオ:
+  - マネージャー/一般職員の権限制御
+  - ページネーション（デフォルト20件、最大100件）
+  - 名前検索（部分一致）
+  - ステータスフィルタ（急性期/回復期/維持期）
+  - 複合フィルタ（検索+ステータス）
+  - 論理削除された患者の除外
+  - セッション期限切れ処理
+  - 監査ログ記録
+
+**ファイル一覧**:
+- コントローラ: `app/controllers/api/v1/patients_controller.rb`
+- モデル: `app/models/patient_staff_assignment.rb`
+- マイグレーション:
+  - `db/migrate/20260123100152_add_patient_fields_to_users.rb`
+  - `db/migrate/20260123100225_create_patient_staff_assignments.rb`
+- テスト: `spec/requests/api/v1/patients_spec.rb`
+- ファクトリ: `test/factories/patient_staff_assignments.rb`
+
+**使用例**:
+
+```bash
+# 患者一覧取得（ページネーション + フィルタ）
+curl -X GET "http://localhost:3000/api/v1/patients?page=1&per_page=10&status=回復期&search=田中" \
+  -H "Cookie: _psyfit_session=<session_id>"
+
+# 患者詳細取得
+curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>" \
+  -H "Cookie: _psyfit_session=<session_id>"
+```
+
+**次のステップ**:
+- ~~運動メニュー割当API（`POST /api/v1/patients/:patient_id/exercises`）~~ ✅ 完了
+- 患者レポート生成API（`GET /api/v1/patients/:patient_id/report`）
+- ~~職員管理API（`GET /api/v1/staff`, `POST /api/v1/staff`）~~ ✅ 完了
+
+---
+
+### 2026-01-24: 職員管理API実装
+
+**実装内容**:
+- `GET /api/v1/staff` - 職員一覧取得（マネージャーのみ）
+- `POST /api/v1/staff` - 職員作成（マネージャーのみ）
+
+**アクセス制御**:
+- マネージャーのみアクセス可能
+- 一般職員は403 Forbiddenが返される
+
+**データベース変更**:
+- `staff`テーブル拡張:
+  - `department` (string): 所属部署
+
+マイグレーション: `db/migrate/20260124004213_add_department_to_staff.rb`
+
+**セキュリティ**:
+- PII（name, name_kana, email）は暗号化されてDB保存（AES-256-GCM）
+- パスワードはbcryptでハッシュ化
+- パスワード複雑性チェック: 8文字以上、2種類以上の文字タイプ必須
+- 全アクセスが監査ログに記録（action: 'read' or 'create'）
+- 職員セッション必須（15分タイムアウト）
+- マネージャー権限チェック（require_manager!）
+
+**バリデーション**:
+- staff_id: 必須、一意
+- name: 必須
+- email: オプション、一意（blind index使用）
+- password: 必須、8文字以上、2種類以上の文字タイプ
+- role: `manager` または `staff`
+
+**テストカバレッジ**:
+- 29テストケース（`spec/requests/api/v1/staff_spec.rb`）
+- 全体カバレッジ: 87.47%（目標80%達成）
+- テストシナリオ:
+  - マネージャーのみアクセス可能（403 Forbidden for non-managers）
+  - 未認証時は401 Unauthorized
+  - セッション期限切れ処理（15分）
+  - パスワード複雑性バリデーション
+  - staff_id/email一意性チェック
+  - 必須フィールドバリデーション
+  - オプションフィールド（name_kana, department）
+  - デフォルトrole（staff）
+  - 論理削除された職員の除外
+  - 監査ログ記録
+
+**ファイル一覧**:
+- コントローラ: `app/controllers/api/v1/staff_controller.rb`
+- マイグレーション: `db/migrate/20260124004213_add_department_to_staff.rb`
+- テスト: `spec/requests/api/v1/staff_spec.rb`
+- ルーティング: `config/routes.rb` に `resources :staff, only: [:index, :create]` 追加
+
+**使用例**:
+
+```bash
+# 職員一覧取得
+curl -X GET "http://localhost:3000/api/v1/staff" \
+  -H "Cookie: _psyfit_session=<manager_session_id>"
+
+# 職員作成
+curl -X POST "http://localhost:3000/api/v1/staff" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: _psyfit_session=<manager_session_id>" \
+  -d '{
+    "staff_id": "new_staff",
+    "name": "佐藤花子",
+    "email": "sato@example.com",
+    "password": "SecurePass123!",
+    "role": "staff",
+    "department": "リハビリテーション科"
+  }'
+```
+
+**次のステップ**:
+- ~~運動メニュー割当API（`POST /api/v1/patients/:patient_id/exercises`）~~ ✅ 完了
+- ~~患者レポート生成API（`GET /api/v1/patients/:patient_id/report`）~~ ✅ 完了
+- 運動マスタAPI（`GET /api/v1/exercises`）
+
+---
+
+### 2026-01-24: 患者レポートAPI実装
+
+**実装内容**:
+- `GET /api/v1/patients/:patient_id/report` - 患者レポートPDF生成
+
+**アクセス制御**:
+- マネージャー: 全患者のレポートを生成可能
+- 一般職員: 担当患者のレポートのみ生成可能
+
+**PDF生成**:
+- `prawn` gem使用（日本語フォント: Noto Sans CJK JP）
+- レポート内容:
+  - 患者基本情報
+  - 測定値推移テーブル
+  - 運動実施状況（日別）
+  - 体調記録推移
+
+**テストカバレッジ**:
+- 17テストケース（`spec/requests/api/v1/patient_reports_spec.rb`）
+- 全体カバレッジ: 89.47%（目標80%達成）
+- テストシナリオ:
+  - マネージャー/一般職員の権限制御
+  - PDFファイル生成
+  - Content-Dispositionヘッダ確認
+  - 測定値・運動記録・体調データ含むレポート
+  - デフォルト期間（30日）
+  - 無効な日付範囲エラー
+  - 論理削除された患者の除外
+  - セッション期限切れ処理
+  - 監査ログ記録
+
+**ファイル一覧**:
+- コントローラ: `app/controllers/api/v1/patient_reports_controller.rb`
+- サービス: `app/services/patient_report_service.rb`
+- テスト: `spec/requests/api/v1/patient_reports_spec.rb`
+- フォント: `app/assets/fonts/NotoSansJP-Regular.otf`
+- ルーティング: `config/routes.rb` に `get 'report', to: 'patient_reports#show'` 追加
+
+**使用例**:
+
+```bash
+# 患者レポートPDF取得
+curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>/report?start_date=2026-01-01&end_date=2026-01-31&format=pdf" \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -o patient_report.pdf
+
+# デフォルト期間（過去30日）でレポート取得
+curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>/report" \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -o patient_report.pdf
+```
+
+**次のステップ**:
+- 運動マスタAPI（`GET /api/v1/exercises`）
+
+---
+
+### 2026-01-24: 利用者向けフロントエンド実装
+
+**実装内容**:
+- U-01 ログイン画面（`Login.tsx`）
+- U-02 ホーム画面（`Home.tsx`）
+
+**ディレクトリ**: `frontend_user/src/components/`
+
+**使用技術**:
+- React 18 + TypeScript
+- Vite 6
+- Tailwind CSS v4
+- Vitest + React Testing Library
+
+**実装画面**:
+
+#### U-01 ログイン画面
+
+| 機能 | 実装状況 |
+|------|---------|
+| メールアドレス入力 | ✅ |
+| パスワード入力 | ✅ |
+| パスワード表示/非表示トグル | ✅ |
+| Zodバリデーション | ✅ |
+| ローディング状態 | ✅ |
+| エラー表示 | ✅ |
+| パスワードリセットリンク | ✅ |
+| 認証済みユーザーのリダイレクト | ✅ |
+
+**テスト**: 19ケース（`Login.test.tsx`）
+- レンダリング（フォーム要素、ブランド表示）
+- フォームバリデーション（空値、無効なメール形式）
+- ログイン機能（認証API連携、リダイレクト）
+- ローディング状態（ボタン無効化、入力無効化）
+- パスワード表示切替
+- ナビゲーション（リセットリンク、認証済みリダイレクト）
+- アクセシビリティ（ラベル関連付け、タップ領域、スクリーンリーダー）
+
+#### U-02 ホーム画面
+
+| 機能 | 実装状況 |
+|------|---------|
+| 時間帯別挨拶（おはよう/こんにちは/こんばんは） | ✅ |
+| ユーザー名表示 | ✅ |
+| 継続日数カード | ✅ |
+| メインメニュー（運動する/記録する/履歴を見る） | ✅ |
+| 測定値リンク | ✅ |
+| フッターナビゲーション | ✅ |
+| ローディング状態 | ✅ |
+| 未認証時リダイレクト | ✅ |
+
+**テスト**: 23ケース（`Home.test.tsx`）
+- レンダリング（挨拶、ユーザー名、継続日数）
+- メインメニュー（3メニュー表示、各ナビゲーション）
+- 測定値リンク（表示、ナビゲーション）
+- 継続日数表示（0日、高日数）
+- 認証（未認証時リダイレクト）
+- アクセシビリティ（ボタン、見出し構造、タップ領域、ランドマーク）
+- フッターナビゲーション
+- ローディング状態
+
+**共通コンポーネント**:
+
+| コンポーネント | 機能 | ファイル |
+|--------------|------|---------|
+| Button | プライマリ/セカンダリ/アウトライン/ゴースト/危険 | `ui/Button.tsx` |
+| Input | ラベル、エラー表示、aria属性 | `ui/Input.tsx` |
+
+**認証コンテキスト** (`AuthContext.tsx`):
+- ログイン/ログアウト
+- セッション管理（30分タイムアウト）
+- ユーザー情報管理
+- アクティビティトラッキング
+
+**テスト結果**:
+```
+ ✓ src/contexts/__tests__/AuthContext.test.tsx (8 tests)
+ ✓ src/components/__tests__/Home.test.tsx (23 tests)
+ ✓ src/components/__tests__/Login.test.tsx (19 tests)
+
+ Test Files  3 passed (3)
+      Tests  50 passed (50)
+```
+
+**カバレッジ**:
+| ファイル | Stmts | Branch | Funcs | Lines |
+|---------|-------|--------|-------|-------|
+| 全体 | 97.17% | 95.63% | 96.55% | 97.17% |
+| Home.tsx | 96.85% | 93.75% | 100% | 96.85% |
+| Login.tsx | 95.45% | 88.23% | 100% | 95.45% |
+| Button.tsx | 100% | 100% | 100% | 100% |
+| Input.tsx | 100% | 100% | 100% | 100% |
+| AuthContext.tsx | 91.66% | 92.85% | 100% | 91.66% |
+
+**アクセシビリティ対応（WCAG 2.1 AA）**:
+- 最小フォントサイズ: 16px
+- タップ領域: 44×44px以上
+- フォーカス表示: focus-visible
+- ARIA属性: role, aria-label, aria-invalid
+- ランドマーク: header, main, nav, region
+- セマンティックHTML: 適切な見出し階層
+
+**次のステップ**:
+- U-03 運動メニュー選択画面
+- U-04 運動実施画面（動画再生）
+- U-10 ウェルカム画面
+- ルーティング設定（React Router）

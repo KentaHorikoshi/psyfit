@@ -9,6 +9,10 @@ FactoryBot.define do
     password_confirmation { "Password123!" }
     failed_login_count { 0 }
     locked_until { nil }
+    status { "維持期" }
+    condition { "変形性膝関節症" }
+    gender { "male" }
+    phone { "090-1234-5678" }
 
     trait :locked do
       failed_login_count { 5 }
@@ -26,6 +30,24 @@ FactoryBot.define do
 
     trait :deleted do
       deleted_at { 1.day.ago }
+    end
+
+    trait :acute do
+      status { "急性期" }
+    end
+
+    trait :recovery do
+      status { "回復期" }
+    end
+
+    trait :maintenance do
+      status { "維持期" }
+    end
+
+    trait :female do
+      gender { "female" }
+      name { "田中花子" }
+      name_kana { "タナカハナコ" }
     end
   end
 end

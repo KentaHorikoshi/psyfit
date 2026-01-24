@@ -10,7 +10,7 @@ module RequestSpecHelper
   def sign_in_as_user(user)
     post '/api/v1/auth/login', params: {
       email: user.email,
-      password: 'Password123'
+      password: 'Password123!'
     }
   end
 

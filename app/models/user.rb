@@ -11,6 +11,10 @@
 class User < ApplicationRecord
   include Encryptable
 
+  # Status constants
+  STATUSES = %w[急性期 回復期 維持期].freeze
+  GENDERS = %w[male female other].freeze
+
   # Encrypt PII fields
   encrypts_pii :email, :name, :name_kana, :birth_date
 
@@ -27,17 +31,24 @@ class User < ApplicationRecord
   has_many :daily_conditions, dependent: :destroy
   has_many :measurements, dependent: :destroy
   has_many :audit_logs, dependent: :nullify
+  has_many :patient_staff_assignments, dependent: :destroy
+  has_many :assigned_staff, through: :patient_staff_assignments, source: :staff
 
   # Validations
   validates :user_code, presence: true, uniqueness: true
   validates :email_bidx, presence: true, uniqueness: { message: 'has already been taken' }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
+  validates :status, presence: true, inclusion: { in: STATUSES }
+  validates :gender, inclusion: { in: GENDERS }, allow_blank: true
   validate :password_complexity, if: :password_digest_changed?
 
   # Soft delete scope
   scope :active, -> { where(deleted_at: nil) }
   scope :deleted, -> { where.not(deleted_at: nil) }
+  scope :by_status, ->(status) { where(status: status) if status.present? }
+  scope :assigned_to, ->(staff_id) { joins(:patient_staff_assignments).where(patient_staff_assignments: { staff_id: staff_id }) }
+  scope :search_by_name, ->(query) { where('name_encrypted LIKE ?', "%#{query}%") if query.present? }
 
   # Account Lockout Methods
 
@@ -90,6 +101,46 @@ class User < ApplicationRecord
 
   def deleted?
     deleted_at.present?
+  end
+
+  # Continue Days Methods
+
+  def update_continue_days!
+    today = Time.current.beginning_of_day
+
+    # Check if last exercise was today
+    return if last_exercise_at.present? && last_exercise_at >= today
+
+    # Calculate new continue_days
+    new_days = if last_exercise_at.nil?
+                 1 # First exercise ever
+               elsif last_exercise_at >= 2.days.ago.beginning_of_day
+                 continue_days + 1 # Consecutive exercise
+               else
+                 1 # Gap > 1 day, reset streak
+               end
+
+    update!(continue_days: new_days, last_exercise_at: Time.current)
+  end
+
+  def exercised_today?
+    last_exercise_at.present? && last_exercise_at >= Time.current.beginning_of_day
+  end
+
+  # Calculate age from birth_date
+  def age
+    return nil if birth_date.blank?
+
+    today = Date.current
+    birth = birth_date.is_a?(String) ? Date.parse(birth_date) : birth_date
+    age = today.year - birth.year
+    age -= 1 if today < birth + age.years
+    age
+  end
+
+  # Get primary assigned staff
+  def primary_staff
+    patient_staff_assignments.primary.first&.staff
   end
 
   private

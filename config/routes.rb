@@ -22,6 +22,30 @@ Rails.application.routes.draw do
         delete 'logout', to: 'auth#logout'
         get 'me', to: 'auth#me'
       end
+
+      # User endpoints (current user)
+      scope :users do
+        get 'me/exercises', to: 'user_exercises#index'
+        get 'me/exercise_records', to: 'exercise_records#index'
+        get 'me/daily_conditions', to: 'daily_conditions#index'
+        get 'me/measurements', to: 'user_measurements#index'
+      end
+
+      # Exercise Records
+      resources :exercise_records, only: [:create]
+
+      # Daily Conditions
+      resources :daily_conditions, only: [:create]
+
+      # Staff endpoints (patients management)
+      resources :patients, only: [:index, :show] do
+        resources :measurements, only: [:index, :create], controller: 'measurements'
+        resources :exercises, only: [:create], controller: 'patient_exercises'
+        get 'report', to: 'patient_reports#show'
+      end
+
+      # Staff management (manager only)
+      resources :staff, only: [:index, :create]
     end
   end
 

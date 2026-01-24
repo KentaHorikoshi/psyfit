@@ -28,6 +28,8 @@ class Staff < ApplicationRecord
   has_many :patient_exercises, foreign_key: :assigned_by_staff_id, dependent: :restrict_with_error
   has_many :measurements, foreign_key: :measured_by_staff_id, dependent: :restrict_with_error
   has_many :audit_logs, dependent: :nullify
+  has_many :patient_staff_assignments, dependent: :destroy
+  has_many :assigned_patients, through: :patient_staff_assignments, source: :user
 
   # Validations
   validates :staff_id, presence: true, uniqueness: true

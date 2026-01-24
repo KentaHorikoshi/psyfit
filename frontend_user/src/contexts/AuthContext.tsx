@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
-import apiClient, { AuthenticationError } from '../lib/api-client'
+import apiClient from '../lib/api-client'
 import type { User } from '../lib/api-types'
 
 // Session timeout: 30 minutes for users

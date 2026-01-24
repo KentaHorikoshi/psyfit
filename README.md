@@ -122,18 +122,21 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | U-14 | 体調入力 | ✅ | ⬜ |
 | U-15 | まとめて記録 | ✅ | ⬜ |
 
-#### 職員向け (src_admin)
-| 画面ID | 画面名 | UI | API接続 |
-|--------|--------|:--:|:------:|
-| S-01 | ログイン | ✅ | ⬜ |
-| S-02 | ダッシュボード | ✅ | ⬜ |
-| S-03 | 患者一覧 | ✅ | ⬜ |
-| S-04 | 患者詳細 | ✅ | ⬜ |
-| S-05 | 測定値入力 | ✅ | ⬜ |
-| S-06 | 運動メニュー設定 | ✅ | ⬜ |
-| S-07 | レポート出力 | ✅ | ⬜ |
-| S-08 | 職員管理 | ✅ | ⬜ |
-| S-09 | パスワードリセット | ✅ | ⬜ |
+#### 職員向け (frontend_admin)
+| 画面ID | 画面名 | UI | テスト | カバレッジ | API接続 |
+|--------|--------|:--:|:-----:|:--------:|:------:|
+| - | Sidebar | ✅ | 15 tests | 100% | - |
+| S-01 | ログイン | ✅ | 19 tests | 95.54% | ⬜ |
+| S-02 | ダッシュボード | ✅ | 22 tests | 100% | ⬜ |
+| S-03 | 患者一覧 | ✅ | 29 tests | 97.9% | ⬜ |
+| S-04 | 患者詳細 | ⬜ | - | - | ⬜ |
+| S-05 | 測定値入力 | ⬜ | - | - | ⬜ |
+| S-06 | 運動メニュー設定 | ⬜ | - | - | ⬜ |
+| S-07 | レポート出力 | ⬜ | - | - | ⬜ |
+| S-08 | 職員管理 | ⬜ | - | - | ⬜ |
+| S-09 | パスワードリセット | ⬜ | - | - | ⬜ |
+
+**フロントエンドテスト**: 92 tests passed, 98.98% overall coverage (2026-01-24)
 
 ### バックエンド実装
 
@@ -196,7 +199,12 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 - [x] 体調記録API ✅
 - [x] 測定値管理API ✅
 - [x] 患者管理API ✅ (2026-01-23)
-- [x] テストカバレッジ80%達成 ✅ (86.52%)
+- [x] バックエンドテストカバレッジ80%達成 ✅ (86.52%)
+- [x] 職員向けUI基盤実装（TDD） ✅ (2026-01-24)
+  - [x] Sidebar (15 tests, 100% coverage)
+  - [x] Dashboard (22 tests, 100% coverage)
+  - [x] PatientList (29 tests, 97.9% coverage)
+  - [x] フロントエンドテストカバレッジ80%達成 ✅ (98.98%)
 - [ ] フロントエンド-バックエンド接続
 
 ### Phase 2: 拡張機能（次のステップ）
@@ -249,6 +257,7 @@ npm run lint            # Lintチェック
 | [04-api-specification.md](.claude/docs/04-api-specification.md) | API仕様 |
 | [05-security-requirements.md](.claude/docs/05-security-requirements.md) | セキュリティ要件 |
 | [06-non-functional-requirements.md](.claude/docs/06-non-functional-requirements.md) | 非機能要件 |
+| [07-frontend-implementation-status.md](.claude/docs/07-frontend-implementation-status.md) | フロントエンド実装状況 ✨NEW |
 | [99-confirmation-items.md](.claude/docs/99-confirmation-items.md) | 確認事項・TODO |
 
 ## セキュリティ

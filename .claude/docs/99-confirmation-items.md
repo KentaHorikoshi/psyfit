@@ -2,8 +2,8 @@
 
 このファイルには、基本設計書から派生した確認事項やTODO項目を記録します。
 
-**最終更新**: 2026-01-23
-**ステータス**: 主要項目確定済み
+**最終更新**: 2026-01-24
+**ステータス**: 職員向けUI基盤実装完了（TDD）
 
 ---
 
@@ -67,7 +67,8 @@
 - [ ] 運動記録（基本）
 - [ ] 体調記録
 - [ ] 測定値入力（職員）
-- [ ] ダッシュボード（職員）
+- [x] ダッシュボード（職員） ← **2026-01-24実装完了**
+- [x] 患者一覧（職員） ← **2026-01-24実装完了**
 
 ### Phase 2: 拡張機能
 - [ ] 履歴グラフ表示
@@ -87,7 +88,13 @@
 ### 単体テスト
 - [ ] モデルバリデーションテスト
 - [ ] APIエンドポイントテスト
-- [ ] Reactコンポーネントテスト
+- [x] Reactコンポーネントテスト（職員向けUI）
+  - [x] AuthContext (7 tests, 91.66% coverage)
+  - [x] Login (19 tests, 95.54% coverage)
+  - [x] Sidebar (15 tests, 100% coverage)
+  - [x] Dashboard (22 tests, 100% coverage)
+  - [x] PatientList (29 tests, 97.9% coverage)
+  - **Total: 92 tests passed, 98.98% overall coverage**
 
 ### 結合テスト
 - [ ] 認証フローテスト
@@ -154,6 +161,53 @@
 - [ ] 個人情報保護法対応チェックリスト
 - [ ] 医療情報ガイドライン準拠確認
 - [ ] 利用規約・プライバシーポリシー作成
+
+## 実装完了項目（2026-01-24）
+
+### 職員向けUI基盤（TDD実装）
+
+**実装方針**: Test-Driven Development (Red-Green-Refactorサイクル)
+
+**実装コンポーネント**:
+1. **Sidebar** (`frontend_admin/src/components/Sidebar.tsx`)
+   - サイドバー背景色 #1E40AF
+   - ナビゲーション: ダッシュボード、患者一覧
+   - 役割ベース表示（マネージャーのみ職員管理表示）
+   - 職員プロフィール・ログアウト
+   - 15 tests, 100% coverage
+
+2. **Dashboard** (`frontend_admin/src/components/Dashboard.tsx`)
+   - KPIカード4枚（担当患者数、来院予定、運動実施、全患者数）
+   - 担当患者一覧
+   - ステータスバッジ（急性期:赤/回復期:黄/維持期:緑）
+   - 測定値入力・メニュー設定ボタン
+   - 22 tests, 100% coverage
+
+3. **PatientList** (`frontend_admin/src/components/PatientList.tsx`)
+   - 患者一覧テーブル（7カラム）
+   - 検索機能（患者名、カナ、300msデバウンス）
+   - ステータスフィルタ
+   - ページネーション
+   - 29 tests, 97.9% coverage
+
+**テスト結果**:
+- Total: 92 tests passed
+- Overall coverage: 98.98% (目標80%を大幅超過)
+  - Statements: 98.98%
+  - Branches: 97.22%
+  - Functions: 95.23%
+  - Lines: 98.98%
+
+**ビルド状態**: ✅ 成功
+
+**型定義追加**:
+- `Patient`, `PatientStatus`, `PatientsListResponse`, `DashboardStats`
+
+**アクセシビリティ準拠**:
+- 最小タップ領域: 44×44px
+- 適切なaria-label、role属性
+- テーブル構造の正しい実装
+- キーボードナビゲーション対応
 
 ## 基本設計書v4.1からの未実装項目
 

@@ -3,7 +3,16 @@ import type {
   LoginResponse,
   LogoutResponse,
   UserLoginRequest,
-  User
+  User,
+  DailyCondition,
+  CreateDailyConditionRequest,
+  MeasurementsResponse,
+  ExerciseRecordsResponse,
+  DateFilterParams,
+  Exercise,
+  ExercisesResponse,
+  ExerciseRecord,
+  CreateExerciseRecordRequest
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
@@ -65,6 +74,50 @@ class ApiClient {
 
   async getCurrentUser(): Promise<ApiResponse<User>> {
     return this.request<User>('/users/me')
+  }
+
+  // Exercise Records endpoints
+  async getExerciseRecords(params?: DateFilterParams): Promise<ApiResponse<ExerciseRecordsResponse>> {
+    const queryString = params
+      ? '?' + new URLSearchParams(
+          Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+        ).toString()
+      : ''
+    return this.request<ExerciseRecordsResponse>(`/users/me/exercise_records${queryString}`)
+  }
+
+  // Measurements endpoints
+  async getMeasurements(params?: DateFilterParams): Promise<ApiResponse<MeasurementsResponse>> {
+    const queryString = params
+      ? '?' + new URLSearchParams(
+          Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+        ).toString()
+      : ''
+    return this.request<MeasurementsResponse>(`/users/me/measurements${queryString}`)
+  }
+
+  // Daily Condition endpoints
+  async createDailyCondition(data: CreateDailyConditionRequest): Promise<ApiResponse<DailyCondition>> {
+    return this.request<DailyCondition>('/daily_conditions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Exercise endpoints
+  async getUserExercises(): Promise<ApiResponse<ExercisesResponse>> {
+    return this.request<ExercisesResponse>('/users/me/exercises')
+  }
+
+  async getExercise(id: string): Promise<ApiResponse<Exercise>> {
+    return this.request<Exercise>(`/exercises/${id}`)
+  }
+
+  async createExerciseRecord(data: CreateExerciseRecordRequest): Promise<ApiResponse<ExerciseRecord>> {
+    return this.request<ExerciseRecord>('/exercise_records', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   }
 }
 

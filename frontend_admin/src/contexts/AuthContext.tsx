@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api, AuthenticationError } from '../lib/api'
+import { api } from '../lib/api'
 import type { Staff } from '../lib/api-types'
 
 // Session timeout: 15 minutes for staff (stricter than users)

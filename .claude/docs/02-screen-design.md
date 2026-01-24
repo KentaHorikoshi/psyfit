@@ -106,20 +106,35 @@
 
 ## 職員向け画面一覧（S-01〜S-09）
 
+### 共通レイアウト: Sidebar
+- サイドバー背景色: #1E40AF
+- ナビゲーション: ダッシュボード、患者一覧
+- 役割ベース表示: マネージャーのみ職員管理メニュー表示
+- 職員プロフィール表示
+- ログアウトボタン
+- 実装: `frontend_admin/src/components/Sidebar.tsx` ✅
+- テスト: 15 tests passed (100% coverage)
+
 ### S-01: ログイン
 - 職員ID・パスワード入力
-- 実装: `src_admin/components/Login.tsx`
+- セッションタイムアウト: 15分
+- 実装: `frontend_admin/src/components/Login.tsx` ✅
+- テスト: 19 tests passed
 
 ### S-02: ダッシュボード
 - 担当患者一覧
 - 本日の来院予定
 - KPI表示（担当患者数、運動実施数など）
-- 実装: `src_admin/components/Dashboard.tsx`
+- 実装: `frontend_admin/src/components/Dashboard.tsx` ✅
+- テスト: 22 tests passed (100% coverage)
 
 ### S-03: 患者一覧
 - 患者リスト
-- 検索・フィルタ機能
-- ステータスバッジ表示
+- 検索・フィルタ機能（患者名、カナ検索 + ステータス絞り込み）
+- ステータスバッジ表示（急性期:赤/回復期:黄/維持期:緑）
+- ページネーション機能
+- 実装: `frontend_admin/src/components/PatientList.tsx` ✅
+- テスト: 29 tests passed (97.9% coverage)
 
 ### S-04: 患者詳細
 - 個人情報

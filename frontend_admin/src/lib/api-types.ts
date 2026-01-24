@@ -36,3 +36,38 @@ export interface ApiError {
   message: string
   errors?: Record<string, string[]>
 }
+
+// Patient Types
+export type PatientStatus = '急性期' | '回復期' | '維持期'
+
+export interface Patient {
+  id: string
+  name: string
+  name_kana: string
+  age: number
+  gender: '男性' | '女性'
+  condition: string
+  status: PatientStatus
+  staff_id: string
+  staff_name: string
+  last_exercise_at?: string
+}
+
+// Patient List Response
+export interface PatientsListResponse {
+  patients: Patient[]
+  meta: {
+    total: number
+    page: number
+    per_page: number
+    total_pages: number
+  }
+}
+
+// Dashboard Stats
+export interface DashboardStats {
+  my_patients_count: number
+  today_appointments_count: number
+  weekly_exercises_count: number
+  total_patients_count: number
+}

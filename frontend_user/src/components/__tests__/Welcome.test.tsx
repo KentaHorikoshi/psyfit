@@ -279,7 +279,7 @@ describe('U-10 Welcome', () => {
     })
 
     it('should have scale animation for continue days', () => {
-      const { container } = renderWelcome()
+      renderWelcome()
 
       // Continue days should have some visual animation
       const continueDaysSection = screen.getByText('継続日数').parentElement

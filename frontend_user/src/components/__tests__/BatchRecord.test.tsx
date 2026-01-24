@@ -21,40 +21,14 @@ vi.mock('../../contexts/AuthContext', () => ({
 }))
 
 // Mock API
+const mockGetUserExercises = vi.fn()
 const mockCreateExerciseRecord = vi.fn()
+
 vi.mock('../../lib/api-client', () => ({
-  createExerciseRecord: (data: any) => mockCreateExerciseRecord(data),
-  getUserExercises: vi.fn().mockResolvedValue({
-    exercises: [
-      {
-        id: '1',
-        name: '膝伸展運動',
-        description: '膝を伸ばす運動',
-        video_url: 'https://example.com/video1.mp4',
-        sets: 3,
-        reps: 10,
-        category: 'lower_body',
-      },
-      {
-        id: '2',
-        name: 'スクワット',
-        description: 'スクワット運動',
-        video_url: 'https://example.com/video2.mp4',
-        sets: 3,
-        reps: 15,
-        category: 'lower_body',
-      },
-      {
-        id: '3',
-        name: '腕立て伏せ',
-        description: '腕立て伏せ運動',
-        video_url: 'https://example.com/video3.mp4',
-        sets: 3,
-        reps: 10,
-        category: 'upper_body',
-      },
-    ],
-  }),
+  default: {
+    getUserExercises: () => mockGetUserExercises(),
+    createExerciseRecord: (data: any) => mockCreateExerciseRecord(data),
+  },
 }))
 
 function renderBatchRecord() {
@@ -78,13 +52,50 @@ describe('U-15 BatchRecord', () => {
       isAuthenticated: true,
       isLoading: false,
     })
+    mockGetUserExercises.mockResolvedValue({
+      status: 'success',
+      data: {
+        exercises: [
+          {
+            id: '1',
+            name: '膝伸展運動',
+            description: '膝を伸ばす運動',
+            video_url: 'https://example.com/video1.mp4',
+            sets: 3,
+            reps: 10,
+            category: 'lower_body' as const,
+          },
+          {
+            id: '2',
+            name: 'スクワット',
+            description: 'スクワット運動',
+            video_url: 'https://example.com/video2.mp4',
+            sets: 3,
+            reps: 15,
+            category: 'lower_body' as const,
+          },
+          {
+            id: '3',
+            name: '腕立て伏せ',
+            description: '腕立て伏せ運動',
+            video_url: 'https://example.com/video3.mp4',
+            sets: 3,
+            reps: 10,
+            category: 'upper_body' as const,
+          },
+        ],
+      },
+    })
     mockCreateExerciseRecord.mockResolvedValue({
-      id: 'record-1',
-      exercise_id: '1',
-      user_id: '1',
-      completed_at: new Date().toISOString(),
-      sets_completed: 3,
-      reps_completed: 10,
+      status: 'success',
+      data: {
+        id: 'record-1',
+        exercise_id: '1',
+        user_id: '1',
+        completed_at: new Date().toISOString(),
+        sets_completed: 3,
+        reps_completed: 10,
+      },
     })
   })
 
@@ -422,9 +433,11 @@ describe('U-15 BatchRecord', () => {
   describe('empty state', () => {
     it('should show message when no exercises available', async () => {
       // Mock empty exercises
-      const apiClient = await import('../../lib/api-client')
-      vi.spyOn(apiClient, 'getUserExercises').mockResolvedValue({
-        exercises: [],
+      mockGetUserExercises.mockResolvedValue({
+        status: 'success',
+        data: {
+          exercises: [],
+        },
       })
 
       renderBatchRecord()

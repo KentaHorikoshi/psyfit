@@ -5,6 +5,13 @@ import type {
   StaffLoginRequest,
   StaffLoginResponse,
   LogoutResponse,
+  PatientDetail,
+  MeasurementInput,
+  Measurement,
+  MeasurementsResponse,
+  ExerciseMastersResponse,
+  BatchExerciseAssignmentRequest,
+  ExerciseAssignmentsResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
@@ -90,6 +97,82 @@ class ApiClient {
 
   async getCurrentStaff(): Promise<ApiResponse<Staff>> {
     return this.get<Staff>('/staff/me')
+  }
+
+  // Patient Management
+  async getPatientDetail(patientId: string): Promise<ApiResponse<PatientDetail>> {
+    return this.get<PatientDetail>(`/patients/${patientId}`)
+  }
+
+  // Measurements
+  async createMeasurement(
+    patientId: string,
+    data: MeasurementInput
+  ): Promise<ApiResponse<Measurement>> {
+    return this.post<Measurement>(`/patients/${patientId}/measurements`, data)
+  }
+
+  async getPatientMeasurements(
+    patientId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<MeasurementsResponse>> {
+    const params = new URLSearchParams()
+    if (startDate) params.append('start_date', startDate)
+    if (endDate) params.append('end_date', endDate)
+    const query = params.toString()
+    const endpoint = `/patients/${patientId}/measurements${query ? `?${query}` : ''}`
+    return this.get<MeasurementsResponse>(endpoint)
+  }
+
+  // Exercise Master endpoints (S-06)
+  async getExerciseMasters(): Promise<ApiResponse<ExerciseMastersResponse>> {
+    return this.get<ExerciseMastersResponse>('/exercise_masters')
+  }
+
+  // Exercise Assignment endpoints (S-06)
+  async assignExercises(
+    patientId: string,
+    data: BatchExerciseAssignmentRequest
+  ): Promise<ApiResponse<ExerciseAssignmentsResponse>> {
+    return this.post<ExerciseAssignmentsResponse>(
+      `/patients/${patientId}/exercises`,
+      data
+    )
+  }
+
+  async getPatientExercises(
+    patientId: string
+  ): Promise<ApiResponse<ExerciseAssignmentsResponse>> {
+    return this.get<ExerciseAssignmentsResponse>(`/patients/${patientId}/exercises`)
+  }
+
+  // Report endpoints (S-07)
+  async downloadReport(
+    patientId: string,
+    params: {
+      start_date: string
+      end_date: string
+      format: 'pdf' | 'csv'
+    }
+  ): Promise<Blob> {
+    const queryString = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+      format: params.format,
+    }).toString()
+
+    const url = `${this.baseUrl}/patients/${patientId}/report?${queryString}`
+
+    const response = await fetch(url, {
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      throw new ApiError('レポートのダウンロードに失敗しました', response.status)
+    }
+
+    return response.blob()
   }
 }
 

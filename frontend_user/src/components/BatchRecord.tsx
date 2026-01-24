@@ -29,7 +29,7 @@ export function BatchRecord() {
       try {
         setIsLoading(true)
         const response = await apiClient.getUserExercises()
-        setExercises(response.exercises)
+        setExercises(response.data?.exercises || [])
       } catch (err) {
         setError('運動メニューの取得に失敗しました')
       } finally {

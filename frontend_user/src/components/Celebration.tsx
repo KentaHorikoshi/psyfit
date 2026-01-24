@@ -72,7 +72,7 @@ export function Celebration() {
         <ConfettiPiece
           key={i}
           delay={i * 0.1}
-          color={confettiColors[i % confettiColors.length]}
+          color={confettiColors[i % confettiColors.length] as string}
         />
       ))}
 

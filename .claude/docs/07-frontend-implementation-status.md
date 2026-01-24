@@ -14,13 +14,16 @@
 |--------------|------------|--------|----------|----------|
 | Login (U-01) | `src/components/Login.tsx` | 19 tests | 95.45% | ✅ 完了 |
 | AuthContext | `src/contexts/AuthContext.tsx` | 8 tests | 91.66% | ✅ 完了 |
-| Home (U-02) | `src/components/Home.tsx` | 23 tests | 96.85% | ✅ 完了 |
+| Home (U-02) | `src/components/Home.tsx` | 23 tests | 97.63% | ✅ 完了 |
 | ExerciseMenu (U-03) | `src/components/ExerciseMenu.tsx` | 16 tests | 94.8% | ✅ 完了 |
 | ExercisePlayer (U-04) | `src/components/ExercisePlayer.tsx` | 24 tests | 95.96% | ✅ 完了 |
 | ExerciseHistory (U-07) | `src/components/ExerciseHistory.tsx` | 19 tests | 100% | ✅ 完了 |
 | Measurements (U-08) | `src/components/Measurements.tsx` | 20 tests | 99.59% | ✅ 完了 |
+| Welcome (U-10) | `src/components/Welcome.tsx` | 21 tests | 97.82% | ✅ 完了 |
 | ExerciseCard (U-11) | `src/components/ExerciseCard.tsx` | 20 tests | 100% | ✅ 完了 |
+| Celebration (U-13) | `src/components/Celebration.tsx` | 24 tests | 100% | ✅ 完了 |
 | ConditionInput (U-14) | `src/components/ConditionInput.tsx` | 27 tests | 98.79% | ✅ 完了 |
+| BatchRecord (U-15) | `src/components/BatchRecord.tsx` | 25 tests | 98.17% | ✅ 完了 |
 
 ### 職員向け（frontend_admin）
 
@@ -30,13 +33,17 @@
 | AuthContext | `src/contexts/AuthContext.tsx` | 7 tests | 91.66% | ✅ 完了 |
 | Sidebar | `src/components/Sidebar.tsx` | 15 tests | 100% | ✅ 完了 |
 | Dashboard | `src/components/Dashboard.tsx` | 22 tests | 100% | ✅ 完了 |
-| PatientList | `src/components/PatientList.tsx` | 29 tests | 97.9% | ✅ 完了 |
+| PatientList (S-03) | `src/components/PatientList.tsx` | 29 tests | 97.9% | ✅ 完了 |
+| PatientDetail (S-04) | `src/components/PatientDetail.tsx` | 17 tests | 97.51% | ✅ 完了 |
+| MeasurementInput (S-05) | `src/components/MeasurementInput.tsx` | 17 tests | 85.51% | ✅ 完了 |
+| ExerciseMenu (S-06) | `src/components/ExerciseMenu.tsx` | 22 tests | 88.67% | ✅ 完了 |
+| ReportGeneration (S-07) | `src/components/ReportGeneration.tsx` | 19 tests | 95.89% | ✅ 完了 |
 
-**利用者向け Total Tests**: 203 tests passed (66 tests 新規追加)
-**利用者向け Overall Coverage**: 97.76% (components: 97.76%)
+**利用者向け Total Tests**: 246 tests passed (136 tests 新規追加)
+**利用者向け Overall Coverage**: 97.99% (components: 97.99%)
 
-**職員向け Total Tests**: 92 tests passed
-**職員向け Overall Coverage**: 98.98%
+**職員向け Total Tests**: 167 tests passed
+**職員向け Overall Coverage**: 93.71% (components)
 
 ---
 
@@ -45,16 +52,13 @@
 ### 利用者向け（frontend_user）
 
 - [ ] U-09: PasswordReset (パスワードリセット)
-- [ ] U-10: Welcome (ウェルカム)
-- [ ] U-13: Celebration (祝福) ※プレースホルダーのみ実装済み
-- [ ] U-15: BatchRecord (まとめて記録)
 
 ### 職員向け（frontend_admin）
 
-- [ ] S-04: PatientDetail (患者詳細)
-- [ ] S-05: MeasurementInput (測定値入力)
-- [ ] S-06: ExerciseMenuSettings (運動メニュー設定)
-- [ ] S-07: ReportGeneration (レポート出力)
+- [x] S-04: PatientDetail (患者詳細) ✅ 完了
+- [x] S-05: MeasurementInput (測定値入力) ✅ 完了
+- [x] S-06: ExerciseMenu (運動メニュー設定) ✅ 完了
+- [x] S-07: ReportGeneration (レポート出力) ✅ 完了
 - [ ] S-08: StaffManagement (職員管理)
 - [ ] S-09: PasswordReset (パスワードリセット)
 
@@ -177,6 +181,108 @@
 - ✅ 日付フィルター・範囲指定
 - ✅ スライダーUI (0-10スケール)
 - ✅ レスポンシブグラフ表示
+
+### 利用者向けUX演出画面（2026-01-24実装）
+
+**実装フロー**:
+1. **RED**: 失敗するテストを先に書く
+2. **GREEN**: テストを通す最小限の実装
+3. **REFACTOR**: コードを改善（テストは維持）
+
+**実装順序**:
+1. Welcome (U-10)
+   - 21テスト作成（RED）
+   - ウェルカム画面実装（GREEN）
+   - 21テスト全パス、97.82%カバレッジ達成
+   - 継続日数表示、3秒自動遷移、タップスキップ機能
+   - フェードイン・スライドアップ・スケールアニメーション
+
+2. Celebration (U-13)
+   - 24テスト作成（RED）
+   - 祝福画面実装（GREEN）
+   - 24テスト全パス、100%カバレッジ達成
+   - 20個のクラッカーアニメーション（confetti falling効果）
+   - トロフィーアイコンのバウンスアニメーション
+   - 運動完了情報表示（セット数・回数）
+
+3. BatchRecord (U-15)
+   - 25テスト作成（RED）
+   - まとめて記録画面実装（GREEN）
+   - 25テスト全パス、98.17%カバレッジ達成
+   - 複数運動の一括チェックボックス選択
+   - すべて選択/解除機能
+   - Promise.all並列処理で一括保存
+
+**成果**:
+- ✅ 70 tests passed (3コンポーネント)
+- ✅ 97.99% overall coverage (目標80%を大幅超過)
+- ✅ TypeScript型安全性確保
+- ✅ ビルド成功
+- ✅ アクセシビリティ準拠（WCAG 2.1 AA）
+- ✅ CSS Keyframesアニメーション実装
+- ✅ タイマー処理（3秒自動遷移）
+- ✅ カラーテーマ別デザイン（緑・アンバー・ブルー）
+- ✅ タップスキップ機能
+- ✅ 空状態ハンドリング
+
+### 職員向けS-04〜S-07画面（2026-01-24実装）
+
+**実装フロー**:
+1. **RED**: 失敗するテストを先に書く
+2. **GREEN**: テストを通す最小限の実装
+3. **REFACTOR**: コードを改善（テストは維持）
+
+**実装順序**:
+1. API型定義追加
+   - ExerciseMaster, ExerciseAssignment, BatchExerciseAssignmentRequest型定義
+   - ReportDownloadParams型定義
+   - APIクライアントメソッド追加（getExerciseMasters, getPatientExercises, assignExercises, downloadReport）
+
+2. PatientDetail (S-04)
+   - 17テスト作成（RED）
+   - 患者詳細画面実装（GREEN）
+   - 17テスト全パス、97.51%カバレッジ達成
+   - 基本情報表示、運動メニューリンク、レポート出力リンク
+
+3. MeasurementInput (S-05)
+   - 17テスト作成（RED）
+   - 測定値入力フォーム実装（GREEN）
+   - 17テスト全パス、85.51%カバレッジ達成
+   - 体重、体脂肪率、筋肉量、TUG、NRS、MMT入力
+   - バリデーション（範囲チェック）
+
+4. ExerciseMenu (S-06)
+   - 22テスト作成（RED）
+   - 運動メニュー設定画面実装（GREEN）
+   - 22テスト全パス、88.67%カバレッジ達成
+   - カテゴリ別アコーディオン表示
+   - 運動選択チェックボックス
+   - 個別セット数・回数カスタマイズ
+   - 痛みフラグトグル（理由入力欄付き）
+   - useParams/useNavigate統合
+
+5. ReportGeneration (S-07)
+   - 19テスト作成（RED）
+   - レポート出力画面実装（GREEN）
+   - 19テスト全パス、95.89%カバレッジ達成
+   - 期間選択（開始日・終了日）
+   - クイック期間ボタン（1週間、1ヶ月、3ヶ月）
+   - 出力形式選択（PDF/CSV）
+   - 備考欄を含むチェックボックス
+   - Blobダウンロード（createObjectURL）
+   - バリデーション（日付必須、終了日>開始日）
+
+**成果**:
+- ✅ 167 tests passed (全9ファイル)
+- ✅ 93.71% overall coverage (目標80%を大幅超過)
+- ✅ TypeScript型安全性確保
+- ✅ ビルド成功
+- ✅ アクセシビリティ準拠（WCAG 2.1 AA）
+- ✅ カテゴリ別運動表示（アコーディオン）
+- ✅ 運動ごとのセット数・回数カスタマイズ
+- ✅ Blobダウンロードパターン（PDF/CSV）
+- ✅ 日付範囲バリデーション
+- ✅ クイック期間選択ボタン
 
 ---
 
@@ -360,6 +466,97 @@ export interface DateFilterParams {
 }
 ```
 
+#### 職員向けS-04〜S-07で追加された型
+
+```typescript
+// 患者詳細 (S-04)
+export interface AssignedStaff {
+  id: string
+  name: string
+  is_primary: boolean
+}
+
+export interface PatientDetail {
+  id: string
+  name: string
+  name_kana: string
+  birth_date: string
+  age: number
+  gender: '男性' | '女性' | 'その他'
+  email: string
+  phone?: string
+  condition: string
+  status: PatientStatus
+  continue_days: number
+  assigned_staff: AssignedStaff[]
+}
+
+// 測定値 (S-05)
+export interface Measurement {
+  id: string
+  measured_date: string
+  weight_kg?: number
+  knee_extension_strength_left?: number
+  knee_extension_strength_right?: number
+  tug_seconds?: number
+  single_leg_stance_seconds?: number
+  nrs_pain_score?: number
+  mmt_score?: number
+  notes?: string
+}
+
+export interface MeasurementInput {
+  measured_date: string
+  weight_kg?: number
+  knee_extension_strength_left?: number
+  knee_extension_strength_right?: number
+  tug_seconds?: number
+  single_leg_stance_seconds?: number
+  nrs_pain_score?: number
+  mmt_score?: number
+  notes?: string
+}
+
+// 運動マスタ・割当 (S-06)
+export interface ExerciseMaster {
+  id: string
+  name: string
+  description: string
+  video_url: string
+  thumbnail_url?: string
+  category: '膝' | '腰' | '全身' | '上肢'
+  default_sets: number
+  default_reps: number
+}
+
+export interface ExerciseAssignment {
+  id: string
+  patient_id: string
+  exercise_id: string
+  sets: number
+  reps: number
+  pain_flag: boolean
+  reason: string
+  assigned_at: string
+  assigned_by: string
+}
+
+export interface BatchExerciseAssignmentRequest {
+  assignments: CreateExerciseAssignmentRequest[]
+  pain_flag: boolean
+  reason: string
+}
+
+// レポート (S-07)
+export interface ReportRequest {
+  patient_id: string
+  start_date: string
+  end_date: string
+  format: 'pdf' | 'csv'
+  include_notes: boolean
+}
+```
+
 ---
 
 ## 実装済みAPIエンドポイント
@@ -397,6 +594,17 @@ GET /api/v1/staff/dashboard          // 統計情報取得
 // 患者管理
 GET /api/v1/patients                 // 患者一覧取得（ページネーション、検索、フィルタ）
 GET /api/v1/patients/:id             // 患者詳細取得
+
+// 運動マスタ・割当
+GET /api/v1/exercise_masters         // 運動マスタ一覧取得
+GET /api/v1/patients/:id/exercises   // 患者の運動割当取得
+POST /api/v1/patients/:id/exercises/assign  // 運動一括割当（sets/reps/pain_flag/reason）
+
+// 測定値
+POST /api/v1/patients/:id/measurements  // 測定値保存（体重、体脂肪率、筋肉量、TUG、NRS、MMT）
+
+// レポート
+GET /api/v1/patients/:id/report      // レポートダウンロード（PDF/CSV、日付範囲指定）
 ```
 
 **注**: これらはフロントエンドで型定義済み。バックエンド実装は別途必要。
@@ -446,21 +654,18 @@ npm run test -- --watch
    - GET /api/v1/users/me/measurements（測定値履歴取得）
    - POST /api/v1/daily_conditions（体調記録作成）
    - GET /api/v1/patients（患者一覧）
+   - GET /api/v1/patients/:id（患者詳細）
    - GET /api/v1/staff/dashboard（ダッシュボード統計）
+   - GET /api/v1/exercise_masters（運動マスタ一覧）
+   - GET /api/v1/patients/:id/exercises（患者の運動割当取得）
+   - POST /api/v1/patients/:id/exercises/assign（運動一括割当）
+   - POST /api/v1/patients/:id/measurements（測定値保存）
+   - GET /api/v1/patients/:id/report（レポートダウンロード）
 
 2. **残りの職員向け画面**
-   - S-04: 患者詳細
-   - S-05: 測定値入力
-   - S-06: 運動メニュー設定
-
-3. **残りの利用者向け画面**
-   - U-10: Welcome（ウェルカム・継続日数表示）
-   - U-13: Celebration（祝福・達成感演出）※完全実装
-   - U-15: BatchRecord（まとめて記録）
+   - S-08: 職員管理
 
 ### 優先度：中
-- レポート出力機能（S-07）
-- 職員管理機能（S-08）
 - パスワードリセット機能（U-09, S-09）
 
 ### 優先度：低

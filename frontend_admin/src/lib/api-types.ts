@@ -71,3 +71,114 @@ export interface DashboardStats {
   weekly_exercises_count: number
   total_patients_count: number
 }
+
+// Patient Detail Types
+export interface AssignedStaff {
+  id: string
+  name: string
+  is_primary: boolean
+}
+
+export interface PatientDetail {
+  id: string
+  name: string
+  name_kana: string
+  birth_date: string
+  age: number
+  gender: '男性' | '女性' | 'その他'
+  email: string
+  phone?: string
+  condition: string
+  status: PatientStatus
+  continue_days: number
+  assigned_staff: AssignedStaff[]
+}
+
+// Measurement Types
+export interface Measurement {
+  id: string
+  measured_date: string
+  weight_kg?: number
+  knee_extension_strength_left?: number
+  knee_extension_strength_right?: number
+  tug_seconds?: number
+  single_leg_stance_seconds?: number
+  nrs_pain_score?: number
+  mmt_score?: number
+  notes?: string
+}
+
+export interface MeasurementInput {
+  measured_date: string
+  weight_kg?: number
+  knee_extension_strength_left?: number
+  knee_extension_strength_right?: number
+  tug_seconds?: number
+  single_leg_stance_seconds?: number
+  nrs_pain_score?: number
+  mmt_score?: number
+  notes?: string
+}
+
+export interface MeasurementsResponse {
+  measurements: Measurement[]
+}
+
+// Exercise Master Types (S-06)
+export interface ExerciseMaster {
+  id: string
+  name: string
+  description: string
+  video_url: string
+  thumbnail_url?: string
+  category: '膝' | '腰' | '全身' | '上肢'
+  default_sets: number
+  default_reps: number
+}
+
+export interface ExerciseMastersResponse {
+  exercises: ExerciseMaster[]
+}
+
+// Exercise Assignment Types (S-06)
+export interface ExerciseAssignment {
+  id: string
+  patient_id: string
+  exercise_id: string
+  sets: number
+  reps: number
+  pain_flag: boolean
+  reason: string
+  assigned_at: string
+  assigned_by: string
+}
+
+export interface CreateExerciseAssignmentRequest {
+  exercise_id: string
+  sets: number
+  reps: number
+}
+
+export interface BatchExerciseAssignmentRequest {
+  assignments: CreateExerciseAssignmentRequest[]
+  pain_flag: boolean
+  reason: string
+}
+
+export interface ExerciseAssignmentsResponse {
+  assignments: ExerciseAssignment[]
+}
+
+// Report Types (S-07)
+export interface ReportRequest {
+  patient_id: string
+  start_date: string
+  end_date: string
+  format: 'pdf' | 'csv'
+  include_notes: boolean
+}
+
+export interface ReportResponse {
+  report_url: string
+  filename: string
+}

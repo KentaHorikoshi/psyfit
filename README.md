@@ -106,21 +106,21 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 
 ### 画面実装
 
-#### 利用者向け (src_user)
-| 画面ID | 画面名 | UI | API接続 |
-|--------|--------|:--:|:------:|
-| U-01 | ログイン | ✅ | ⬜ |
-| U-02 | トップ（ホーム） | ✅ | ⬜ |
-| U-03 | 運動メニュー選択 | ✅ | ⬜ |
-| U-04 | 運動実施（動画） | ✅ | ⬜ |
-| U-07 | 履歴一覧 | ✅ | ⬜ |
-| U-08 | 測定値履歴 | ✅ | ⬜ |
-| U-09 | パスワードリセット | ✅ | ⬜ |
-| U-10 | ウェルカム | ✅ | ⬜ |
-| U-11 | 運動カード | ✅ | ⬜ |
-| U-13 | 祝福 | ✅ | ⬜ |
-| U-14 | 体調入力 | ✅ | ⬜ |
-| U-15 | まとめて記録 | ✅ | ⬜ |
+#### 利用者向け (frontend_user)
+| 画面ID | 画面名 | UI | テスト | カバレッジ | API接続 |
+|--------|--------|:--:|:-----:|:--------:|:------:|
+| U-01 | ログイン | ✅ | 19 tests | 95.45% | ⬜ |
+| U-02 | トップ（ホーム） | ✅ | 23 tests | 97.63% | ⬜ |
+| U-03 | 運動メニュー選択 | ✅ | 16 tests | 94.8% | ⬜ |
+| U-04 | 運動実施（動画） | ✅ | 24 tests | 95.96% | ⬜ |
+| U-07 | 履歴一覧 | ✅ | 19 tests | 100% | ⬜ |
+| U-08 | 測定値履歴 | ✅ | 20 tests | 99.59% | ⬜ |
+| U-09 | パスワードリセット | ⬜ | - | - | ⬜ |
+| U-10 | ウェルカム | ✅ | 21 tests | 97.82% | - |
+| U-11 | 運動カード | ✅ | 20 tests | 100% | ⬜ |
+| U-13 | 祝福 | ✅ | 24 tests | 100% | - |
+| U-14 | 体調入力 | ✅ | 27 tests | 98.79% | ⬜ |
+| U-15 | まとめて記録 | ✅ | 25 tests | 98.17% | ⬜ |
 
 #### 職員向け (frontend_admin)
 | 画面ID | 画面名 | UI | テスト | カバレッジ | API接続 |
@@ -129,14 +129,15 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | S-01 | ログイン | ✅ | 19 tests | 95.54% | ⬜ |
 | S-02 | ダッシュボード | ✅ | 22 tests | 100% | ⬜ |
 | S-03 | 患者一覧 | ✅ | 29 tests | 97.9% | ⬜ |
-| S-04 | 患者詳細 | ⬜ | - | - | ⬜ |
-| S-05 | 測定値入力 | ⬜ | - | - | ⬜ |
-| S-06 | 運動メニュー設定 | ⬜ | - | - | ⬜ |
-| S-07 | レポート出力 | ⬜ | - | - | ⬜ |
+| S-04 | 患者詳細 | ✅ | 17 tests | 97.51% | ⬜ |
+| S-05 | 測定値入力 | ✅ | 17 tests | 85.51% | ⬜ |
+| S-06 | 運動メニュー設定 | ✅ | 22 tests | 88.67% | ⬜ |
+| S-07 | レポート出力 | ✅ | 19 tests | 95.89% | ⬜ |
 | S-08 | 職員管理 | ⬜ | - | - | ⬜ |
 | S-09 | パスワードリセット | ⬜ | - | - | ⬜ |
 
-**フロントエンドテスト**: 92 tests passed, 98.98% overall coverage (2026-01-24)
+**利用者向けテスト**: 246 tests passed, 97.99% overall coverage (2026-01-24)
+**職員向けテスト**: 167 tests passed, 93.71% overall coverage (2026-01-24)
 
 ### バックエンド実装
 
@@ -154,7 +155,7 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | Video | ✅ | ✅ | - |
 | AuditLog | ✅ | ✅ | - |
 
-#### APIエンドポイント（最新更新: 2026-01-23）
+#### APIエンドポイント（最新更新: 2026-01-24）
 | エンドポイント | 実装 | テスト |
 |---------------|:---:|:-----:|
 | **認証** | | |
@@ -176,6 +177,12 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | **患者管理（職員）** | | |
 | GET /api/v1/patients | ✅ | ✅ |
 | GET /api/v1/patients/:id | ✅ | ✅ |
+| **運動メニュー管理（職員・S-06）** | | |
+| GET /api/v1/exercise_masters | ⬜ | ⬜ |
+| POST /api/v1/patients/:id/exercises | ⬜ | ⬜ |
+| GET /api/v1/patients/:id/exercises | ⬜ | ⬜ |
+| **レポート出力（職員・S-07）** | | |
+| GET /api/v1/patients/:id/report | ⬜ | ⬜ |
 | **その他** | | |
 | GET /api/v1/health | ✅ | ✅ |
 
@@ -204,13 +211,21 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
   - [x] Sidebar (15 tests, 100% coverage)
   - [x] Dashboard (22 tests, 100% coverage)
   - [x] PatientList (29 tests, 97.9% coverage)
-  - [x] フロントエンドテストカバレッジ80%達成 ✅ (98.98%)
+  - [x] PatientDetail (17 tests, 97.51% coverage)
+  - [x] MeasurementInput (17 tests, 85.51% coverage)
+  - [x] ExerciseMenu S-06 (22 tests, 88.67% coverage)
+  - [x] ReportGeneration S-07 (19 tests, 95.89% coverage)
+  - [x] フロントエンドテストカバレッジ80%達成 ✅ (93.71%)
 - [ ] フロントエンド-バックエンド接続
 
 ### Phase 2: 拡張機能（次のステップ）
-- [ ] 運動メニュー割当API（職員 → 患者）
-- [ ] レポート出力API（PDF/CSV）
-- [ ] 職員管理API（マネージャー専用）
+- [ ] 運動メニュー割当API実装（S-06バックエンド）
+  - [ ] GET /api/v1/exercise_masters
+  - [ ] POST /api/v1/patients/:id/exercises
+  - [ ] GET /api/v1/patients/:id/exercises
+- [ ] レポート出力API実装（S-07バックエンド）
+  - [ ] GET /api/v1/patients/:id/report (PDF/CSV生成)
+- [ ] 職員管理API（マネージャー専用・S-08）
 - [ ] 履歴グラフ表示（フロントエンド）
 - [ ] フロントエンド完全実装（利用者・職員）
 

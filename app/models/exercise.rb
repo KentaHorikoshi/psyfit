@@ -33,9 +33,9 @@ class Exercise < ApplicationRecord
   # Helper methods
   def difficulty_label
     case difficulty
-    when 'easy' then '易しい'
-    when 'medium' then '普通'
-    when 'hard' then '難しい'
+    when "easy" then "易しい"
+    when "medium" then "普通"
+    when "hard" then "難しい"
     end
   end
 

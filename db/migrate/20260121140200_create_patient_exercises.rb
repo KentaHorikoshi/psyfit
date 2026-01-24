@@ -14,6 +14,6 @@ class CreatePatientExercises < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :patient_exercises, [:user_id, :is_active]
+    add_index :patient_exercises, [ :user_id, :is_active ]
   end
 end

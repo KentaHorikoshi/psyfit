@@ -18,6 +18,6 @@ class CreateMeasurements < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :measurements, [:user_id, :measured_date]
+    add_index :measurements, [ :user_id, :measured_date ]
   end
 end

@@ -29,7 +29,7 @@ class Video < ApplicationRecord
 
     minutes = duration_seconds / 60
     seconds = duration_seconds % 60
-    format('%d:%02d', minutes, seconds)
+    format("%d:%02d", minutes, seconds)
   end
 
   def deactivate!

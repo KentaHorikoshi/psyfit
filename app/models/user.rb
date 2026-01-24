@@ -36,7 +36,7 @@ class User < ApplicationRecord
 
   # Validations
   validates :user_code, presence: true, uniqueness: true
-  validates :email_bidx, presence: true, uniqueness: { message: 'has already been taken' }
+  validates :email_bidx, presence: true, uniqueness: { message: "has already been taken" }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
   validates :status, presence: true, inclusion: { in: STATUSES }
@@ -48,7 +48,7 @@ class User < ApplicationRecord
   scope :deleted, -> { where.not(deleted_at: nil) }
   scope :by_status, ->(status) { where(status: status) if status.present? }
   scope :assigned_to, ->(staff_id) { joins(:patient_staff_assignments).where(patient_staff_assignments: { staff_id: staff_id }) }
-  scope :search_by_name, ->(query) { where('name_encrypted LIKE ?', "%#{query}%") if query.present? }
+  scope :search_by_name, ->(query) { where("name_encrypted LIKE ?", "%#{query}%") if query.present? }
 
   # Account Lockout Methods
 
@@ -114,11 +114,11 @@ class User < ApplicationRecord
     # Calculate new continue_days
     new_days = if last_exercise_at.nil?
                  1 # First exercise ever
-               elsif last_exercise_at >= 2.days.ago.beginning_of_day
+    elsif last_exercise_at >= 2.days.ago.beginning_of_day
                  continue_days + 1 # Consecutive exercise
-               else
+    else
                  1 # Gap > 1 day, reset streak
-               end
+    end
 
     update!(continue_days: new_days, last_exercise_at: Time.current)
   end

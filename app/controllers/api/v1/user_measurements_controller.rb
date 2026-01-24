@@ -36,11 +36,11 @@ module Api
 
       def apply_date_filters(measurements)
         if params[:start_date].present?
-          measurements = measurements.where('measured_date >= ?', params[:start_date])
+          measurements = measurements.where("measured_date >= ?", params[:start_date])
         end
 
         if params[:end_date].present?
-          measurements = measurements.where('measured_date <= ?', params[:end_date])
+          measurements = measurements.where("measured_date <= ?", params[:end_date])
         end
 
         measurements

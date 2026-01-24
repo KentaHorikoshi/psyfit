@@ -12,6 +12,6 @@ class CreateDailyConditions < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :daily_conditions, [:user_id, :recorded_date], unique: true
+    add_index :daily_conditions, [ :user_id, :recorded_date ], unique: true
   end
 end

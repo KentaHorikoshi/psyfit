@@ -17,11 +17,11 @@ module Psyfit
     config.autoload_lib(ignore: %w[assets tasks])
 
     # Time zone for Japan
-    config.time_zone = 'Tokyo'
+    config.time_zone = "Tokyo"
 
     # Default locale
     config.i18n.default_locale = :ja
-    config.i18n.available_locales = [:ja, :en]
+    config.i18n.available_locales = [ :ja, :en ]
 
     # Generators configuration
     config.generators do |g|

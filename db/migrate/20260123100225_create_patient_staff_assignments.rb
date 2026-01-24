@@ -10,8 +10,8 @@ class CreatePatientStaffAssignments < ActiveRecord::Migration[8.1]
 
     add_index :patient_staff_assignments, :user_id
     add_index :patient_staff_assignments, :staff_id
-    add_index :patient_staff_assignments, [:user_id, :staff_id], unique: true
-    add_index :patient_staff_assignments, [:user_id, :is_primary]
+    add_index :patient_staff_assignments, [ :user_id, :staff_id ], unique: true
+    add_index :patient_staff_assignments, [ :user_id, :is_primary ]
 
     add_foreign_key :patient_staff_assignments, :users
     add_foreign_key :patient_staff_assignments, :staff

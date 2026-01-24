@@ -30,7 +30,7 @@ module Api
           render_success(measurement_response(@measurement), status: :created)
         else
           render_error(
-            'バリデーションエラー',
+            "バリデーションエラー",
             errors: @measurement.errors.to_hash,
             status: :unprocessable_entity
           )
@@ -74,13 +74,13 @@ module Api
 
       def log_audit_success
         AuditLog.log_action(
-          action: 'create',
-          status: 'success',
+          action: "create",
+          status: "success",
           staff: current_staff,
           ip_address: client_ip,
           user_agent: user_agent,
           additional_info: {
-            resource_type: 'Measurement',
+            resource_type: "Measurement",
             resource_id: @measurement.id,
             patient_id: @patient.id
           }.to_json
@@ -89,13 +89,13 @@ module Api
 
       def log_audit_read_success
         AuditLog.log_action(
-          action: 'read',
-          status: 'success',
+          action: "read",
+          status: "success",
           staff: current_staff,
           ip_address: client_ip,
           user_agent: user_agent,
           additional_info: {
-            resource_type: 'Measurement',
+            resource_type: "Measurement",
             patient_id: @patient.id
           }.to_json
         )
@@ -103,11 +103,11 @@ module Api
 
       def apply_date_filters(measurements)
         if params[:start_date].present?
-          measurements = measurements.where('measured_date >= ?', params[:start_date])
+          measurements = measurements.where("measured_date >= ?", params[:start_date])
         end
 
         if params[:end_date].present?
-          measurements = measurements.where('measured_date <= ?', params[:end_date])
+          measurements = measurements.where("measured_date <= ?", params[:end_date])
         end
 
         measurements

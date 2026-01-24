@@ -5,7 +5,7 @@ class PatientExercise < ApplicationRecord
   # Relationships
   belongs_to :user
   belongs_to :exercise
-  belongs_to :assigned_by_staff, class_name: 'Staff', foreign_key: :assigned_by_staff_id
+  belongs_to :assigned_by_staff, class_name: "Staff", foreign_key: :assigned_by_staff_id
 
   # Validations
   validates :user_id, presence: true
@@ -17,8 +17,8 @@ class PatientExercise < ApplicationRecord
 
   # Prevent duplicate active assignments
   validates :exercise_id, uniqueness: {
-    scope: [:user_id, :is_active],
-    message: 'is already assigned to this patient',
+    scope: [ :user_id, :is_active ],
+    message: "is already assigned to this patient",
     conditions: -> { where(is_active: true) }
   }
 

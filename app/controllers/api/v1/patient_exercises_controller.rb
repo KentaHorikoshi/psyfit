@@ -6,8 +6,8 @@ module Api
       before_action :authenticate_staff!
       before_action :set_patient
       before_action :authorize_patient_access!
-      before_action :validate_exercise_id, only: [:create]
-      before_action :set_exercise, only: [:create]
+      before_action :validate_exercise_id, only: [ :create ]
+      before_action :set_exercise, only: [ :create ]
 
       # POST /api/v1/patients/:patient_id/exercises
       def create
@@ -19,7 +19,7 @@ module Api
 
         @patient_exercise.save!
 
-        log_audit('create', 'success')
+        log_audit("create", "success")
 
         render_success(serialize_patient_exercise(@patient_exercise), status: :created)
       end
@@ -33,7 +33,7 @@ module Api
       def validate_exercise_id
         return if params[:exercise_id].present?
 
-        render_error('exercise_idは必須です', status: :unprocessable_entity)
+        render_error("exercise_idは必須です", status: :unprocessable_entity)
       end
 
       def set_exercise
@@ -44,7 +44,7 @@ module Api
         return if current_staff.manager?
         return if patient_assigned_to_current_staff?
 
-        render_forbidden('この患者へのアクセス権限がありません')
+        render_forbidden("この患者へのアクセス権限がありません")
       end
 
       def patient_assigned_to_current_staff?
@@ -67,14 +67,14 @@ module Api
 
       def log_audit(action, status)
         AuditLog.create!(
-          user_type: 'staff',
+          user_type: "staff",
           staff_id: current_staff.id,
           action: action,
           status: status,
           ip_address: client_ip,
           user_agent: user_agent,
           additional_info: {
-            resource_type: 'PatientExercise',
+            resource_type: "PatientExercise",
             patient_id: @patient.id,
             exercise_id: @exercise&.id
           }.to_json

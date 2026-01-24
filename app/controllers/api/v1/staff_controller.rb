@@ -9,7 +9,7 @@ module Api
       def index
         staff_members = Staff.active.order(:staff_id)
 
-        log_audit('read', 'success')
+        log_audit("read", "success")
 
         render_success({
           staff: serialize_staff_list(staff_members)
@@ -21,15 +21,15 @@ module Api
         staff = Staff.new(staff_params)
 
         if staff.save
-          log_audit('create', 'success', resource_id: staff.id)
+          log_audit("create", "success", resource_id: staff.id)
 
           render json: {
-            status: 'success',
+            status: "success",
             data: serialize_staff(staff)
           }, status: :created
         else
           render_error(
-            'バリデーションエラー',
+            "バリデーションエラー",
             errors: staff.errors.to_hash,
             status: :unprocessable_entity
           )
@@ -58,13 +58,13 @@ module Api
 
       def log_audit(action, status, resource_id: nil)
         AuditLog.create!(
-          user_type: 'staff',
+          user_type: "staff",
           staff_id: current_staff.id,
           action: action,
           status: status,
           ip_address: client_ip,
           user_agent: user_agent,
-          additional_info: { resource_type: 'Staff', resource_id: resource_id }.to_json
+          additional_info: { resource_type: "Staff", resource_id: resource_id }.to_json
         )
       end
     end

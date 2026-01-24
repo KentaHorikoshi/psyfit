@@ -19,13 +19,13 @@ module Api
         user = find_user_by_email(email)
 
         if user.nil?
-          log_login_failure(email, reason: 'user_not_found')
-          return render_unauthorized('メールアドレスまたはパスワードが正しくありません')
+          log_login_failure(email, reason: "user_not_found")
+          return render_unauthorized("メールアドレスまたはパスワードが正しくありません")
         end
 
         if user.locked?
-          log_login_failure(email, reason: 'account_locked')
-          return render_unauthorized('アカウントがロックされています。しばらく待ってから再試行してください')
+          log_login_failure(email, reason: "account_locked")
+          return render_unauthorized("アカウントがロックされています。しばらく待ってから再試行してください")
         end
 
         if user.authenticate(password)
@@ -36,8 +36,8 @@ module Api
           render_success({ user: user_response(user) })
         else
           user.increment_failed_login!
-          log_login_failure(email, reason: 'invalid_password')
-          render_unauthorized('メールアドレスまたはパスワードが正しくありません')
+          log_login_failure(email, reason: "invalid_password")
+          render_unauthorized("メールアドレスまたはパスワードが正しくありません")
         end
       end
 
@@ -50,13 +50,13 @@ module Api
         staff = Staff.active.find_by(staff_id: staff_id)
 
         if staff.nil?
-          log_login_failure(staff_id, reason: 'staff_not_found')
-          return render_unauthorized('職員IDまたはパスワードが正しくありません')
+          log_login_failure(staff_id, reason: "staff_not_found")
+          return render_unauthorized("職員IDまたはパスワードが正しくありません")
         end
 
         if staff.locked?
-          log_login_failure(staff_id, reason: 'account_locked')
-          return render_unauthorized('アカウントがロックされています。しばらく待ってから再試行してください')
+          log_login_failure(staff_id, reason: "account_locked")
+          return render_unauthorized("アカウントがロックされています。しばらく待ってから再試行してください")
         end
 
         if staff.authenticate(password)
@@ -67,8 +67,8 @@ module Api
           render_success({ staff: staff_response(staff) })
         else
           staff.increment_failed_login!
-          log_login_failure(staff_id, reason: 'invalid_password')
-          render_unauthorized('職員IDまたはパスワードが正しくありません')
+          log_login_failure(staff_id, reason: "invalid_password")
+          render_unauthorized("職員IDまたはパスワードが正しくありません")
         end
       end
 
@@ -82,7 +82,7 @@ module Api
         end
 
         reset_session
-        render_success({ message: 'ログアウトしました' })
+        render_success({ message: "ログアウトしました" })
       end
 
       # Get current session info
@@ -93,7 +93,7 @@ module Api
         elsif current_staff && session_valid?(:staff)
           render_success({ staff: staff_response(current_staff) })
         else
-          render_unauthorized('認証が必要です')
+          render_unauthorized("認証が必要です")
         end
       end
 
@@ -121,14 +121,14 @@ module Api
       def create_user_session(user)
         reset_session
         session[:user_id] = user.id
-        session[:user_type] = 'user'
+        session[:user_type] = "user"
         session[:last_activity] = Time.current.iso8601
       end
 
       def create_staff_session(staff)
         reset_session
         session[:staff_id] = staff.id
-        session[:user_type] = 'staff'
+        session[:user_type] = "staff"
         session[:last_activity] = Time.current.iso8601
       end
 

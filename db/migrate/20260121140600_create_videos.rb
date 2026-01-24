@@ -15,7 +15,7 @@ class CreateVideos < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :videos, [:exercise_id, :display_order]
+    add_index :videos, [ :exercise_id, :display_order ]
     add_index :videos, :is_active
   end
 end

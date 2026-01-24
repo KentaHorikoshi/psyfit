@@ -17,12 +17,12 @@ module Api
           generated_by: current_staff
         ).generate
 
-        log_audit('read', 'success', resource_id: @patient.id)
+        log_audit("read", "success", resource_id: @patient.id)
 
         send_data pdf,
                   filename: report_filename,
-                  type: 'application/pdf',
-                  disposition: 'attachment'
+                  type: "application/pdf",
+                  disposition: "attachment"
       end
 
       private
@@ -35,7 +35,7 @@ module Api
         return if current_staff.manager?
         return if patient_assigned_to_current_staff?(@patient)
 
-        render_forbidden('この患者へのアクセス権限がありません')
+        render_forbidden("この患者へのアクセス権限がありません")
       end
 
       def validate_date_params
@@ -45,10 +45,10 @@ module Api
         end_date = Date.parse(params[:end_date])
 
         if start_date > end_date
-          render_error('開始日付は終了日付より前である必要があります', status: :unprocessable_entity)
+          render_error("開始日付は終了日付より前である必要があります", status: :unprocessable_entity)
         end
       rescue ArgumentError
-        render_error('日付の形式が正しくありません', status: :unprocessable_entity)
+        render_error("日付の形式が正しくありません", status: :unprocessable_entity)
       end
 
       def report_start_date
@@ -60,7 +60,7 @@ module Api
       end
 
       def report_filename
-        sanitized_name = @patient.name.gsub(/[^\p{Han}\p{Hiragana}\p{Katakana}a-zA-Z0-9]/, '_')
+        sanitized_name = @patient.name.gsub(/[^\p{Han}\p{Hiragana}\p{Katakana}a-zA-Z0-9]/, "_")
         "patient_report_#{sanitized_name}_#{report_start_date}_#{report_end_date}.pdf"
       end
 
@@ -70,14 +70,14 @@ module Api
 
       def log_audit(action, status, resource_id: nil)
         AuditLog.create!(
-          user_type: 'staff',
+          user_type: "staff",
           staff_id: current_staff.id,
           action: action,
           status: status,
           ip_address: client_ip,
           user_agent: user_agent,
           additional_info: {
-            resource_type: 'PatientReport',
+            resource_type: "PatientReport",
             resource_id: resource_id,
             start_date: report_start_date,
             end_date: report_end_date

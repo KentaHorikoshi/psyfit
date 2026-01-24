@@ -9,7 +9,7 @@ SimpleCov.start 'rails' do
 
   # 認証・セキュリティ関連は100%カバレッジ必須
   add_group 'Authentication', 'app/controllers/api/v1/auth'
-  add_group 'Security', ['app/models/concerns/encryptable', 'app/services/security']
+  add_group 'Security', [ 'app/models/concerns/encryptable', 'app/services/security' ]
   add_group 'Models', 'app/models'
   add_group 'Controllers', 'app/controllers'
 

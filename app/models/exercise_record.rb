@@ -21,9 +21,9 @@ class ExerciseRecord < ApplicationRecord
   scope :for_user, ->(user_id) { where(user_id: user_id) }
   scope :for_exercise, ->(exercise_id) { where(exercise_id: exercise_id) }
   scope :recent, -> { order(completed_at: :desc) }
-  scope :today, -> { where('completed_at >= ?', Time.current.beginning_of_day) }
-  scope :this_week, -> { where('completed_at >= ?', 1.week.ago.beginning_of_day) }
-  scope :this_month, -> { where('completed_at >= ?', 1.month.ago.beginning_of_day) }
+  scope :today, -> { where("completed_at >= ?", Time.current.beginning_of_day) }
+  scope :this_week, -> { where("completed_at >= ?", 1.week.ago.beginning_of_day) }
+  scope :this_month, -> { where("completed_at >= ?", 1.month.ago.beginning_of_day) }
   scope :between_dates, ->(start_date, end_date) { where(completed_at: start_date..end_date) }
 
   # Callbacks
@@ -35,7 +35,7 @@ class ExerciseRecord < ApplicationRecord
 
     minutes = duration_seconds / 60
     seconds = duration_seconds % 60
-    format('%d:%02d', minutes, seconds)
+    format("%d:%02d", minutes, seconds)
   end
 
   private

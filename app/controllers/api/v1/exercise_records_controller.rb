@@ -8,7 +8,7 @@ module Api
       # POST /api/v1/exercise_records
       def create
         if params[:exercise_id].blank?
-          render_error('バリデーションエラー', errors: { exercise_id: ['を入力してください'] }, status: :unprocessable_entity)
+          render_error("バリデーションエラー", errors: { exercise_id: [ "を入力してください" ] }, status: :unprocessable_entity)
           return
         end
 
@@ -22,7 +22,7 @@ module Api
           log_create_action(record)
           render_success(record_response(record), status: :created)
         else
-          render_error('バリデーションエラー', errors: record.errors.to_hash, status: :unprocessable_entity)
+          render_error("バリデーションエラー", errors: record.errors.to_hash, status: :unprocessable_entity)
         end
       end
 
@@ -43,8 +43,8 @@ module Api
       end
 
       def filter_by_date(records)
-        records = records.where('completed_at >= ?', Date.parse(params[:start_date]).beginning_of_day) if params[:start_date].present?
-        records = records.where('completed_at <= ?', Date.parse(params[:end_date]).end_of_day) if params[:end_date].present?
+        records = records.where("completed_at >= ?", Date.parse(params[:start_date]).beginning_of_day) if params[:start_date].present?
+        records = records.where("completed_at <= ?", Date.parse(params[:end_date]).end_of_day) if params[:end_date].present?
         records
       end
 
@@ -82,8 +82,8 @@ module Api
 
       def log_create_action(record)
         AuditLog.log_action(
-          action: 'create',
-          status: 'success',
+          action: "create",
+          status: "success",
           user: current_user,
           ip_address: client_ip,
           user_agent: user_agent,

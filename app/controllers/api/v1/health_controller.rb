@@ -7,9 +7,9 @@ module Api
       # GET /api/v1/health
       def show
         render_success({
-          health_status: 'healthy',
+          health_status: "healthy",
           timestamp: Time.current.iso8601,
-          version: '1.0.0'
+          version: "1.0.0"
         })
       end
     end

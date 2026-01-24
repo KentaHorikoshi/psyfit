@@ -11,7 +11,7 @@
 
 class Staff < ApplicationRecord
   # Table name is "staff" (not "staffs" - staff is uncountable)
-  self.table_name = 'staff'
+  self.table_name = "staff"
 
   include Encryptable
 
@@ -34,19 +34,19 @@ class Staff < ApplicationRecord
   # Validations
   validates :staff_id, presence: true, uniqueness: true
   validates :name, presence: true
-  validates :email_bidx, uniqueness: { message: 'has already been taken' }, allow_nil: true
+  validates :email_bidx, uniqueness: { message: "has already been taken" }, allow_nil: true
   validates :role, presence: true, inclusion: { in: %w[manager staff] }
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
   validate :password_complexity, if: :password_digest_changed?
 
   # Default role
-  attribute :role, :string, default: 'staff'
+  attribute :role, :string, default: "staff"
 
   # Soft delete scope
   scope :active, -> { where(deleted_at: nil) }
   scope :deleted, -> { where.not(deleted_at: nil) }
-  scope :managers, -> { where(role: 'manager') }
-  scope :staff_members, -> { where(role: 'staff') }
+  scope :managers, -> { where(role: "manager") }
+  scope :staff_members, -> { where(role: "staff") }
 
   # Account Lockout Methods (15 minutes for staff)
 
@@ -89,11 +89,11 @@ class Staff < ApplicationRecord
 
   # Role check methods
   def manager?
-    role == 'manager'
+    role == "manager"
   end
 
   def staff_member?
-    role == 'staff'
+    role == "staff"
   end
 
   # Soft Delete Methods

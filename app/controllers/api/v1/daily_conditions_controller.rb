@@ -21,7 +21,7 @@ module Api
           )
         else
           render_error(
-            'バリデーションエラー',
+            "バリデーションエラー",
             errors: @condition.errors.to_hash,
             status: :unprocessable_entity
           )

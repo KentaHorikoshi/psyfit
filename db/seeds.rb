@@ -133,7 +133,7 @@ patients.each do |patient|
   assigned_exercises = exercises.sample(rand(3..5))
   assigned_exercises.each do |exercise|
     PatientExercise.find_or_create_by!(user: patient, exercise: exercise) do |pe|
-      pe.assigned_by_staff = [staff1, staff2].sample
+      pe.assigned_by_staff = [ staff1, staff2 ].sample
       pe.target_reps = exercise.recommended_reps
       pe.target_sets = exercise.recommended_sets
       pe.assigned_at = rand(1..30).days.ago
@@ -199,7 +199,7 @@ patients.each do |patient|
 
     Measurement.create!(
       user: patient,
-      measured_by_staff: [staff1, staff2].sample,
+      measured_by_staff: [ staff1, staff2 ].sample,
       measured_date: date,
       weight_kg: rand(45.0..90.0).round(1),
       knee_extension_strength_left: rand(10.0..50.0).round(1),
@@ -221,7 +221,7 @@ puts "Creating audit logs..."
   AuditLog.log_login_success(patients.sample, ip_address: '192.168.1.100', user_agent: 'Mozilla/5.0')
 end
 3.times do
-  AuditLog.log_login_success([staff1, staff2, manager].sample, ip_address: '192.168.1.101', user_agent: 'Mozilla/5.0')
+  AuditLog.log_login_success([ staff1, staff2, manager ].sample, ip_address: '192.168.1.101', user_agent: 'Mozilla/5.0')
 end
 puts "  Created sample audit logs"
 

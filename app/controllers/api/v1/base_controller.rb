@@ -39,13 +39,13 @@ module Api
       def authenticate_user!
         return if user_signed_in? && session_valid?(:user)
 
-        render_unauthorized('認証が必要です')
+        render_unauthorized("認証が必要です")
       end
 
       def authenticate_staff!
         return if staff_signed_in? && session_valid?(:staff)
 
-        render_unauthorized('認証が必要です')
+        render_unauthorized("認証が必要です")
       end
 
       def require_manager!
@@ -53,7 +53,7 @@ module Api
         return if performed?
         return if current_staff&.manager?
 
-        render_forbidden('この操作はマネージャー権限が必要です')
+        render_forbidden("この操作はマネージャー権限が必要です")
       end
 
       # Session management
@@ -63,10 +63,10 @@ module Api
         return false unless last_activity
 
         timeout = case type
-                  when :user then 30.minutes
-                  when :staff then 15.minutes
-                  else 15.minutes
-                  end
+        when :user then 30.minutes
+        when :staff then 15.minutes
+        else 15.minutes
+        end
 
         if Time.current - Time.parse(last_activity.to_s) > timeout
           reset_session
@@ -80,32 +80,32 @@ module Api
       # Response helpers
 
       def render_success(data = {}, status: :ok)
-        render json: { status: 'success', data: data }, status: status
+        render json: { status: "success", data: data }, status: status
       end
 
       def render_error(message, errors: nil, status: :unprocessable_entity)
-        response = { status: 'error', message: message }
+        response = { status: "error", message: message }
         response[:errors] = errors if errors.present?
         render json: response, status: status
       end
 
-      def render_unauthorized(message = '認証が必要です')
+      def render_unauthorized(message = "認証が必要です")
         render_error(message, status: :unauthorized)
       end
 
-      def render_forbidden(message = 'アクセス権限がありません')
+      def render_forbidden(message = "アクセス権限がありません")
         render_error(message, status: :forbidden)
       end
 
       # Exception handlers
 
       def not_found
-        render_error('リソースが見つかりません', status: :not_found)
+        render_error("リソースが見つかりません", status: :not_found)
       end
 
       def unprocessable_entity(exception)
         render_error(
-          'バリデーションエラー',
+          "バリデーションエラー",
           errors: exception.record.errors.to_hash,
           status: :unprocessable_entity
         )

@@ -1,14 +1,14 @@
 # SimpleCov must be loaded BEFORE any application code
-if ENV['COVERAGE']
-  require 'simplecov'
-  SimpleCov.start 'rails' do
-    add_filter '/test/'
-    add_filter '/config/'
-    add_filter '/vendor/'
+if ENV["COVERAGE"]
+  require "simplecov"
+  SimpleCov.start "rails" do
+    add_filter "/test/"
+    add_filter "/config/"
+    add_filter "/vendor/"
 
-    add_group 'Models', 'app/models'
-    add_group 'Controllers', 'app/controllers'
-    add_group 'Concerns', 'app/models/concerns'
+    add_group "Models", "app/models"
+    add_group "Controllers", "app/controllers"
+    add_group "Concerns", "app/models/concerns"
 
     # Require 100% coverage for authentication components
     minimum_coverage 100
@@ -21,9 +21,9 @@ require_relative "../config/environment"
 require "rails/test_help"
 
 # Load test dependencies
-require 'minitest/reporters'
-require 'database_cleaner/active_record'
-require 'timecop'
+require "minitest/reporters"
+require "database_cleaner/active_record"
+require "timecop"
 
 # Better test output formatting
 Minitest::Reporters.use! [
@@ -58,12 +58,12 @@ module ActiveSupport
       if user_or_staff.is_a?(User)
         post api_v1_users_auth_login_url, params: {
           email: user_or_staff.email,
-          password: 'password123' # Default test password
+          password: "password123" # Default test password
         }, as: :json
       elsif user_or_staff.is_a?(Staff)
         post api_v1_staff_auth_login_url, params: {
           staff_id: user_or_staff.staff_id,
-          password: 'password123' # Default test password
+          password: "password123" # Default test password
         }, as: :json
       end
       @current_session = session

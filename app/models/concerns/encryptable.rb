@@ -20,12 +20,12 @@ module Encryptable
     # Uses attr_encrypted with AES-256-GCM encryption
     def self.encrypts_pii(*attributes)
       # Convert hex key to binary (32 bytes for AES-256)
-      key_bytes = [ENCRYPTION_KEY].pack('H*')
+      key_bytes = [ ENCRYPTION_KEY ].pack("H*")
 
       attributes.each do |attribute|
         attr_encrypted attribute, {
           key: key_bytes,
-          algorithm: 'aes-256-gcm',
+          algorithm: "aes-256-gcm",
           encode: true,
           encode_iv: true,
           # Map to schema column names: {attribute}_encrypted and {attribute}_encrypted_iv
@@ -49,7 +49,7 @@ module Encryptable
       bidx_column = options[:bidx_attribute] || "#{attribute}_bidx"
 
       # Track this field
-      self.blind_indexed_fields = blind_indexed_fields + [attribute.to_sym]
+      self.blind_indexed_fields = blind_indexed_fields + [ attribute.to_sym ]
 
       # Before validation callback to compute blind index (needed for presence validation)
       before_validation :"compute_#{attribute}_blind_index", if: -> { send("#{attribute}_changed?") || send(bidx_column).blank? }
@@ -105,8 +105,8 @@ module Encryptable
       normalized = value.to_s.downcase.strip
 
       # Use HMAC-SHA256 for the blind index
-      key_bytes = [BLIND_INDEX_KEY].pack('H*')
-      OpenSSL::HMAC.hexdigest('SHA256', key_bytes, normalized)
+      key_bytes = [ BLIND_INDEX_KEY ].pack("H*")
+      OpenSSL::HMAC.hexdigest("SHA256", key_bytes, normalized)
     end
   end
 

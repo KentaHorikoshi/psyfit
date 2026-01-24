@@ -4,8 +4,8 @@ module Api
   module V1
     class PatientsController < BaseController
       before_action :authenticate_staff!
-      before_action :set_patient, only: [:show]
-      before_action :authorize_patient_access!, only: [:show]
+      before_action :set_patient, only: [ :show ]
+      before_action :authorize_patient_access!, only: [ :show ]
 
       # GET /api/v1/patients
       def index
@@ -15,7 +15,7 @@ module Api
 
         paginated = paginate(patients)
 
-        log_audit('read', 'success')
+        log_audit("read", "success")
 
         render_success({
           patients: serialize_patients(paginated),
@@ -25,7 +25,7 @@ module Api
 
       # GET /api/v1/patients/:id
       def show
-        log_audit('read', 'success', resource_id: @patient.id)
+        log_audit("read", "success", resource_id: @patient.id)
 
         render_success(serialize_patient_detail(@patient))
       end
@@ -40,7 +40,7 @@ module Api
         return if current_staff.manager?
         return if patient_assigned_to_current_staff?(@patient)
 
-        render_forbidden('この患者へのアクセス権限がありません')
+        render_forbidden("この患者へのアクセス権限がありません")
       end
 
       def fetch_patients
@@ -67,9 +67,9 @@ module Api
       def paginate(patients)
         # Convert to array if it's a relation that was filtered with select block
         patients_array = patients.is_a?(Array) ? patients : patients.to_a
-        page = [params[:page].to_i, 1].max
+        page = [ params[:page].to_i, 1 ].max
         per_page_param = params[:per_page].to_i
-        per_page = per_page_param.positive? ? [per_page_param, 100].min : 20
+        per_page = per_page_param.positive? ? [ per_page_param, 100 ].min : 20
 
         start_index = (page - 1) * per_page
         patients_array.slice(start_index, per_page) || []
@@ -78,8 +78,8 @@ module Api
       def pagination_meta(all_patients, paginated)
         total = all_patients.is_a?(Array) ? all_patients.length : all_patients.count
         per_page_param = params[:per_page].to_i
-        per_page = per_page_param.positive? ? [per_page_param, 100].min : 20
-        page = [params[:page].to_i, 1].max
+        per_page = per_page_param.positive? ? [ per_page_param, 100 ].min : 20
+        page = [ params[:page].to_i, 1 ].max
 
         {
           total: total,
@@ -142,13 +142,13 @@ module Api
 
       def log_audit(action, status, resource_id: nil)
         AuditLog.create!(
-          user_type: 'staff',
+          user_type: "staff",
           staff_id: current_staff.id,
           action: action,
           status: status,
           ip_address: client_ip,
           user_agent: user_agent,
-          additional_info: { resource_type: 'Patient', resource_id: resource_id }.to_json
+          additional_info: { resource_type: "Patient", resource_id: resource_id }.to_json
         )
       end
     end

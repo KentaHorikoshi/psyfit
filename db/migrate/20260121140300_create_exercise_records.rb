@@ -14,6 +14,6 @@ class CreateExerciseRecords < ActiveRecord::Migration[8.0]
       t.datetime :created_at, null: false
     end
 
-    add_index :exercise_records, [:user_id, :completed_at]
+    add_index :exercise_records, [ :user_id, :completed_at ]
   end
 end

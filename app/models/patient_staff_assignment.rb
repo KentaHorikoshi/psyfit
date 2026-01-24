@@ -12,7 +12,7 @@ class PatientStaffAssignment < ApplicationRecord
   validates :user_id, presence: true
   validates :staff_id, presence: true
   validates :assigned_at, presence: true
-  validates :user_id, uniqueness: { scope: :staff_id, message: 'is already assigned to this staff' }
+  validates :user_id, uniqueness: { scope: :staff_id, message: "is already assigned to this staff" }
 
   # Scopes
   scope :primary, -> { where(is_primary: true) }

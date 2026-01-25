@@ -121,7 +121,7 @@ export function MeasurementInput() {
       await api.createMeasurement(id, dataToSubmit as MeasurementInputType)
 
       navigate(`/patients/${id}`)
-    } catch (err) {
+    } catch {
       setSubmitError('測定値の保存に失敗しました')
     } finally {
       setIsSubmitting(false)

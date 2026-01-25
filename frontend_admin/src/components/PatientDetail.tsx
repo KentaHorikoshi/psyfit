@@ -36,8 +36,8 @@ export function PatientDetail() {
         setError(null)
         const response = await api.getPatientDetail(id)
         setPatient(response.data!)
-      } catch (err: any) {
-        if (err?.status === 403) {
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'status' in err && err.status === 403) {
           setError('この患者の情報にアクセスする権限がありません')
         } else {
           setError('患者情報の取得に失敗しました')

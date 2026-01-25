@@ -50,7 +50,7 @@ export function ExerciseMenu() {
           }
         })
         setExerciseSettings(initialSettings)
-      } catch (err) {
+      } catch {
         setError('運動マスタの取得に失敗しました')
       } finally {
         setIsLoading(false)
@@ -132,7 +132,7 @@ export function ExerciseMenu() {
 
       // Success - navigate back
       navigate(`/patients/${patientId}`)
-    } catch (err) {
+    } catch {
       setError('運動メニューの保存に失敗しました')
     } finally {
       setIsSubmitting(false)

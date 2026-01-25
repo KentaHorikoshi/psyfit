@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { MeasurementInput } from '../MeasurementInput'
+import type { MeasurementInput as MeasurementInputType } from '../../lib/api-types'
 
 // Mock useParams and useNavigate
 const mockPatientId = 'patient-123'
@@ -22,7 +23,7 @@ const mockCreateMeasurement = vi.fn()
 
 vi.mock('../../lib/api', () => ({
   api: {
-    createMeasurement: (patientId: string, data: any) =>
+    createMeasurement: (patientId: string, data: MeasurementInputType) =>
       mockCreateMeasurement(patientId, data),
   },
 }))

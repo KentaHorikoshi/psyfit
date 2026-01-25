@@ -33,3 +33,11 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Playwright
+frontend_user/e2e-report/
+frontend_user/e2e/.auth/
+frontend_user/test-results/
+frontend_admin/e2e-report/
+frontend_admin/e2e/.auth/
+frontend_admin/test-results/
+

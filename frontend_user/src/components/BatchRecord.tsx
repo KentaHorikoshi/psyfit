@@ -30,7 +30,7 @@ export function BatchRecord() {
         setIsLoading(true)
         const response = await apiClient.getUserExercises()
         setExercises(response.data?.exercises || [])
-      } catch (err) {
+      } catch {
         setError('運動メニューの取得に失敗しました')
       } finally {
         setIsLoading(false)
@@ -83,7 +83,7 @@ export function BatchRecord() {
 
       // Navigate to home on success
       navigate('/home')
-    } catch (err) {
+    } catch {
       setError('記録に失敗しました。もう一度お試しください。')
     } finally {
       setIsSubmitting(false)

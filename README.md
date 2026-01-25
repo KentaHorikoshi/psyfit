@@ -13,7 +13,7 @@
 | Charts | Recharts 2.15.2 |
 | Backend | Ruby on Rails 8 (API mode) |
 | Database | PostgreSQL |
-| Testing | Vitest (Frontend), Minitest (Backend) |
+| Testing | Vitest + Playwright (Frontend), RSpec (Backend) |
 
 ## プロジェクト構造
 
@@ -71,7 +71,7 @@ cd frontend_user
 npm install
 npm run dev    # 開発サーバー起動
 npm run build  # 本番ビルド
-npm run test   # テスト実行
+npm run test   # 単体テスト実行
 ```
 
 ### フロントエンド（職員向け）
@@ -81,7 +81,27 @@ cd frontend_admin
 npm install
 npm run dev    # 開発サーバー起動
 npm run build  # 本番ビルド
-npm run test   # テスト実行
+npm run test   # 単体テスト実行
+```
+
+### E2Eテスト
+
+E2Eテストの実行には、バックエンドサーバー（Rails）が起動している必要があります。
+
+```bash
+# 利用者向けアプリ
+cd frontend_user
+npm run test:e2e          # 全テスト実行
+npm run test:e2e:headed   # ブラウザ表示付きで実行
+npm run test:e2e:ui       # UIモードで実行
+npm run test:e2e:report   # レポート表示
+
+# 職員向けアプリ
+cd frontend_admin
+npm run test:e2e          # 全テスト実行
+npm run test:e2e:headed   # ブラウザ表示付きで実行
+npm run test:e2e:ui       # UIモードで実行
+npm run test:e2e:report   # レポート表示
 ```
 
 ## 環境変数
@@ -228,65 +248,42 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 
 ## 開発ロードマップ
 
-### Phase 1: MVP（進行中）
+### Phase 1: MVP ✅ 完了 (2026-01-25)
 - [x] UIコンポーネント作成
 - [x] データベース設計・マイグレーション
 - [x] モデル実装（バリデーション・暗号化）
-- [x] 認証API完全実装 ✅
-- [x] 運動メニュー表示API ✅
-- [x] 運動記録API ✅
-- [x] 体調記録API ✅
-- [x] 測定値管理API ✅
-- [x] 患者管理API ✅ (2026-01-23)
-- [x] パスワードリセットAPI ✅
-- [x] バックエンドテストカバレッジ80%達成 ✅ (86.52%)
-- [x] 利用者向けUI全画面実装（TDD） ✅ (2026-01-25)
-  - [x] Login U-01 (19 tests, 95.45% coverage)
-  - [x] Home U-02 (23 tests, 96.85% coverage)
-  - [x] ExerciseMenu U-03 (16 tests, 94.8% coverage)
-  - [x] ExercisePlayer U-04 (24 tests, 95.96% coverage)
-  - [x] ExerciseHistory U-07 (19 tests, 100% coverage)
-  - [x] Measurements U-08 (20 tests, 99.59% coverage)
-  - [x] PasswordReset U-09 (31 tests, 96.83% coverage)
-  - [x] Welcome U-10 (21 tests, 97.82% coverage)
-  - [x] ExerciseCard U-11 (20 tests, 100% coverage)
-  - [x] Celebration U-13 (24 tests, 100% coverage)
-  - [x] ConditionInput U-14 (27 tests, 98.79% coverage)
-  - [x] BatchRecord U-15 (25 tests, 98.17% coverage)
-- [x] 職員向けUI全画面実装（TDD） ✅ (2026-01-25)
-  - [x] Sidebar (15 tests, 100% coverage)
-  - [x] Login S-01 (19 tests, 95.54% coverage)
-  - [x] Dashboard S-02 (22 tests, 100% coverage)
-  - [x] PatientList S-03 (29 tests, 97.9% coverage)
-  - [x] PatientDetail S-04 (17 tests, 97.51% coverage)
-  - [x] MeasurementInput S-05 (22 tests, 85.51% coverage)
-  - [x] ExerciseMenu S-06 (18 tests, 88.67% coverage)
-  - [x] ReportGeneration S-07 (14 tests, 95.89% coverage)
-  - [x] StaffManagement S-08 (26 tests, 95%+ coverage)
-  - [x] PasswordReset S-09 (28 tests, 100% coverage)
-- [x] フロントエンドテストカバレッジ80%達成 ✅
-- [ ] フロントエンド-バックエンド接続
+- [x] 認証API完全実装
+- [x] 運動メニュー表示API
+- [x] 運動記録API
+- [x] 体調記録API
+- [x] 測定値管理API
+- [x] 患者管理API
+- [x] パスワードリセットAPI
+- [x] バックエンドテストカバレッジ80%達成 (90.49%)
+- [x] 利用者向けUI全画面実装（TDD）- 12画面完了
+- [x] 職員向けUI全画面実装（TDD）- 9画面完了
+- [x] フロントエンドテストカバレッジ80%達成 (97%+)
+- [x] E2Eテスト実装（Playwright）
+  - 利用者向け: 5テストファイル（ログイン、運動フロー、体調入力、履歴、パスワードリセット）
+  - 職員向け: 5テストファイル（ログイン、患者管理、測定値入力、運動メニュー、レポート出力）
+- [x] ESLintエラー修正
 
-### Phase 2: バックエンドAPI完成（次のステップ）
-- [ ] 運動メニュー割当API実装（S-06バックエンド）
-  - [ ] GET /api/v1/exercise_masters
-  - [ ] POST /api/v1/patients/:id/exercises
-  - [ ] GET /api/v1/patients/:id/exercises
-- [ ] レポート出力API実装（S-07バックエンド）
-  - [ ] GET /api/v1/patients/:id/report (PDF/CSV生成)
-- [x] 職員管理API（マネージャー専用・S-08） ✅
-  - [x] GET /api/v1/staff
-  - [x] POST /api/v1/staff
-- [ ] パスワード変更API（S-09バックエンド）
-  - [ ] POST /api/v1/staff/me/password
-- [ ] 履歴グラフ表示（フロントエンド）
-- [x] 職員向けフロントエンド全画面実装 ✅ (S-01〜S-09)
+### Phase 2: 本番デプロイ準備（次のステップ）
+- [ ] パスワードリセットメール送信実装（現在スタブ）
+- [ ] 動画アクセス制御の実装
+- [ ] レート制限の実装
+- [ ] Docker環境構築
+  - [ ] docker-compose.yml
+  - [ ] .env.example作成
+- [ ] CI/CDパイプライン構築
+- [ ] SSL証明書設定
+- [ ] 本番環境デプロイ
 
-### Phase 3: 最適化
+### Phase 3: 最適化・拡張
 - [ ] パフォーマンス最適化
-- [ ] オフライン対応（PWA）
 - [ ] プッシュ通知
 - [ ] アクセシビリティ改善（WCAG 2.1 AA完全準拠）
+- [ ] Lighthouseスコア測定・改善
 
 ## コマンド一覧
 
@@ -308,9 +305,15 @@ bundle exec rubocop                   # Lintチェック
 ```bash
 npm run dev             # 開発サーバー
 npm run build           # 本番ビルド
-npm run test            # テスト実行
+npm run test            # 単体テスト実行
 npm run test:coverage   # カバレッジ付きテスト
 npm run lint            # Lintチェック
+
+# E2Eテスト（Playwright）
+npm run test:e2e        # 全E2Eテスト実行
+npm run test:e2e:headed # ブラウザ表示付き
+npm run test:e2e:ui     # UIモード
+npm run test:e2e:report # レポート表示
 ```
 
 ## 設計ドキュメント

@@ -53,7 +53,7 @@ export function ReportGeneration() {
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       setError('レポートのダウンロードに失敗しました')
     } finally {
       setIsGenerating(false)

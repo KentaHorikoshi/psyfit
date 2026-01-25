@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { BatchRecord } from '../BatchRecord'
+import type { CreateExerciseRecordRequest } from '../../lib/api-types'
 
 // Mock useNavigate
 const mockNavigate = vi.fn()
@@ -27,7 +28,7 @@ const mockCreateExerciseRecord = vi.fn()
 vi.mock('../../lib/api-client', () => ({
   default: {
     getUserExercises: () => mockGetUserExercises(),
-    createExerciseRecord: (data: any) => mockCreateExerciseRecord(data),
+    createExerciseRecord: (data: CreateExerciseRecordRequest) => mockCreateExerciseRecord(data),
   },
 }))
 

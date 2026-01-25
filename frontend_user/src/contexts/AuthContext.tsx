@@ -66,7 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (response.status === 'success' && response.data) {
           setUser(response.data)
         }
-      } catch (err) {
+      } catch {
         // No active session - that's ok
         setUser(null)
       } finally {

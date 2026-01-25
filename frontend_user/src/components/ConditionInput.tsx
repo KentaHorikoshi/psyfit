@@ -42,15 +42,12 @@ export function ConditionInput() {
     try {
       const today = new Date().toISOString().split('T')[0]
       const trimmedNotes = notes.trim()
-      const payload: any = {
+      await apiClient.createDailyCondition({
         recorded_date: today,
         pain_level: painLevel,
         body_condition: bodyCondition,
-      }
-      if (trimmedNotes) {
-        payload.notes = trimmedNotes
-      }
-      await apiClient.createDailyCondition(payload)
+        notes: trimmedNotes || undefined,
+      })
       navigate('/home')
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存に失敗しました')

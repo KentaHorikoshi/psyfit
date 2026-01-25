@@ -80,7 +80,7 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<ApiResponse<User>> {
-    return this.request<User>('/users/me')
+    return this.request<User>('/auth/me')
   }
 
   // Exercise Records endpoints

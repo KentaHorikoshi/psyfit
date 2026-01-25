@@ -61,14 +61,49 @@ PsyFit - リハビリ運動支援アプリ（利用者向け・職員向け 統�
 - 80% minimum coverage
 - 100% coverage for authentication, security, and financial calculations
 
+## Development Server
+
+### 起動方法
+
+```bash
+# 1. バックエンド (Rails API) - ポート3001
+bin/rails server -b 0.0.0.0 -p 3001
+
+# 2. フロントエンド (利用者向け) - ポート3000
+cd frontend_user && npm run dev -- --host 0.0.0.0 --port 3000
+```
+
+### アクセスURL
+
+| アプリ | URL |
+|--------|-----|
+| 利用者向けフロントエンド | http://localhost:3000 |
+| バックエンドAPI | http://localhost:3001 |
+| APIヘルスチェック | http://localhost:3001/api/v1/health |
+
+### 開発用アカウント
+
+```bash
+# シードデータ投入
+bin/rails db:seed
+```
+
+| 種別 | ID/メール | パスワード |
+|------|-----------|-----------|
+| マネージャー | MGR001 | Manager1! |
+| 職員 | STF001 | Staff123! |
+| 職員 | STF002 | Staff123! |
+| 利用者 | tanaka@example.com | Patient1! |
+| 利用者 | takahashi@example.com | Patient1! |
+
 ## File Structure
 
 ```
 psyfit/
-├── src_user/           # 利用者向けアプリ (U-01〜U-15画面)
-│   └── components/
-├── src_admin/          # 職員向けアプリ (S-01〜S-09画面)
-│   └── components/
+├── frontend_user/      # 利用者向けアプリ (U-01〜U-15画面)
+│   └── src/
+├── frontend_admin/     # 職員向けアプリ (S-01〜S-09画面) ※未実装
+│   └── src/
 ├── app/                # Rails backend
 ├── .claude/
 │   ├── docs/           # Design specifications

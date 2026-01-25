@@ -25,8 +25,8 @@ function Celebration() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <div className="min-h-screen bg-background">
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
@@ -46,7 +46,7 @@ export default function App() {
             */}
           </Routes>
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   )
 }

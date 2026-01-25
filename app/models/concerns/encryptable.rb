@@ -76,10 +76,12 @@ module Encryptable
       end
 
       # Define class method to find by this attribute
+      # Use Arel to safely query with dynamic column names
       define_singleton_method("find_by_#{attribute}") do |value|
         return nil if value.blank?
+        validate_bidx_column!(bidx_column)
         bidx = compute_blind_index(value)
-        find_by(bidx_column => bidx)
+        where(arel_table[bidx_column].eq(bidx)).first
       end
 
       # Define class method to find by this attribute (with exception)
@@ -90,10 +92,20 @@ module Encryptable
       end
 
       # Define scope to search by this attribute
+      # Use Arel to safely query with dynamic column names
       scope "by_#{attribute}", ->(value) {
         return none if value.blank?
-        where(bidx_column => compute_blind_index(value))
+        validate_bidx_column!(bidx_column)
+        where(arel_table[bidx_column].eq(compute_blind_index(value)))
       }
+    end
+
+    # Validate that the blind index column exists in the table
+    # Prevents SQL injection by ensuring only valid column names are used
+    def self.validate_bidx_column!(column_name)
+      unless column_names.include?(column_name.to_s)
+        raise ArgumentError, "Invalid blind index column: #{column_name}"
+      end
     end
 
     # Compute blind index hash for a value

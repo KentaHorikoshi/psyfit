@@ -38,8 +38,16 @@ module Api
 
       private
 
+      ALLOWED_ROLES = %w[manager staff].freeze
+
       def staff_params
-        params.permit(:staff_id, :name, :name_kana, :email, :password, :role, :department)
+        permitted = params.permit(:staff_id, :name, :name_kana, :email, :password, :department)
+        permitted[:role] = sanitized_role if params[:role].present?
+        permitted
+      end
+
+      def sanitized_role
+        ALLOWED_ROLES.include?(params[:role]) ? params[:role] : "staff"
       end
 
       def serialize_staff_list(staff_members)

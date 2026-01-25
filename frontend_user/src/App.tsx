@@ -9,6 +9,8 @@ import { ExercisePlayer } from './components/ExercisePlayer'
 import { ExerciseHistory } from './components/ExerciseHistory'
 import { Measurements } from './components/Measurements'
 import { ConditionInput } from './components/ConditionInput'
+import { BatchRecord } from './components/BatchRecord'
+import { Profile } from './components/Profile'
 
 // Placeholder components - to be implemented
 function Celebration() {
@@ -40,6 +42,8 @@ export default function App() {
             <Route path="/history" element={<ExerciseHistory />} />
             <Route path="/measurements" element={<Measurements />} />
             <Route path="/condition-input" element={<ConditionInput />} />
+            <Route path="/record" element={<BatchRecord />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/connection-test" element={<ConnectionTest />} />
             {/* TODO: Add remaining routes
             <Route path="/welcome" element={<Welcome />} />

@@ -21,6 +21,8 @@ Rails.application.routes.draw do
         post "staff/login", to: "auth#staff_login"
         delete "logout", to: "auth#logout"
         get "me", to: "auth#me"
+        post "password_reset_request", to: "auth#password_reset_request"
+        post "password_reset", to: "auth#password_reset"
       end
 
       # User endpoints (current user)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_24_004213) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_24_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -92,6 +92,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_004213) do
     t.index ["measured_by_staff_id"], name: "index_measurements_on_measured_by_staff_id"
     t.index ["user_id", "measured_date"], name: "index_measurements_on_user_id_and_measured_date"
     t.index ["user_id"], name: "index_measurements_on_user_id"
+  end
+
+  create_table "password_reset_tokens", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.uuid "staff_id"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "used_at"
+    t.uuid "user_id"
+    t.index ["expires_at"], name: "index_password_reset_tokens_on_expires_at"
+    t.index ["staff_id", "used_at"], name: "index_password_reset_tokens_on_staff_id_and_used_at"
+    t.index ["staff_id"], name: "index_password_reset_tokens_on_staff_id"
+    t.index ["token"], name: "index_password_reset_tokens_on_token", unique: true
+    t.index ["user_id", "used_at"], name: "index_password_reset_tokens_on_user_id_and_used_at"
+    t.index ["user_id"], name: "index_password_reset_tokens_on_user_id"
   end
 
   create_table "patient_exercises", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -203,6 +219,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_004213) do
   add_foreign_key "exercise_records", "users"
   add_foreign_key "measurements", "staff", column: "measured_by_staff_id"
   add_foreign_key "measurements", "users"
+  add_foreign_key "password_reset_tokens", "staff", on_delete: :cascade
+  add_foreign_key "password_reset_tokens", "users", on_delete: :cascade
   add_foreign_key "patient_exercises", "exercises"
   add_foreign_key "patient_exercises", "staff", column: "assigned_by_staff_id"
   add_foreign_key "patient_exercises", "users"

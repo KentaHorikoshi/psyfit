@@ -14,6 +14,8 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | POST /api/v1/auth/staff/login | ✅ 実装済み | ✅ |
 | DELETE /api/v1/auth/logout | ✅ 実装済み | ✅ |
 | GET /api/v1/auth/me | ✅ 実装済み | ✅ |
+| POST /api/v1/auth/password_reset_request | ✅ 実装済み | ✅ |
+| POST /api/v1/auth/password_reset | ✅ 実装済み | ✅ |
 | GET /api/v1/users/me/exercises | ✅ 実装済み | ✅ |
 | POST /api/v1/exercise_records | ✅ 実装済み | ✅ |
 | GET /api/v1/users/me/exercise_records | ✅ 実装済み | ✅ |
@@ -29,25 +31,79 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/patients/:patient_id/report | ✅ 実装済み | ✅ |
 | GET /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff | ✅ 実装済み | ✅ |
+| POST /api/v1/staff/me/password | ⏳ バックエンド未実装 | - |
 
 ## フロントエンド実装状況
+
+### 利用者向け (frontend_user) - 全画面実装完了 ✅
 
 | 画面 | コンポーネント | ステータス | テスト |
 |------|---------------|-----------|--------|
 | U-01 ログイン | Login.tsx | ✅ 実装済み | ✅ 19件 |
 | U-02 ホーム | Home.tsx | ✅ 実装済み | ✅ 23件 |
-| U-03〜U-15 | - | ⏳ 未実装 | - |
-| S-01〜S-09 | - | ⏳ 未実装 | - |
+| U-03 運動メニュー選択 | ExerciseMenu.tsx | ✅ 実装済み | ✅ 16件 |
+| U-04 運動実施（動画） | ExercisePlayer.tsx | ✅ 実装済み | ✅ 24件 |
+| U-07 履歴一覧 | ExerciseHistory.tsx | ✅ 実装済み | ✅ 19件 |
+| U-08 測定値履歴 | Measurements.tsx | ✅ 実装済み | ✅ 20件 |
+| U-09 パスワードリセット | PasswordReset.tsx | ✅ 実装済み | ✅ 31件 |
+| U-10 ウェルカム | Welcome.tsx | ✅ 実装済み | ✅ 21件 |
+| U-11 運動カード | ExerciseCard.tsx | ✅ 実装済み | ✅ 20件 |
+| U-13 祝福 | Celebration.tsx | ✅ 実装済み | ✅ 24件 |
+| U-14 体調入力 | ConditionInput.tsx | ✅ 実装済み | ✅ 27件 |
+| U-15 まとめて記録 | BatchRecord.tsx | ✅ 実装済み | ✅ 25件 |
 
-**フロントエンドテストファイル**:
-- `frontend_user/src/components/__tests__/Login.test.tsx` - ログイン画面
-- `frontend_user/src/components/__tests__/Home.test.tsx` - ホーム画面
-- `frontend_user/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト
+**利用者向けテスト合計**: 277件（カバレッジ: 97.77%）
+
+### 職員向け (frontend_admin) - 全画面実装完了 ✅
+
+| 画面 | コンポーネント | ステータス | テスト |
+|------|---------------|-----------|--------|
+| - | Sidebar | ✅ 実装済み | ✅ 15件 |
+| S-01 ログイン | Login.tsx | ✅ 実装済み | ✅ 19件 |
+| S-02 ダッシュボード | Dashboard.tsx | ✅ 実装済み | ✅ 22件 |
+| S-03 患者一覧 | PatientList.tsx | ✅ 実装済み | ✅ 29件 |
+| S-04 患者詳細 | PatientDetail.tsx | ✅ 実装済み | ✅ 17件 |
+| S-05 測定値入力 | MeasurementInput.tsx | ✅ 実装済み | ✅ 22件 |
+| S-06 運動メニュー設定 | ExerciseMenu.tsx | ✅ 実装済み | ✅ 18件 |
+| S-07 レポート出力 | ReportGeneration.tsx | ✅ 実装済み | ✅ 14件 |
+| S-08 職員管理 | StaffManagement.tsx | ✅ 実装済み | ✅ 26件 |
+| S-09 パスワードリセット | PasswordReset.tsx | ✅ 実装済み | ✅ 28件 |
+
+**職員向けテスト合計**: 210件
+
+**フロントエンドテストファイル（利用者向け）**:
+- `frontend_user/src/components/__tests__/Login.test.tsx` - ログイン画面 (19件)
+- `frontend_user/src/components/__tests__/Home.test.tsx` - ホーム画面 (23件)
+- `frontend_user/src/components/__tests__/ExerciseMenu.test.tsx` - 運動メニュー選択 (16件)
+- `frontend_user/src/components/__tests__/ExercisePlayer.test.tsx` - 運動実施 (24件)
+- `frontend_user/src/components/__tests__/ExerciseHistory.test.tsx` - 履歴一覧 (19件)
+- `frontend_user/src/components/__tests__/Measurements.test.tsx` - 測定値履歴 (20件)
+- `frontend_user/src/components/__tests__/PasswordReset.test.tsx` - パスワードリセット (31件)
+- `frontend_user/src/components/__tests__/Welcome.test.tsx` - ウェルカム (21件)
+- `frontend_user/src/components/__tests__/ExerciseCard.test.tsx` - 運動カード (20件)
+- `frontend_user/src/components/__tests__/Celebration.test.tsx` - 祝福 (24件)
+- `frontend_user/src/components/__tests__/ConditionInput.test.tsx` - 体調入力 (27件)
+- `frontend_user/src/components/__tests__/BatchRecord.test.tsx` - まとめて記録 (25件)
+- `frontend_user/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト (8件)
+
+**フロントエンドテストファイル（職員向け）**:
+- `frontend_admin/src/components/__tests__/Login.test.tsx` - ログイン画面
+- `frontend_admin/src/components/__tests__/Dashboard.test.tsx` - ダッシュボード
+- `frontend_admin/src/components/__tests__/PatientList.test.tsx` - 患者一覧
+- `frontend_admin/src/components/__tests__/PatientDetail.test.tsx` - 患者詳細
+- `frontend_admin/src/components/__tests__/MeasurementInput.test.tsx` - 測定値入力
+- `frontend_admin/src/components/__tests__/ExerciseMenu.test.tsx` - 運動メニュー設定
+- `frontend_admin/src/components/__tests__/ReportGeneration.test.tsx` - レポート出力
+- `frontend_admin/src/components/__tests__/StaffManagement.test.tsx` - 職員管理
+- `frontend_admin/src/components/__tests__/PasswordReset.test.tsx` - パスワードリセット
+- `frontend_admin/src/components/__tests__/Sidebar.test.tsx` - サイドバー
+- `frontend_admin/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト
 
 **テストカバレッジ**: 97.17%（目標80%達成）
 
 **テストファイル**:
 - `spec/requests/api/v1/auth_spec.rb` - 認証API
+- `spec/requests/api/v1/password_reset_spec.rb` - パスワードリセットAPI
 - `spec/requests/api/v1/user_exercises_spec.rb` - 運動メニューAPI
 - `spec/requests/api/v1/exercise_records_spec.rb` - 運動記録API
 - `spec/requests/api/v1/daily_conditions_spec.rb` - 体調記録API
@@ -57,6 +113,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 - `spec/requests/api/v1/staff_spec.rb` - 職員管理API
 - `spec/requests/api/v1/patient_reports_spec.rb` - 患者レポートAPI
 - `spec/models/user_continue_days_spec.rb` - 継続日数ロジック
+- `spec/models/password_reset_token_spec.rb` - パスワードリセットトークンモデル
 
 **実装ファイル**:
 - `app/controllers/api/v1/daily_conditions_controller.rb` - 体調記録コントローラ
@@ -246,6 +303,108 @@ Cookie: _psyfit_session=<session_id>
       "name": "山田太郎",
       "role": "manager"
     }
+  }
+}
+```
+
+#### POST /api/v1/auth/password_reset_request (パスワードリセット要求) ✅
+
+パスワードリセットトークンを生成し、メール送信する（メール送信は現在スタブ）。
+
+**認証**: 不要
+
+**リクエスト（利用者）**:
+```json
+{
+  "email": "patient@example.com"
+}
+```
+
+**リクエスト（職員）**:
+```json
+{
+  "staff_id": "yamada"
+}
+```
+
+**レスポンス (200 OK)**:
+```json
+{
+  "status": "success",
+  "data": {
+    "message": "パスワードリセットのメールを送信しました"
+  }
+}
+```
+
+**セキュリティ**:
+- メール列挙攻撃対策: 存在しないアカウントでも同じレスポンスを返す
+- トークン: `SecureRandom.urlsafe_base64(32)` で生成
+- 有効期限: 1時間
+- 既存の有効トークンは自動的に無効化
+
+**副作用**:
+- 監査ログに記録（action: 'password_reset', step: 'request'）
+
+**エラー (422)**:
+```json
+{
+  "status": "error",
+  "message": "email または staff_id が必要です"
+}
+```
+
+#### POST /api/v1/auth/password_reset (パスワード更新) ✅
+
+トークンを検証してパスワードを更新する。
+
+**認証**: 不要（トークンで認証）
+
+**リクエスト**:
+```json
+{
+  "token": "xxxxx",
+  "new_password": "NewPassword123!",
+  "new_password_confirmation": "NewPassword123!"
+}
+```
+
+**レスポンス (200 OK)**:
+```json
+{
+  "status": "success",
+  "data": {
+    "message": "パスワードが更新されました"
+  }
+}
+```
+
+**副作用**:
+- パスワードが更新される
+- トークンが使用済みとしてマークされる
+- アカウントロックがリセットされる（failed_login_count = 0, locked_until = nil）
+- 監査ログに記録（action: 'password_reset', step: 'complete'）
+
+**エラー (422)**:
+```json
+// トークン無効
+{
+  "status": "error",
+  "message": "トークンが無効または期限切れです"
+}
+
+// パスワード不一致
+{
+  "status": "error",
+  "message": "パスワードが一致しません"
+}
+
+// パスワードバリデーションエラー
+{
+  "status": "error",
+  "message": "パスワードの更新に失敗しました",
+  "errors": {
+    "password": ["は8文字以上で入力してください"]
   }
 }
 ```
@@ -891,6 +1050,48 @@ Cookie: _psyfit_session=<session_id>
 - `401 Unauthorized`: 職員セッションがない場合
 - `403 Forbidden`: 一般職員がアクセスした場合
 - `422 Unprocessable Entity`: バリデーションエラー
+
+#### POST /api/v1/staff/me/password (S-09: パスワード変更) ⏳
+
+ログイン中の職員が自分のパスワードを変更する。
+
+**認証**: 職員セッション必須
+
+**フロントエンド実装**: ✅ `frontend_admin/src/components/PasswordReset.tsx`
+
+```json
+// Request
+{
+  "current_password": "OldPassword123",
+  "new_password": "NewSecurePass456!",
+  "new_password_confirmation": "NewSecurePass456!"
+}
+
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "message": "パスワードを変更しました"
+  }
+}
+```
+
+**バリデーション**:
+| フィールド | ルール |
+|-----------|--------|
+| current_password | 必須、現在のパスワードと一致 |
+| new_password | 必須、8文字以上、2種類以上の文字タイプ |
+| new_password_confirmation | 必須、new_passwordと一致 |
+
+**セキュリティ**:
+- 現在のパスワード検証必須
+- 新パスワードはbcryptでハッシュ化
+- 監査ログに記録される（action: 'password_change'）
+- 変更成功後はセッションを無効化し、再ログインを要求
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `422 Unprocessable Entity`: バリデーションエラー（現在のパスワード不一致など）
 
 ---
 

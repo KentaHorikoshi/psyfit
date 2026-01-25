@@ -15,6 +15,8 @@ import type {
   StaffListResponse,
   CreateStaffRequest,
   CreateStaffResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
@@ -185,6 +187,11 @@ class ApiClient {
 
   async createStaff(data: CreateStaffRequest): Promise<ApiResponse<CreateStaffResponse>> {
     return this.post<CreateStaffResponse>('/staff', data)
+  }
+
+  // Password Change endpoint (S-09)
+  async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<ChangePasswordResponse>> {
+    return this.post<ChangePasswordResponse>('/staff/me/password', data)
   }
 }
 

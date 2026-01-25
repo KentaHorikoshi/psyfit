@@ -218,3 +218,14 @@ export interface CreateStaffRequest {
 export interface CreateStaffResponse {
   staff: StaffMember
 }
+
+// Password Change Types (S-09)
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+  new_password_confirmation: string
+}
+
+export interface ChangePasswordResponse {
+  message: string
+}

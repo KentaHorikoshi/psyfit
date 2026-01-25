@@ -93,4 +93,24 @@ class AuditLog < ApplicationRecord
       additional_info: { video_id: video_id }.to_json
     )
   end
+
+  def self.log_password_reset(user_or_staff, ip_address:, step:)
+    if user_or_staff.is_a?(User)
+      log_action(
+        action: "password_reset",
+        status: "success",
+        user: user_or_staff,
+        ip_address: ip_address,
+        additional_info: { step: step }.to_json
+      )
+    else
+      log_action(
+        action: "password_reset",
+        status: "success",
+        staff: user_or_staff,
+        ip_address: ip_address,
+        additional_info: { step: step }.to_json
+      )
+    end
+  end
 end

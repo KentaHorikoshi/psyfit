@@ -97,6 +97,59 @@ module Api
         end
       end
 
+      # Request password reset
+      # POST /api/v1/auth/password_reset_request
+      def password_reset_request
+        email = password_reset_request_params[:email]
+        staff_id = password_reset_request_params[:staff_id]
+
+        if email.blank? && staff_id.blank?
+          return render_error("email または staff_id が必要です", status: :unprocessable_entity)
+        end
+
+        if email.present?
+          handle_user_password_reset_request(email)
+        else
+          handle_staff_password_reset_request(staff_id)
+        end
+
+        render_success({ message: "パスワードリセットのメールを送信しました" })
+      end
+
+      # Reset password with token
+      # POST /api/v1/auth/password_reset
+      def password_reset
+        token_string = password_reset_params[:token]
+        new_password = password_reset_params[:new_password]
+        new_password_confirmation = password_reset_params[:new_password_confirmation]
+
+        reset_token = PasswordResetToken.find_valid_token(token_string)
+
+        if reset_token.nil?
+          return render_error("トークンが無効または期限切れです", status: :unprocessable_entity)
+        end
+
+        if new_password != new_password_confirmation
+          return render_error("パスワードが一致しません", status: :unprocessable_entity)
+        end
+
+        target = reset_token.target
+
+        if target.update(password: new_password, password_confirmation: new_password_confirmation)
+          reset_token.mark_as_used!
+          target.reset_failed_login!
+          AuditLog.log_password_reset(target, ip_address: client_ip, step: "complete")
+
+          render_success({ message: "パスワードが更新されました" })
+        else
+          render_error(
+            "パスワードの更新に失敗しました",
+            errors: target.errors.to_hash,
+            status: :unprocessable_entity
+          )
+        end
+      end
+
       private
 
       def login_params
@@ -157,6 +210,38 @@ module Api
           user_agent: user_agent,
           reason: reason
         )
+      end
+
+      def password_reset_request_params
+        params.permit(:email, :staff_id)
+      end
+
+      def password_reset_params
+        params.permit(:token, :new_password, :new_password_confirmation)
+      end
+
+      def handle_user_password_reset_request(email)
+        user = find_user_by_email(email)
+        return unless user
+
+        token = PasswordResetToken.generate_for_user(user)
+        AuditLog.log_password_reset(user, ip_address: client_ip, step: "request")
+
+        # TODO: Send email with token (stub for now)
+        # PasswordResetMailer.reset_email(user, token).deliver_later
+        Rails.logger.info("Password reset token generated for user #{user.id}: #{token.token}")
+      end
+
+      def handle_staff_password_reset_request(staff_id)
+        staff = Staff.active.find_by(staff_id: staff_id)
+        return unless staff
+
+        token = PasswordResetToken.generate_for_staff(staff)
+        AuditLog.log_password_reset(staff, ip_address: client_ip, step: "request")
+
+        # TODO: Send email with token (stub for now)
+        # PasswordResetMailer.reset_email(staff, token).deliver_later
+        Rails.logger.info("Password reset token generated for staff #{staff.id}: #{token.token}")
       end
     end
   end

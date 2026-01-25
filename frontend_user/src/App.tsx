@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext'
 import { ConnectionTest } from './components/ConnectionTest'
 import { Login } from './components/Login'
+import { PasswordReset } from './components/PasswordReset'
 import { Home } from './components/Home'
 import { ExerciseMenu } from './components/ExerciseMenu'
 import { ExercisePlayer } from './components/ExercisePlayer'
@@ -30,6 +31,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/password-reset" element={<PasswordReset />} />
+            <Route path="/password-reset/:token" element={<PasswordReset />} />
             <Route path="/home" element={<Home />} />
             <Route path="/exercise-menu" element={<ExerciseMenu />} />
             <Route path="/exercise/:id" element={<ExercisePlayer />} />
@@ -40,7 +43,6 @@ export default function App() {
             <Route path="/connection-test" element={<ConnectionTest />} />
             {/* TODO: Add remaining routes
             <Route path="/welcome" element={<Welcome />} />
-            <Route path="/password-reset" element={<PasswordReset />} />
             */}
           </Routes>
         </div>

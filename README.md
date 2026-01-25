@@ -110,12 +110,12 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | 画面ID | 画面名 | UI | テスト | カバレッジ | API接続 |
 |--------|--------|:--:|:-----:|:--------:|:------:|
 | U-01 | ログイン | ✅ | 19 tests | 95.45% | ⬜ |
-| U-02 | トップ（ホーム） | ✅ | 23 tests | 97.63% | ⬜ |
+| U-02 | トップ（ホーム） | ✅ | 23 tests | 96.85% | ⬜ |
 | U-03 | 運動メニュー選択 | ✅ | 16 tests | 94.8% | ⬜ |
 | U-04 | 運動実施（動画） | ✅ | 24 tests | 95.96% | ⬜ |
 | U-07 | 履歴一覧 | ✅ | 19 tests | 100% | ⬜ |
 | U-08 | 測定値履歴 | ✅ | 20 tests | 99.59% | ⬜ |
-| U-09 | パスワードリセット | ⬜ | - | - | ⬜ |
+| U-09 | パスワードリセット | ✅ | 31 tests | 96.83% | ⬜ |
 | U-10 | ウェルカム | ✅ | 21 tests | 97.82% | - |
 | U-11 | 運動カード | ✅ | 20 tests | 100% | ⬜ |
 | U-13 | 祝福 | ✅ | 24 tests | 100% | - |
@@ -130,14 +130,14 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | S-02 | ダッシュボード | ✅ | 22 tests | 100% | ⬜ |
 | S-03 | 患者一覧 | ✅ | 29 tests | 97.9% | ⬜ |
 | S-04 | 患者詳細 | ✅ | 17 tests | 97.51% | ⬜ |
-| S-05 | 測定値入力 | ✅ | 17 tests | 85.51% | ⬜ |
-| S-06 | 運動メニュー設定 | ✅ | 22 tests | 88.67% | ⬜ |
-| S-07 | レポート出力 | ✅ | 19 tests | 95.89% | ⬜ |
-| S-08 | 職員管理 | ⬜ | - | - | ⬜ |
-| S-09 | パスワードリセット | ⬜ | - | - | ⬜ |
+| S-05 | 測定値入力 | ✅ | 22 tests | 85.51% | ⬜ |
+| S-06 | 運動メニュー設定 | ✅ | 18 tests | 88.67% | ⬜ |
+| S-07 | レポート出力 | ✅ | 14 tests | 95.89% | ⬜ |
+| S-08 | 職員管理 | ✅ | 26 tests | 95%+ | ⬜ |
+| S-09 | パスワードリセット | ✅ | 28 tests | 100% | ⬜ |
 
-**利用者向けテスト**: 246 tests passed, 97.99% overall coverage (2026-01-24)
-**職員向けテスト**: 167 tests passed, 93.71% overall coverage (2026-01-24)
+**利用者向けテスト**: 277 tests passed, 97.77% overall coverage (2026-01-25) - 全画面実装完了 ✅
+**職員向けテスト**: 210 tests passed (2026-01-25) - 全画面実装完了 ✅
 
 ### バックエンド実装
 
@@ -163,6 +163,8 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | POST /api/v1/auth/staff/login | ✅ | ✅ |
 | DELETE /api/v1/auth/logout | ✅ | ✅ |
 | GET /api/v1/auth/me | ✅ | ✅ |
+| POST /api/v1/auth/password_reset_request | ✅ | ✅ |
+| POST /api/v1/auth/password_reset | ✅ | ✅ |
 | **運動メニュー・記録（利用者）** | | |
 | GET /api/v1/users/me/exercises | ✅ | ✅ |
 | POST /api/v1/exercise_records | ✅ | ✅ |
@@ -182,7 +184,12 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | POST /api/v1/patients/:id/exercises | ⬜ | ⬜ |
 | GET /api/v1/patients/:id/exercises | ⬜ | ⬜ |
 | **レポート出力（職員・S-07）** | | |
-| GET /api/v1/patients/:id/report | ⬜ | ⬜ |
+| GET /api/v1/patients/:id/report | ✅ | ✅ |
+| **職員管理（マネージャー・S-08）** | | |
+| GET /api/v1/staff | ✅ | ✅ |
+| POST /api/v1/staff | ✅ | ✅ |
+| **パスワード変更（職員・S-09）** | | |
+| POST /api/v1/staff/me/password | ⬜ | ⬜ |
 | **その他** | | |
 | GET /api/v1/health | ✅ | ✅ |
 
@@ -206,28 +213,49 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 - [x] 体調記録API ✅
 - [x] 測定値管理API ✅
 - [x] 患者管理API ✅ (2026-01-23)
+- [x] パスワードリセットAPI ✅
 - [x] バックエンドテストカバレッジ80%達成 ✅ (86.52%)
-- [x] 職員向けUI基盤実装（TDD） ✅ (2026-01-24)
+- [x] 利用者向けUI全画面実装（TDD） ✅ (2026-01-25)
+  - [x] Login U-01 (19 tests, 95.45% coverage)
+  - [x] Home U-02 (23 tests, 96.85% coverage)
+  - [x] ExerciseMenu U-03 (16 tests, 94.8% coverage)
+  - [x] ExercisePlayer U-04 (24 tests, 95.96% coverage)
+  - [x] ExerciseHistory U-07 (19 tests, 100% coverage)
+  - [x] Measurements U-08 (20 tests, 99.59% coverage)
+  - [x] PasswordReset U-09 (31 tests, 96.83% coverage)
+  - [x] Welcome U-10 (21 tests, 97.82% coverage)
+  - [x] ExerciseCard U-11 (20 tests, 100% coverage)
+  - [x] Celebration U-13 (24 tests, 100% coverage)
+  - [x] ConditionInput U-14 (27 tests, 98.79% coverage)
+  - [x] BatchRecord U-15 (25 tests, 98.17% coverage)
+- [x] 職員向けUI全画面実装（TDD） ✅ (2026-01-25)
   - [x] Sidebar (15 tests, 100% coverage)
-  - [x] Dashboard (22 tests, 100% coverage)
-  - [x] PatientList (29 tests, 97.9% coverage)
-  - [x] PatientDetail (17 tests, 97.51% coverage)
-  - [x] MeasurementInput (17 tests, 85.51% coverage)
-  - [x] ExerciseMenu S-06 (22 tests, 88.67% coverage)
-  - [x] ReportGeneration S-07 (19 tests, 95.89% coverage)
-  - [x] フロントエンドテストカバレッジ80%達成 ✅ (93.71%)
+  - [x] Login S-01 (19 tests, 95.54% coverage)
+  - [x] Dashboard S-02 (22 tests, 100% coverage)
+  - [x] PatientList S-03 (29 tests, 97.9% coverage)
+  - [x] PatientDetail S-04 (17 tests, 97.51% coverage)
+  - [x] MeasurementInput S-05 (22 tests, 85.51% coverage)
+  - [x] ExerciseMenu S-06 (18 tests, 88.67% coverage)
+  - [x] ReportGeneration S-07 (14 tests, 95.89% coverage)
+  - [x] StaffManagement S-08 (26 tests, 95%+ coverage)
+  - [x] PasswordReset S-09 (28 tests, 100% coverage)
+- [x] フロントエンドテストカバレッジ80%達成 ✅
 - [ ] フロントエンド-バックエンド接続
 
-### Phase 2: 拡張機能（次のステップ）
+### Phase 2: バックエンドAPI完成（次のステップ）
 - [ ] 運動メニュー割当API実装（S-06バックエンド）
   - [ ] GET /api/v1/exercise_masters
   - [ ] POST /api/v1/patients/:id/exercises
   - [ ] GET /api/v1/patients/:id/exercises
 - [ ] レポート出力API実装（S-07バックエンド）
   - [ ] GET /api/v1/patients/:id/report (PDF/CSV生成)
-- [ ] 職員管理API（マネージャー専用・S-08）
+- [x] 職員管理API（マネージャー専用・S-08） ✅
+  - [x] GET /api/v1/staff
+  - [x] POST /api/v1/staff
+- [ ] パスワード変更API（S-09バックエンド）
+  - [ ] POST /api/v1/staff/me/password
 - [ ] 履歴グラフ表示（フロントエンド）
-- [ ] フロントエンド完全実装（利用者・職員）
+- [x] 職員向けフロントエンド全画面実装 ✅ (S-01〜S-09)
 
 ### Phase 3: 最適化
 - [ ] パフォーマンス最適化

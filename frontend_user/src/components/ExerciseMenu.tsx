@@ -75,7 +75,7 @@ export function ExerciseMenu() {
         setError(null)
         const response = await apiClient.getUserExercises()
         if (response.data) {
-          setExercises(response.data.exercises)
+          setExercises(response.data.exercises ?? [])
         }
       } catch {
         setError('エラーが発生しました。再度お試しください。')

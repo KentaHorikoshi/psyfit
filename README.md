@@ -136,8 +136,33 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | S-08 | 職員管理 | ✅ | 26 tests | 95%+ | ⬜ |
 | S-09 | パスワードリセット | ✅ | 28 tests | 100% | ⬜ |
 
-**利用者向けテスト**: 277 tests passed, 97.77% overall coverage (2026-01-25) - 全画面実装完了 ✅
+**利用者向けテスト**: 302 tests passed, 99.81% overall coverage (2026-01-25) - 全画面実装完了 ✅
 **職員向けテスト**: 210 tests passed (2026-01-25) - 全画面実装完了 ✅
+
+### フロントエンドAPIクライアント
+
+#### 利用者向け (frontend_user/src/lib/api-client.ts) ✅ NEW (2026-01-25)
+
+| メソッド | エンドポイント | 機能 | テスト |
+|----------|---------------|------|:------:|
+| `login()` | POST /auth/login | ログイン | ✅ |
+| `logout()` | DELETE /auth/logout | ログアウト | ✅ |
+| `getCurrentUser()` | GET /users/me | 現在のユーザー取得 | ✅ |
+| `getUserExercises()` | GET /users/me/exercises | 割当運動メニュー取得 | ✅ |
+| `getExercise(id)` | GET /exercises/:id | 運動詳細取得 | ✅ |
+| `createExerciseRecord()` | POST /exercise_records | 運動記録作成 | ✅ |
+| `getExerciseRecords()` | GET /users/me/exercise_records | 運動履歴取得 | ✅ |
+| `createDailyCondition()` | POST /daily_conditions | 体調記録作成 | ✅ |
+| `getMyDailyConditions()` | GET /users/me/daily_conditions | 体調履歴取得 | ✅ |
+| `getMeasurements()` | GET /users/me/measurements | 測定値履歴取得 | ✅ |
+
+**機能**:
+- BaseURL設定（環境変数VITE_API_URL対応）
+- credentials: 'include' でCookie送信
+- エラーハンドリング（ApiError, AuthenticationError）
+- DateFilterParams対応（start_date, end_date）
+
+**テスト**: 25 tests, 100% coverage (MSW使用)
 
 ### バックエンド実装
 

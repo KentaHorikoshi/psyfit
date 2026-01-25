@@ -85,6 +85,10 @@ export interface CreateDailyConditionRequest {
   notes?: string
 }
 
+export interface DailyConditionsResponse {
+  conditions: DailyCondition[]
+}
+
 // Measurement Types
 export interface Measurement {
   id: string

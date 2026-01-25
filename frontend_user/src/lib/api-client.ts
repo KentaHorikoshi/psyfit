@@ -6,6 +6,7 @@ import type {
   User,
   DailyCondition,
   CreateDailyConditionRequest,
+  DailyConditionsResponse,
   MeasurementsResponse,
   ExerciseRecordsResponse,
   DateFilterParams,
@@ -22,6 +23,12 @@ class ApiClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl
+  }
+
+  private buildQueryString(params?: Record<string, string | undefined>): string {
+    if (!params) return ''
+    const entries = Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+    return entries.length > 0 ? '?' + new URLSearchParams(entries).toString() : ''
   }
 
   private async request<T>(
@@ -78,22 +85,12 @@ class ApiClient {
 
   // Exercise Records endpoints
   async getExerciseRecords(params?: DateFilterParams): Promise<ApiResponse<ExerciseRecordsResponse>> {
-    const queryString = params
-      ? '?' + new URLSearchParams(
-          Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
-        ).toString()
-      : ''
-    return this.request<ExerciseRecordsResponse>(`/users/me/exercise_records${queryString}`)
+    return this.request<ExerciseRecordsResponse>(`/users/me/exercise_records${this.buildQueryString(params)}`)
   }
 
   // Measurements endpoints
   async getMeasurements(params?: DateFilterParams): Promise<ApiResponse<MeasurementsResponse>> {
-    const queryString = params
-      ? '?' + new URLSearchParams(
-          Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
-        ).toString()
-      : ''
-    return this.request<MeasurementsResponse>(`/users/me/measurements${queryString}`)
+    return this.request<MeasurementsResponse>(`/users/me/measurements${this.buildQueryString(params)}`)
   }
 
   // Daily Condition endpoints
@@ -102,6 +99,10 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     })
+  }
+
+  async getMyDailyConditions(params?: DateFilterParams): Promise<ApiResponse<DailyConditionsResponse>> {
+    return this.request<DailyConditionsResponse>(`/users/me/daily_conditions${this.buildQueryString(params)}`)
   }
 
   // Exercise endpoints

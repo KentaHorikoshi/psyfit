@@ -52,7 +52,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | U-14 体調入力 | ConditionInput.tsx | ✅ 実装済み | ✅ 27件 |
 | U-15 まとめて記録 | BatchRecord.tsx | ✅ 実装済み | ✅ 25件 |
 
-**利用者向けテスト合計**: 277件（カバレッジ: 97.77%）
+**利用者向けテスト合計**: 302件（カバレッジ: 99.81%）
 
 ### 職員向け (frontend_admin) - 全画面実装完了 ✅
 
@@ -85,6 +85,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 - `frontend_user/src/components/__tests__/ConditionInput.test.tsx` - 体調入力 (27件)
 - `frontend_user/src/components/__tests__/BatchRecord.test.tsx` - まとめて記録 (25件)
 - `frontend_user/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト (8件)
+- `frontend_user/src/lib/__tests__/api-client.test.ts` - APIクライアント (25件) ✨NEW
 
 **フロントエンドテストファイル（職員向け）**:
 - `frontend_admin/src/components/__tests__/Login.test.tsx` - ログイン画面
@@ -99,7 +100,78 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 - `frontend_admin/src/components/__tests__/Sidebar.test.tsx` - サイドバー
 - `frontend_admin/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト
 
-**テストカバレッジ**: 97.17%（目標80%達成）
+**テストカバレッジ**: 99.81%（目標80%達成）
+
+### APIクライアント実装状況 (2026-01-25) ✨NEW
+
+#### 利用者向けAPIクライアント (`frontend_user/src/lib/api-client.ts`)
+
+| メソッド | エンドポイント | 機能 | テスト |
+|----------|---------------|------|:------:|
+| `login(credentials)` | POST /api/v1/auth/login | ログイン | ✅ |
+| `logout()` | DELETE /api/v1/auth/logout | ログアウト | ✅ |
+| `getCurrentUser()` | GET /api/v1/users/me | 現在ユーザー取得 | ✅ |
+| `getUserExercises()` | GET /api/v1/users/me/exercises | 運動メニュー取得 | ✅ |
+| `getExercise(id)` | GET /api/v1/exercises/:id | 運動詳細取得 | ✅ |
+| `createExerciseRecord(data)` | POST /api/v1/exercise_records | 運動記録作成 | ✅ |
+| `getExerciseRecords(params)` | GET /api/v1/users/me/exercise_records | 運動履歴取得 | ✅ |
+| `createDailyCondition(data)` | POST /api/v1/daily_conditions | 体調記録作成 | ✅ |
+| `getMyDailyConditions(params)` | GET /api/v1/users/me/daily_conditions | 体調履歴取得 | ✅ |
+| `getMeasurements(params)` | GET /api/v1/users/me/measurements | 測定値履歴取得 | ✅ |
+
+**実装ファイル**:
+- `frontend_user/src/lib/api-client.ts` - APIクライアント本体（100%カバレッジ）
+- `frontend_user/src/lib/api-types.ts` - 型定義
+- `frontend_user/src/lib/__tests__/api-client.test.ts` - テスト（25件）
+
+**機能**:
+- BaseURL設定（環境変数 `VITE_API_URL` 対応、デフォルト: `/api/v1`）
+- `credentials: 'include'` でセッションCookie送信
+- エラーハンドリング（`ApiError`, `AuthenticationError`）
+- `DateFilterParams` 対応（`start_date`, `end_date` クエリパラメータ）
+- 重複コード削減のための `buildQueryString` ヘルパーメソッド
+
+**エラークラス**:
+```typescript
+// 認証エラー（401）
+class AuthenticationError extends Error {
+  name = 'AuthenticationError'
+}
+
+// APIエラー（400, 422, 500など）
+class ApiError extends Error {
+  status: number
+  errors?: Record<string, string[]>
+}
+```
+
+**使用例**:
+```typescript
+import { apiClient, ApiError, AuthenticationError } from '@/lib/api-client'
+
+// ログイン
+const response = await apiClient.login({ email: 'user@example.com', password: 'pass' })
+console.log(response.data?.user)
+
+// 運動記録取得（日付フィルタ）
+const records = await apiClient.getExerciseRecords({
+  start_date: '2026-01-01',
+  end_date: '2026-01-31',
+})
+
+// エラーハンドリング
+try {
+  await apiClient.getCurrentUser()
+} catch (error) {
+  if (error instanceof AuthenticationError) {
+    // 認証エラー - ログインページへリダイレクト
+  } else if (error instanceof ApiError) {
+    console.error(error.message, error.status, error.errors)
+  }
+}
+```
+
+**テストツール**: MSW (Mock Service Worker) 2.12.7
 
 **テストファイル**:
 - `spec/requests/api/v1/auth_spec.rb` - 認証API

@@ -82,7 +82,7 @@ bin/rails db:encryption:init
 
 ```bash
 # Rails APIサーバー
-bin/rails server -p 3001
+bin/rails server -p 4001
 
 # フロントエンド開発サーバー（別ターミナル）
 cd src_user && npm run dev

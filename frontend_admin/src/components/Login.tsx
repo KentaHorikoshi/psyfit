@@ -119,7 +119,7 @@ export function Login() {
             <Input
               type="text"
               label="職員ID"
-              placeholder="例: ST001"
+              placeholder="例: STF001"
               value={staffId}
               onChange={(e) => handleStaffIdChange(e.target.value)}
               error={validationErrors.staffId}
@@ -201,7 +201,7 @@ export function Login() {
         {import.meta.env.DEV && (
           <div className="mt-4 bg-blue-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600 text-center">
-              <strong>開発用:</strong> ST001 / password123
+              <strong>開発用:</strong> MGR001 / Manager1! または STF001 / Staff123!
             </p>
           </div>
         )}

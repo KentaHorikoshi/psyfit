@@ -44,7 +44,7 @@ module Api
       # Staff login
       # POST /api/v1/auth/staff/login
       def staff_login
-        staff_id = staff_login_params[:staff_id]
+        staff_id = staff_login_params[:staff_id]&.strip
         password = staff_login_params[:password]
 
         staff = Staff.active.find_by(staff_id: staff_id)

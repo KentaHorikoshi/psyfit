@@ -294,8 +294,8 @@ Cookie: _psyfit_session=<session_id>
 ```json
 // Request
 {
-  "email": "patient@example.com",
-  "password": "password123"
+  "email": "tanaka@example.com",
+  "password": "Patient1!"
 }
 
 // Response (200 OK)
@@ -304,8 +304,8 @@ Cookie: _psyfit_session=<session_id>
   "data": {
     "user": {
       "id": "uuid",
-      "name": "田中太郎",
-      "email": "patient@example.com",
+      "name": "田中 健一",
+      "email": "tanaka@example.com",
       "continue_days": 14
     }
   }
@@ -317,8 +317,8 @@ Cookie: _psyfit_session=<session_id>
 ```json
 // Request
 {
-  "staff_id": "yamada",
-  "password": "password123"
+  "staff_id": "MGR001",
+  "password": "Manager1!"
 }
 
 // Response (200 OK)
@@ -327,8 +327,8 @@ Cookie: _psyfit_session=<session_id>
   "data": {
     "staff": {
       "id": "uuid",
-      "staff_id": "yamada",
-      "name": "山田太郎",
+      "staff_id": "MGR001",
+      "name": "山田 太郎",
       "role": "manager"
     }
   }

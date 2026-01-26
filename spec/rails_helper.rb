@@ -50,6 +50,12 @@ RSpec.configure do |config|
   # FactoryBot setup
   config.include FactoryBot::Syntax::Methods
 
+  # ActiveJob inline execution for mailer tests
+  config.include ActiveJob::TestHelper
+  config.before(:each) do
+    ActiveJob::Base.queue_adapter = :test
+  end
+
   # Request spec helpers
   config.include RequestSpecHelper, type: :request
 

@@ -55,6 +55,12 @@ Rails.application.routes.draw do
 
       # Exercise masters
       resources :exercise_masters, only: [ :index ]
+
+      # Video streaming with access control
+      scope :videos do
+        get ":exercise_id/token", to: "videos#token"
+        get ":exercise_id/stream", to: "videos#stream"
+      end
     end
   end
 

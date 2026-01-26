@@ -2,7 +2,7 @@
 
 このファイルには、基本設計書から派生した確認事項やTODO項目を記録します。
 
-**最終更新**: 2026-01-25
+**最終更新**: 2026-01-26
 **ステータス**: **Phase 1 MVP 完了** - 全画面実装、E2Eテスト完了、ESLintエラー修正完了
 
 ---
@@ -39,7 +39,7 @@
 ### 3. 認証・セキュリティ
 - [ ] 二要素認証(2FA)の導入要否
 - [x] パスワードリセットAPI実装 → **完了（2026-01-25）**
-- [ ] パスワードリセットのメール送信実装（現在はスタブ）
+- [x] パスワードリセットのメール送信実装 → **完了（2026-01-26）**
 - [ ] セッションタイムアウト後の挙動詳細
 - [ ] API呼び出しのレート制限詳細
 
@@ -321,7 +321,7 @@ npm run test:e2e:report   # レポート表示
 ### Phase 2 残作業（本番デプロイ準備）
 | 項目 | 状態 | 優先度 |
 |------|------|--------|
-| パスワードリセットメール送信 | スタブ実装 | 高 |
+| パスワードリセットメール送信 | ✅ 完了 (2026-01-26) | 高 |
 | 動画アクセス制御 | 未着手 | 高 |
 | レート制限 | 未着手 | 中 |
 | Docker環境構築 | 未着手 | 高 |
@@ -454,9 +454,70 @@ TDDで実装完了。利用者・職員両方に対応。
 
 ### 次のステップ（Phase 2）
 
-- [ ] パスワードリセットメール送信実装（Sendgrid/SES統合）
+- [x] パスワードリセットメール送信実装 ← **完了（2026-01-26）**
 - [ ] 動画アクセス制御実装（認証済みユーザーのみ）
 - [ ] レート制限実装
 - [ ] Docker環境構築（docker-compose.yml, .env.example）
 - [ ] CI/CDパイプライン構築（GitHub Actions）
 - [ ] 本番環境デプロイ準備
+
+## パスワードリセットメール送信実装サマリー（2026-01-26）
+
+### 実装内容
+
+TDDで実装。Action Mailerを使用したメール送信機能。
+
+### 作成ファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `app/mailers/user_mailer.rb` | UserMailerクラス（password_reset_instructions メソッド） |
+| `app/views/user_mailer/password_reset_instructions.text.erb` | テキスト版メールテンプレート |
+| `app/views/user_mailer/password_reset_instructions.html.erb` | HTML版メールテンプレート |
+| `spec/mailers/user_mailer_spec.rb` | メーラーテスト（13件） |
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `app/mailers/application_mailer.rb` | default from を環境変数から取得するよう更新 |
+| `app/controllers/api/v1/auth_controller.rb` | メール送信処理追加、エラーハンドリング実装 |
+| `spec/requests/api/v1/password_reset_spec.rb` | メール送信統合テスト追加（4件） |
+| `spec/rails_helper.rb` | ActiveJob::TestHelper追加 |
+
+### メール仕様
+
+| 項目 | 内容 |
+|------|------|
+| 件名 | 【PsyFit】パスワードリセットのご案内 |
+| 送信元 | `noreply@psyfit.jp`（環境変数 `MAILER_FROM_ADDRESS` で変更可能） |
+| 形式 | text/plain, text/html 両方 |
+| 内容 | ユーザー名、リセットリンク、24時間有効期限の明示 |
+| 送信方式 | `deliver_later`（非同期） |
+
+### 環境変数
+
+| 変数名 | デフォルト値 | 説明 |
+|--------|-------------|------|
+| `MAILER_FROM_ADDRESS` | `noreply@psyfit.jp` | メール送信元アドレス |
+| `USER_APP_URL` | `http://localhost:3000` | 利用者向けアプリURL（リセットリンク用） |
+| `ADMIN_APP_URL` | `http://localhost:3003` | 職員向けアプリURL（リセットリンク用） |
+
+### セキュリティ要件
+
+- メール送信エラー時も成功レスポンスを返す（情報漏洩防止）
+- 存在しないメールアドレスでも同じレスポンス（列挙攻撃対策）
+- メール本文にトークンを含むリセットリンクを記載
+- 有効期限（24時間）を明示
+
+### テスト結果
+
+- **UserMailer テスト**: 13件 パス
+- **API統合テスト（メール送信関連）**: 4件 パス
+- **全テスト**: 44件 パス
+
+### 注意事項
+
+- 現在の `PasswordResetToken` の有効期限は **1時間** です
+- 要件の **24時間** に変更する場合は `app/models/password_reset_token.rb:82` を修正
+- 本番環境では SMTP 設定（Sendgrid, SES 等）が必要

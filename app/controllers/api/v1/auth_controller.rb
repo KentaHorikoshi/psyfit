@@ -227,9 +227,7 @@ module Api
         token = PasswordResetToken.generate_for_user(user)
         AuditLog.log_password_reset(user, ip_address: client_ip, step: "request")
 
-        # TODO: Send email with token (stub for now)
-        # PasswordResetMailer.reset_email(user, token).deliver_later
-        Rails.logger.info("Password reset token generated for user #{user.id}: #{token.token}")
+        send_password_reset_email(user, token)
       end
 
       def handle_staff_password_reset_request(staff_id)
@@ -239,9 +237,15 @@ module Api
         token = PasswordResetToken.generate_for_staff(staff)
         AuditLog.log_password_reset(staff, ip_address: client_ip, step: "request")
 
-        # TODO: Send email with token (stub for now)
-        # PasswordResetMailer.reset_email(staff, token).deliver_later
-        Rails.logger.info("Password reset token generated for staff #{staff.id}: #{token.token}")
+        send_password_reset_email(staff, token)
+      end
+
+      def send_password_reset_email(recipient, token)
+        UserMailer.password_reset_instructions(recipient, token).deliver_later
+        Rails.logger.info("Password reset email enqueued for #{recipient.class.name} #{recipient.id}")
+      rescue StandardError => e
+        # Log the error but don't expose it to the user (security: no information leakage)
+        Rails.logger.error("Failed to enqueue password reset email for #{recipient.class.name} #{recipient.id}: #{e.message}")
       end
     end
   end

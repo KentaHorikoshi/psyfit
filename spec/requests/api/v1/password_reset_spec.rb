@@ -38,6 +38,28 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
           expect(log.user_id).to eq(user.id)
           expect(JSON.parse(log.additional_info)['step']).to eq('request')
         end
+
+        it 'sends password reset email' do
+          perform_enqueued_jobs do
+            expect {
+              post '/api/v1/auth/password_reset_request', params: { email: user.email }
+            }.to change { ActionMailer::Base.deliveries.count }.by(1)
+          end
+
+          mail = ActionMailer::Base.deliveries.last
+          expect(mail.to).to eq([user.email])
+          expect(mail.subject).to eq('【PsyFit】パスワードリセットのご案内')
+        end
+
+        it 'sends email with valid reset token' do
+          perform_enqueued_jobs do
+            post '/api/v1/auth/password_reset_request', params: { email: user.email }
+          end
+
+          mail = ActionMailer::Base.deliveries.last
+          token = PasswordResetToken.last
+          expect(mail.text_part.body.decoded).to include(token.token)
+        end
       end
 
       context 'when email does not exist' do
@@ -52,6 +74,28 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
           expect {
             post '/api/v1/auth/password_reset_request', params: { email: 'nonexistent@example.com' }
           }.not_to change(PasswordResetToken, :count)
+        end
+
+        it 'does not send any email (security: no enumeration)' do
+          perform_enqueued_jobs do
+            expect {
+              post '/api/v1/auth/password_reset_request', params: { email: 'nonexistent@example.com' }
+            }.not_to change { ActionMailer::Base.deliveries.count }
+          end
+        end
+      end
+
+      context 'when email sending fails' do
+        before do
+          allow(UserMailer).to receive(:password_reset_instructions)
+            .and_raise(StandardError.new('SMTP connection failed'))
+        end
+
+        it 'still returns success (no information leakage)' do
+          post '/api/v1/auth/password_reset_request', params: { email: user.email }
+
+          expect(response).to have_http_status(:ok)
+          expect(json_response['status']).to eq('success')
         end
       end
 
@@ -96,6 +140,18 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
           log = AuditLog.recent.first
           expect(log.action).to eq('password_reset')
           expect(log.staff_id).to eq(staff.id)
+        end
+
+        it 'sends password reset email to staff' do
+          perform_enqueued_jobs do
+            expect {
+              post '/api/v1/auth/password_reset_request', params: { staff_id: 'test_staff' }
+            }.to change { ActionMailer::Base.deliveries.count }.by(1)
+          end
+
+          mail = ActionMailer::Base.deliveries.last
+          expect(mail.to).to eq([staff.email])
+          expect(mail.subject).to eq('【PsyFit】パスワードリセットのご案内')
         end
       end
 

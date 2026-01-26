@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_24_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_26_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -198,6 +198,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_100000) do
     t.index ["user_code"], name: "index_users_on_user_code", unique: true
   end
 
+  create_table "video_access_tokens", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "exercise_id", null: false
+    t.datetime "expires_at", null: false
+    t.string "token", limit: 64, null: false
+    t.datetime "updated_at", null: false
+    t.datetime "used_at"
+    t.uuid "user_id", null: false
+    t.index ["exercise_id"], name: "index_video_access_tokens_on_exercise_id"
+    t.index ["expires_at", "used_at"], name: "index_video_access_tokens_on_valid"
+    t.index ["expires_at"], name: "index_video_access_tokens_on_expires_at"
+    t.index ["token"], name: "index_video_access_tokens_on_token", unique: true
+    t.index ["user_id", "exercise_id"], name: "index_video_access_tokens_on_user_id_and_exercise_id"
+    t.index ["user_id"], name: "index_video_access_tokens_on_user_id"
+  end
+
   create_table "videos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -226,5 +242,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_100000) do
   add_foreign_key "patient_exercises", "users"
   add_foreign_key "patient_staff_assignments", "staff"
   add_foreign_key "patient_staff_assignments", "users"
+  add_foreign_key "video_access_tokens", "exercises"
+  add_foreign_key "video_access_tokens", "users", on_delete: :cascade
   add_foreign_key "videos", "exercises"
 end

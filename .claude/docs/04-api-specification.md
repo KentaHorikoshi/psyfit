@@ -176,6 +176,7 @@ try {
 **テストファイル**:
 - `spec/requests/api/v1/auth_spec.rb` - 認証API
 - `spec/requests/api/v1/password_reset_spec.rb` - パスワードリセットAPI
+- `spec/mailers/user_mailer_spec.rb` - パスワードリセットメール（13テスト）
 - `spec/requests/api/v1/user_exercises_spec.rb` - 運動メニューAPI
 - `spec/requests/api/v1/exercise_records_spec.rb` - 運動記録API
 - `spec/requests/api/v1/daily_conditions_spec.rb` - 体調記録API
@@ -188,6 +189,9 @@ try {
 - `spec/models/password_reset_token_spec.rb` - パスワードリセットトークンモデル
 
 **実装ファイル**:
+- `app/mailers/user_mailer.rb` - パスワードリセットメール送信
+- `app/views/user_mailer/password_reset_instructions.text.erb` - メールテンプレート（テキスト）
+- `app/views/user_mailer/password_reset_instructions.html.erb` - メールテンプレート（HTML）
 - `app/controllers/api/v1/daily_conditions_controller.rb` - 体調記録コントローラ
 - `app/controllers/api/v1/measurements_controller.rb` - 測定値コントローラ（職員用）
 - `app/controllers/api/v1/user_measurements_controller.rb` - 測定値コントローラ（利用者用）
@@ -381,9 +385,15 @@ Cookie: _psyfit_session=<session_id>
 
 #### POST /api/v1/auth/password_reset_request (パスワードリセット要求) ✅
 
-パスワードリセットトークンを生成し、メール送信する（メール送信は現在スタブ）。
+パスワードリセットトークンを生成し、メール送信する。
 
 **認証**: 不要
+
+**メール送信**: ✅ 実装済み（2026-01-26）
+- Action Mailer (`UserMailer.password_reset_instructions`)
+- text/html 両形式のテンプレート
+- 非同期送信 (`deliver_later`)
+- エラー時も成功レスポンス（情報漏洩防止）
 
 **リクエスト（利用者）**:
 ```json

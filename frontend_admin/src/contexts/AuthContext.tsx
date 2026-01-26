@@ -64,7 +64,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const response = await api.getCurrentStaff()
         if (response.status === 'success' && response.data) {
-          setStaff(response.data)
+          const data = response.data as Record<string, unknown>
+          // /auth/me returns {staff: {...}} for staff sessions
+          // Ignore user sessions ({user: {...}}) from the user app
+          if (data.staff) {
+            setStaff(data.staff as Staff)
+          }
         }
       } catch {
         // No active session - that's ok

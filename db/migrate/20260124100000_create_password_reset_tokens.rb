@@ -22,8 +22,8 @@ class CreatePasswordResetTokens < ActiveRecord::Migration[8.1]
     add_index :password_reset_tokens, :user_id
     add_index :password_reset_tokens, :staff_id
     add_index :password_reset_tokens, :expires_at
-    add_index :password_reset_tokens, [:user_id, :used_at]
-    add_index :password_reset_tokens, [:staff_id, :used_at]
+    add_index :password_reset_tokens, [ :user_id, :used_at ]
+    add_index :password_reset_tokens, [ :staff_id, :used_at ]
 
     # Foreign keys
     add_foreign_key :password_reset_tokens, :users, column: :user_id, on_delete: :cascade

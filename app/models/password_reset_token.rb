@@ -14,7 +14,7 @@ class PasswordResetToken < ApplicationRecord
   before_create :set_expiration
 
   # Scopes
-  scope :valid, -> { where('expires_at > ? AND used_at IS NULL', Time.current) }
+  scope :valid, -> { where("expires_at > ? AND used_at IS NULL", Time.current) }
   scope :for_user, ->(user) { where(user: user) }
   scope :for_staff, ->(staff) { where(staff: staff) }
 
@@ -85,12 +85,12 @@ class PasswordResetToken < ApplicationRecord
   def user_or_staff_present
     return if user_id.present? || staff_id.present?
 
-    errors.add(:base, 'user_id または staff_id のどちらかが必要です')
+    errors.add(:base, "user_id または staff_id のどちらかが必要です")
   end
 
   def user_and_staff_mutually_exclusive
     return unless user_id.present? && staff_id.present?
 
-    errors.add(:base, 'user_id と staff_id を同時に設定できません')
+    errors.add(:base, "user_id と staff_id を同時に設定できません")
   end
 end

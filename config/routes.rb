@@ -42,12 +42,19 @@ Rails.application.routes.draw do
       # Staff endpoints (patients management)
       resources :patients, only: [ :index, :show ] do
         resources :measurements, only: [ :index, :create ], controller: "measurements"
-        resources :exercises, only: [ :create ], controller: "patient_exercises"
+        resources :exercises, only: [ :index, :create ], controller: "patient_exercises"
         get "report", to: "patient_reports#show"
       end
 
       # Staff management (manager only)
-      resources :staff, only: [ :index, :create ]
+      resources :staff, only: [ :index, :create ] do
+        collection do
+          post "me/password", to: "staff#change_password"
+        end
+      end
+
+      # Exercise masters
+      resources :exercise_masters, only: [ :index ]
     end
   end
 

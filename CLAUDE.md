@@ -71,6 +71,9 @@ bin/rails server -b 0.0.0.0 -p 3001
 
 # 2. フロントエンド (利用者向け) - ポート3000
 cd frontend_user && npm run dev -- --host 0.0.0.0 --port 3000
+
+# 3. フロントエンド (職員向け) - ポート3003
+cd frontend_admin && npm run dev -- --host 0.0.0.0 --port 3003
 ```
 
 ### アクセスURL
@@ -78,6 +81,7 @@ cd frontend_user && npm run dev -- --host 0.0.0.0 --port 3000
 | アプリ | URL |
 |--------|-----|
 | 利用者向けフロントエンド | http://localhost:3000 |
+| 職員向けフロントエンド | http://localhost:3003 |
 | バックエンドAPI | http://localhost:3001 |
 | APIヘルスチェック | http://localhost:3001/api/v1/health |
 

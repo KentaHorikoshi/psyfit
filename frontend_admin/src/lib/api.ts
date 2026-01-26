@@ -5,6 +5,7 @@ import type {
   StaffLoginRequest,
   StaffLoginResponse,
   LogoutResponse,
+  PatientsListResponse,
   PatientDetail,
   MeasurementInput,
   Measurement,
@@ -19,7 +20,7 @@ import type {
   ChangePasswordResponse,
 } from './api-types'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 interface HealthResponse {
   health_status: string
@@ -101,10 +102,17 @@ class ApiClient {
   }
 
   async getCurrentStaff(): Promise<ApiResponse<Staff>> {
-    return this.get<Staff>('/staff/me')
+    return this.get<Staff>('/auth/me')
   }
 
   // Patient Management
+  async getPatients(
+    params?: Record<string, string>
+  ): Promise<ApiResponse<PatientsListResponse>> {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : ''
+    return this.get<PatientsListResponse>(`/patients${query}`)
+  }
+
   async getPatientDetail(patientId: string): Promise<ApiResponse<PatientDetail>> {
     return this.get<PatientDetail>(`/patients/${patientId}`)
   }

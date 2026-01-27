@@ -2,8 +2,8 @@
 
 このファイルには、基本設計書から派生した確認事項やTODO項目を記録します。
 
-**最終更新**: 2026-01-26
-**ステータス**: **Phase 1 MVP 完了** - 全画面実装、E2Eテスト完了、ESLintエラー修正完了
+**最終更新**: 2026-01-27
+**ステータス**: **Phase 2 進行中** - Docker環境構築完了、CI/CD・本番デプロイ準備中
 
 ---
 
@@ -31,7 +31,7 @@
 - [x] オフライン視聴機能 → **不要**
 
 ### 2. データベース詳細設計
-- [ ] PostgreSQLバージョンの確定
+- [x] PostgreSQLバージョンの確定 → **PostgreSQL 16（Docker環境で確定）**
 - [ ] データベース暗号化の実装方式詳細
 - [ ] バックアップ・リストア手順の策定
 - [ ] レプリケーション構成の検討
@@ -41,7 +41,7 @@
 - [x] パスワードリセットAPI実装 → **完了（2026-01-25）**
 - [x] パスワードリセットのメール送信実装 → **完了（2026-01-26）**
 - [ ] セッションタイムアウト後の挙動詳細
-- [ ] API呼び出しのレート制限詳細
+- [x] API呼び出しのレート制限詳細 → **完了（2026-01-27）**
 
 ### 4. UI/UX詳細
 - [ ] ウェルカム画面の自動遷移時間の調整（現在3秒）
@@ -178,10 +178,13 @@ npm run test:e2e:report   # レポート表示
 
 ## インフラ・環境
 
-### 開発環境
-- [ ] Dockerコンテナ構成の確定
-- [ ] docker-compose.yml作成
-- [ ] 環境変数テンプレート (.env.example) 作成
+### 開発環境 ✅ 完了 (2026-01-27)
+- [x] Dockerコンテナ構成の確定 → **api, db(PostgreSQL 16), redis(Redis 7), frontend_user, frontend_admin**
+- [x] docker-compose.yml作成 → **開発用・本番用の2ファイル構成**
+- [x] 環境変数テンプレート (.env.example) 作成
+- [x] Dockerfile.dev作成（開発用）
+- [x] 既存Dockerfile更新（PostgreSQL対応）
+- [x] bin/docker-setup, bin/docker-start, bin/docker-test スクリプト作成
 
 ### ステージング環境
 - [ ] サーバースペック確定
@@ -268,8 +271,8 @@ npm run test:e2e:report   # レポート表示
 - [x] S-07: レポート出力 ← **実装完了**
 - [x] S-08: 職員管理 ← **実装完了**
 - [x] 監査ログの実装 ← **実装完了**
-- [ ] 動画アクセス制御の実装
-- [ ] レート制限の実装
+- [x] 動画アクセス制御の実装 ← **実装完了（2026-01-27）**
+- [x] レート制限の実装 ← **実装完了（2026-01-27）**
 - [x] パスワードリセットUI（フロントエンド） ← **実装完了（2026-01-25）**
 
 ## 実装完了サマリー（2026-01-25）
@@ -322,9 +325,9 @@ npm run test:e2e:report   # レポート表示
 | 項目 | 状態 | 優先度 |
 |------|------|--------|
 | パスワードリセットメール送信 | ✅ 完了 (2026-01-26) | 高 |
-| 動画アクセス制御 | 未着手 | 高 |
-| レート制限 | 未着手 | 中 |
-| Docker環境構築 | 未着手 | 高 |
+| 動画アクセス制御 | ✅ 完了 (2026-01-27) | 高 |
+| レート制限 | ✅ 完了 (2026-01-27) | 中 |
+| Docker環境構築 | ✅ 完了 (2026-01-27) | 高 |
 | CI/CDパイプライン | 未着手 | 中 |
 | 本番環境デプロイ | 未着手 | 高 |
 
@@ -455,9 +458,9 @@ TDDで実装完了。利用者・職員両方に対応。
 ### 次のステップ（Phase 2）
 
 - [x] パスワードリセットメール送信実装 ← **完了（2026-01-26）**
-- [ ] 動画アクセス制御実装（認証済みユーザーのみ）
-- [ ] レート制限実装
-- [ ] Docker環境構築（docker-compose.yml, .env.example）
+- [x] 動画アクセス制御実装（認証済みユーザーのみ） ← **完了（2026-01-27）**
+- [x] レート制限実装 ← **完了（2026-01-27）**
+- [x] Docker環境構築（docker-compose.yml, .env.example） ← **完了（2026-01-27）**
 - [ ] CI/CDパイプライン構築（GitHub Actions）
 - [ ] 本番環境デプロイ準備
 
@@ -521,3 +524,122 @@ TDDで実装。Action Mailerを使用したメール送信機能。
 - 現在の `PasswordResetToken` の有効期限は **1時間** です
 - 要件の **24時間** に変更する場合は `app/models/password_reset_token.rb:82` を修正
 - 本番環境では SMTP 設定（Sendgrid, SES 等）が必要
+
+## APIレート制限実装サマリー（2026-01-27）
+
+### 実装内容
+
+TDDでRack::Attackによるセッション別APIレート制限を実装。
+
+### レート制限ルール
+
+| 対象 | 制限値 | 期間 | 識別単位 |
+|------|--------|------|---------|
+| 利用者（一般API） | 60リクエスト | 1分 | セッション（user_id） |
+| 職員（一般API） | 120リクエスト | 1分 | セッション（staff_id） |
+| 認証エンドポイント | 10リクエスト | 1分 | IP + ログイン識別子 |
+| パスワードリセット | 5リクエスト | 1時間 | IPアドレス |
+| 未認証（フォールバック） | 120リクエスト | 1分 | IPアドレス |
+
+### レスポンスヘッダー
+
+全APIレスポンスに付与:
+- `X-RateLimit-Limit` — 制限値
+- `X-RateLimit-Remaining` — 残りリクエスト数
+- `X-RateLimit-Reset` — リセット時刻（Unix timestamp）
+
+制限超過時: `429 Too Many Requests` + `Retry-After` ヘッダー + JSON エラーボディ
+
+### 不正リクエスト遮断
+
+SQLインジェクション・XSSパターン検出 → Fail2Ban（3回/10分で1時間遮断） → `403 Forbidden`
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `config/initializers/rack_attack.rb` | セッション別スロットル、API仕様準拠の制限値に全面改修 |
+| `app/middleware/rate_limit_headers.rb` | 新規: X-RateLimit-* ヘッダー付与ミドルウェア |
+| `config/initializers/rate_limit_headers.rb` | 新規: ミドルウェア登録 |
+| `spec/initializers/rack_attack_spec.rb` | 新規: 23テストケース |
+
+### テスト結果
+
+- **レート制限テスト**: 23件 パス（100%カバレッジ）
+- **全テスト**: 460件、カバレッジ 94.85%
+- **既存テストへの影響**: なし（回帰なし）
+
+## Docker開発・本番環境構築サマリー（2026-01-27）
+
+### 実装内容
+
+TDDで開発・本番用Docker環境を構築。41項目のテストスクリプトで検証済み。
+
+### アーキテクチャ
+
+| サービス | 開発環境 | 本番環境 |
+|---------|---------|---------|
+| api | Dockerfile.dev (Ruby 4.0.1-slim) ポート4001 | Dockerfile (マルチステージビルド) ポート80 |
+| db | PostgreSQL 16 Alpine ポート5432 | PostgreSQL 16 Alpine ポート5432 |
+| redis | Redis 7 Alpine ポート6379 | Redis 7 Alpine（AOF有効） ポート6379 |
+| frontend_user | Node 20 Alpine ポート3000 | - （静的ビルド配信） |
+| frontend_admin | Node 20 Alpine ポート3003 | - （静的ビルド配信） |
+
+### 作成ファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `Dockerfile.dev` | 開発用Dockerfile（Ruby 4.0.1-slim + PostgreSQL client） |
+| `docker-compose.yml` | 開発環境（5サービス、ヘルスチェック、ボリューム永続化） |
+| `docker-compose.prod.yml` | 本番環境（3サービス、ヘルスチェック、ログローテーション） |
+| `.env.example` | 環境変数テンプレート |
+| `.env.docker` | Docker開発用デフォルト値 |
+| `bin/docker-setup` | 初回セットアップスクリプト |
+| `bin/docker-start` | 起動スクリプト（引数でサービス選択可能） |
+| `bin/docker-test` | Docker環境テストスクリプト（41項目） |
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `Dockerfile` | sqlite3 → libpq5/postgresql-client（PostgreSQL対応） |
+| `.gitignore` | .env.example, .env.docker をトラッキング対象に追加 |
+| `.dockerignore` | docker-compose*.yml, frontend_*/ を除外に追加 |
+
+### テスト結果
+
+- **テストスクリプト**: bin/docker-test（41項目）
+- **ファイル存在**: 10件 パス
+- **Compose設定検証**: 2件 パス
+- **サービス定義**: 8件 パス
+- **ポートマッピング**: 5件 パス
+- **環境変数テンプレート**: 10件 パス
+- **セキュリティ**: 3件 パス
+- **ボリューム・ヘルスチェック**: 3件 パス
+- **Dockerfile.devビルド**: パス
+
+### 使い方
+
+```bash
+# 初回セットアップ
+bin/docker-setup
+
+# 全サービス起動
+bin/docker-start
+
+# バックグラウンド起動
+bin/docker-start -d
+
+# 特定サービスのみ
+bin/docker-start api       # APIのみ
+bin/docker-start db        # DB+Redisのみ
+bin/docker-start frontend  # フロントエンドのみ
+
+# 停止
+bin/docker-start stop
+
+# テスト実行
+bin/docker-test
+DOCKER_BUILD_TEST=true bin/docker-test
+DOCKER_BUILD_TEST=true DOCKER_UP_TEST=true bin/docker-test
+```

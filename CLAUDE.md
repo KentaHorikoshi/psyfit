@@ -23,8 +23,10 @@ PsyFit - リハビリ運動支援アプリ（利用者向け・職員向け 統�
 
 ### Backend
 - **Framework**: Ruby on Rails 8 (API mode)
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL 16
+- **Cache/Session**: Redis 7
 - **Authentication**: Session-based auth
+- **Container**: Docker + Docker Compose
 
 ## Critical Rules
 
@@ -85,6 +87,30 @@ cd frontend_admin && npm run dev -- --host 0.0.0.0 --port 3003
 | バックエンドAPI | http://localhost:4001 |
 | APIヘルスチェック | http://localhost:4001/api/v1/health |
 
+### Docker環境での起動
+
+```bash
+# 初回セットアップ（.env作成、ビルド、DB作成）
+bin/docker-setup
+
+# 全サービス起動
+bin/docker-start
+
+# バックグラウンド起動
+bin/docker-start -d
+
+# 特定サービスのみ起動
+bin/docker-start api       # APIのみ
+bin/docker-start db        # DB+Redisのみ
+bin/docker-start frontend  # フロントエンドのみ
+
+# 停止
+bin/docker-start stop
+
+# Docker環境テスト（41項目）
+bin/docker-test
+```
+
 ### 開発用アカウント
 
 ```bash
@@ -104,16 +130,25 @@ bin/rails db:seed
 
 ```
 psyfit/
-├── frontend_user/      # 利用者向けアプリ (U-01〜U-15画面)
+├── frontend_user/         # 利用者向けアプリ (U-01〜U-15画面)
 │   └── src/
-├── frontend_admin/     # 職員向けアプリ (S-01〜S-09画面)
+├── frontend_admin/        # 職員向けアプリ (S-01〜S-09画面)
 │   └── src/
-├── app/                # Rails backend
+├── app/                   # Rails backend
 ├── .claude/
-│   ├── docs/           # Design specifications
-│   ├── agents/         # Specialized agents
-│   └── skills/         # Reusable skills
-└── CLAUDE.md           # This file
+│   ├── docs/              # Design specifications
+│   ├── agents/            # Specialized agents
+│   └── skills/            # Reusable skills
+├── Dockerfile             # 本番用 (マルチステージビルド)
+├── Dockerfile.dev         # 開発用
+├── docker-compose.yml     # 開発環境 (api, db, redis, frontends)
+├── docker-compose.prod.yml # 本番環境 (api, db, redis)
+├── .env.example           # 環境変数テンプレート
+├── .env.docker            # Docker開発用デフォルト値
+├── bin/docker-setup       # 初回セットアップ
+├── bin/docker-start       # 起動スクリプト
+├── bin/docker-test        # Docker環境テスト
+└── CLAUDE.md              # This file
 ```
 
 ## Screen Design Reference

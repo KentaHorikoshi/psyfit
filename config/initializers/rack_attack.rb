@@ -1,57 +1,77 @@
+# frozen_string_literal: true
+
 # Rack::Attack configuration for rate limiting
-# Protects authentication endpoints from brute force attacks
+# Protects API endpoints with per-role rate limits and brute force prevention
 
 class Rack::Attack
   # Cache store for tracking requests
   # Uses Rails cache (memory store in dev, Redis in production)
   Rack::Attack.cache.store = Rails.cache
 
+  ### Authentication endpoint throttling ###
+
   # Throttle login attempts by IP address
-  # 5 requests per 20 seconds
-  throttle("logins/ip", limit: 5, period: 20.seconds) do |req|
-    if req.path == "/api/v1/auth/login" && req.post?
+  # 10 requests per minute (brute force protection)
+  throttle("auth/login/ip", limit: 10, period: 60.seconds) do |req|
+    if login_path?(req) && req.post?
       req.ip
     end
   end
 
-  # Throttle login attempts by email/user_code
-  # 5 requests per minute per account
-  throttle("logins/identifier", limit: 5, period: 60.seconds) do |req|
-    if req.path == "/api/v1/auth/login" && req.post?
-      # Extract email or user_code from request body
-      body = begin
-        JSON.parse(req.body.read)
-      rescue
-        {}
-      ensure
-        req.body.rewind
+  # Throttle login attempts by identifier
+  # 10 requests per minute per account
+  throttle("auth/login/identifier", limit: 10, period: 60.seconds) do |req|
+    if login_path?(req) && req.post?
+      extract_login_identifier(req)
+    end
+  end
+
+  ### Password reset throttling ###
+
+  # 5 requests per hour per IP
+  throttle("auth/password_reset/ip", limit: 5, period: 1.hour) do |req|
+    if password_reset_path?(req) && req.post?
+      req.ip
+    end
+  end
+
+  ### Session-based API rate limiting ###
+
+  # User sessions: 60 requests per minute
+  throttle("api/user", limit: 60, period: 60.seconds) do |req|
+    if general_api_path?(req)
+      session = req.env["rack.session"] || {}
+      if session["user_type"] == "user" && session["user_id"]
+        "user:#{session['user_id']}"
       end
-
-      body["email"] || body["user_code"] || body["staff_id"]
     end
   end
 
-  # Throttle password reset requests
-  # 3 requests per hour per IP
-  throttle("password_reset/ip", limit: 3, period: 1.hour) do |req|
-    if req.path == "/api/v1/auth/password_reset" && req.post?
-      req.ip
+  # Staff sessions: 120 requests per minute
+  throttle("api/staff", limit: 120, period: 60.seconds) do |req|
+    if general_api_path?(req)
+      session = req.env["rack.session"] || {}
+      if session["user_type"] == "staff" && session["staff_id"]
+        "staff:#{session['staff_id']}"
+      end
     end
   end
 
-  # General API rate limit
-  # 100 requests per minute per IP
-  throttle("api/ip", limit: 100, period: 1.minute) do |req|
-    if req.path.start_with?("/api/")
-      req.ip
+  # Fallback IP-based rate limit for unauthenticated API requests
+  # Uses the higher staff limit as default
+  throttle("api/ip", limit: 120, period: 60.seconds) do |req|
+    if general_api_path?(req)
+      session = req.env["rack.session"] || {}
+      unless session["user_type"]
+        req.ip
+      end
     end
   end
 
-  # Block suspicious requests (SQL injection attempts, etc.)
+  ### Suspicious request blocking ###
+
   blocklist("block/suspicious") do |req|
-    # Block requests with suspicious patterns
     Rack::Attack::Fail2Ban.filter("suspicious-#{req.ip}", maxretry: 3, findtime: 10.minutes, bantime: 1.hour) do
-      # Suspicious patterns in path or query string
       suspicious_patterns = [
         /union.*select/i,
         /insert.*into/i,
@@ -67,31 +87,59 @@ class Rack::Attack
     end
   end
 
+  ### Response handlers ###
+
   # Custom response for throttled requests
   self.throttled_responder = lambda do |req|
     match_data = req.env["rack.attack.match_data"]
     now = match_data[:epoch_time]
+    retry_after = (match_data[:period] - (now % match_data[:period])).to_i
 
     headers = {
       "Content-Type" => "application/json",
-      "Retry-After" => (match_data[:period] - (now % match_data[:period])).to_s
+      "Retry-After" => retry_after.to_s
     }
 
     body = {
       error: "Rate limit exceeded",
-      retry_after: headers["Retry-After"].to_i
+      retry_after: retry_after
     }.to_json
 
-    [ 429, headers, [ body ] ]
+    [429, headers, [body]]
   end
 
   # Custom response for blocked requests
   self.blocklisted_responder = lambda do |req|
-    body = {
-      error: "Access denied"
-    }.to_json
+    body = { error: "Access denied" }.to_json
+    [403, { "Content-Type" => "application/json" }, [body]]
+  end
 
-    [ 403, { "Content-Type" => "application/json" }, [ body ] ]
+  ### Helper methods ###
+
+  class << self
+    def login_path?(req)
+      req.path == "/api/v1/auth/login" || req.path == "/api/v1/auth/staff/login"
+    end
+
+    def password_reset_path?(req)
+      req.path == "/api/v1/auth/password_reset_request" || req.path == "/api/v1/auth/password_reset"
+    end
+
+    def general_api_path?(req)
+      req.path.start_with?("/api/") && !login_path?(req) && !password_reset_path?(req)
+    end
+
+    def extract_login_identifier(req)
+      body = begin
+        JSON.parse(req.body.read)
+      rescue StandardError
+        {}
+      ensure
+        req.body.rewind
+      end
+
+      body["email"] || body["staff_id"]
+    end
   end
 end
 
@@ -100,26 +148,28 @@ ActiveSupport::Notifications.subscribe("throttle.rack_attack") do |_name, _start
   req = payload[:request]
   Rails.logger.warn "[Rack::Attack] Throttled #{req.ip} for #{req.path}"
 
-  # Log to audit_logs
-  AuditLog.log_action(
-    action: "rate_limit_exceeded",
-    status: "failure",
-    ip_address: req.ip,
-    user_agent: req.user_agent,
-    additional_info: { path: req.path }.to_json
-  ) if defined?(AuditLog)
+  if defined?(AuditLog)
+    AuditLog.log_action(
+      action: "rate_limit_exceeded",
+      status: "failure",
+      ip_address: req.ip,
+      user_agent: req.user_agent,
+      additional_info: { path: req.path }.to_json
+    )
+  end
 end
 
 ActiveSupport::Notifications.subscribe("blocklist.rack_attack") do |_name, _start, _finish, _id, payload|
   req = payload[:request]
   Rails.logger.error "[Rack::Attack] Blocked #{req.ip} for #{req.path}"
 
-  # Log to audit_logs
-  AuditLog.log_action(
-    action: "blocked_request",
-    status: "failure",
-    ip_address: req.ip,
-    user_agent: req.user_agent,
-    additional_info: { path: req.path }.to_json
-  ) if defined?(AuditLog)
+  if defined?(AuditLog)
+    AuditLog.log_action(
+      action: "blocked_request",
+      status: "failure",
+      ip_address: req.ip,
+      user_agent: req.user_agent,
+      additional_info: { path: req.path }.to_json
+    )
+  end
 end

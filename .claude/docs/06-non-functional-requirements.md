@@ -121,7 +121,7 @@ database:
 ```
 
 ### キャッシング戦略
-- **Redis**: セッション、APIレスポンスキャッシュ
+- **Redis 7**: セッション、APIレスポンスキャッシュ（Docker環境で構成済み）
 - **CDN**: 静的アセット（画像、CSS、JS）
 - **ブラウザキャッシュ**: 適切なCache-Controlヘッダー
 
@@ -151,6 +151,20 @@ Rails.logger.error "Failed to save exercise record: #{e.message}"
 - **デプロイ頻度**: 週1回（金曜午前）
 - **デプロイ方式**: Blue-Greenデプロイメント
 - **ロールバック**: ワンクリックロールバック可能
+- **コンテナ化**: Docker + Docker Compose（Kamal対応）
+
+### Docker環境構成（実装済み）
+
+| 環境 | 構成ファイル | サービス |
+|------|------------|---------|
+| 開発 | `docker-compose.yml` | api, db(PostgreSQL 16), redis(Redis 7), frontend_user, frontend_admin |
+| 本番 | `docker-compose.prod.yml` | api, db(PostgreSQL 16), redis(Redis 7) |
+
+**本番環境の特徴**:
+- ヘルスチェック設定（DB: 10秒間隔、API: 30秒間隔）
+- ログローテーション（json-file、最大50MB x 5ファイル）
+- restart: unless-stopped による自動復旧
+- ネットワーク分離（psyfit_prod）
 
 ## 7. セキュリティ非機能要件
 
@@ -193,8 +207,9 @@ config.action_dispatch.default_headers = {
 | E2Eテスト | クリティカルパス100% |
 
 ### テスト環境
-- **開発環境**: ローカル
-- **ステージング環境**: 本番同等構成
+- **開発環境**: ローカル / Docker (`docker-compose.yml`)
+- **ステージング環境**: 本番同等構成 (`docker-compose.prod.yml`)
+- **Docker環境テスト**: `bin/docker-test`（41項目の自動検証）
 - **CI/CD**: GitHub Actions
 
 ```yaml

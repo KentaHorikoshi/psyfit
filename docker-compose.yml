@@ -1,0 +1,94 @@
+# PsyFit Development Environment
+# Usage: docker compose up
+
+services:
+  # PostgreSQL 16 Database
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-psyfit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-psyfit_dev}
+      POSTGRES_DB: psyfit_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psyfit"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis 7 (Session / Cache)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Rails API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4001:4001"
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    environment:
+      RAILS_ENV: development
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-psyfit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-psyfit_dev}
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+  # 利用者向けフロントエンド (Port 3000)
+  frontend_user:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend_user:/app
+      - frontend_user_modules:/app/node_modules
+    environment:
+      VITE_API_URL: http://api:4001
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    depends_on:
+      - api
+
+  # 職員向けフロントエンド (Port 3003)
+  frontend_admin:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./frontend_admin:/app
+      - frontend_admin_modules:/app/node_modules
+    environment:
+      VITE_API_URL: http://api:4001
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3003"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  redis_data:
+  bundle_cache:
+  frontend_user_modules:
+  frontend_admin_modules:

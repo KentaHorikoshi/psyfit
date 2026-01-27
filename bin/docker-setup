@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+# PsyFit Docker初回セットアップスクリプト
+echo "=== PsyFit Docker Setup ==="
+
+# 1. 環境変数ファイルの準備
+if [ ! -f .env ]; then
+  echo "Creating .env from .env.docker..."
+  cp .env.docker .env
+  echo "  .env created. Edit as needed for your environment."
+else
+  echo "  .env already exists, skipping."
+fi
+
+# 2. コンテナのビルド
+echo ""
+echo "Building containers..."
+docker compose build
+
+# 3. データベースの作成とマイグレーション
+echo ""
+echo "Setting up database..."
+docker compose run --rm api bin/rails db:create db:migrate
+
+# 4. シードデータの投入
+echo ""
+read -p "Load seed data? (y/N): " load_seeds
+if [ "$load_seeds" = "y" ] || [ "$load_seeds" = "Y" ]; then
+  docker compose run --rm api bin/rails db:seed
+  echo "  Seed data loaded."
+fi
+
+echo ""
+echo "=== Setup Complete ==="
+echo ""
+echo "Start the application with:"
+echo "  bin/docker-start"
+echo ""
+echo "Access URLs:"
+echo "  利用者向け:    http://localhost:3000"
+echo "  職員向け:      http://localhost:3003"
+echo "  API:          http://localhost:4001"
+echo "  ヘルスチェック: http://localhost:4001/api/v1/health"

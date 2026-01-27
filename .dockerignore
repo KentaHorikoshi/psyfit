@@ -49,3 +49,8 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+/docker-compose*.yml
+
+# Ignore frontend directories (not needed for API build)
+/frontend_user/
+/frontend_admin/

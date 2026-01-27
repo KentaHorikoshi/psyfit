@@ -1410,14 +1410,71 @@ curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=abc1
 
 ## レート制限
 
-- **利用者**: 60リクエスト/分
-- **職員**: 120リクエスト/分
+**実装済み**（Rack::Attack + RateLimitHeaders ミドルウェア）
+
+### エンドポイント別制限
+
+| 対象 | 制限値 | 期間 | 識別単位 |
+|------|--------|------|---------|
+| 利用者（一般API） | 60リクエスト | 1分 | セッション（user_id） |
+| 職員（一般API） | 120リクエスト | 1分 | セッション（staff_id） |
+| 認証エンドポイント | 10リクエスト | 1分 | IPアドレス + ログイン識別子 |
+| パスワードリセット | 5リクエスト | 1時間 | IPアドレス |
+| 未認証API（フォールバック） | 120リクエスト | 1分 | IPアドレス |
+
+### レスポンスヘッダー
+
+全APIレスポンスに以下のヘッダーを付与:
 
 ```http
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
 X-RateLimit-Reset: 1642780800
 ```
+
+| ヘッダー | 説明 |
+|---------|------|
+| `X-RateLimit-Limit` | 現在のエンドポイントの制限値 |
+| `X-RateLimit-Remaining` | 残りリクエスト数 |
+| `X-RateLimit-Reset` | リセット時刻（Unix timestamp） |
+
+### 制限超過時のレスポンス
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+Retry-After: 45
+```
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 45
+}
+```
+
+### 不正リクエスト遮断
+
+SQLインジェクション・XSSパターンを検出した場合、Fail2Banで自動遮断:
+
+- **検出閾値**: 3回/10分
+- **遮断期間**: 1時間
+- **レスポンス**: `403 Forbidden`
+
+### 実装ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `config/initializers/rack_attack.rb` | Rack::Attack スロットル・ブロックリスト設定 |
+| `app/middleware/rate_limit_headers.rb` | X-RateLimit-* ヘッダー付与ミドルウェア |
+| `config/initializers/rate_limit_headers.rb` | ミドルウェア登録 |
+
+### キャッシュストア
+
+| 環境 | ストア |
+|------|--------|
+| 開発/テスト | `ActiveSupport::Cache::MemoryStore` |
+| 本番 | Redis（`Rails.cache` 経由） |
 
 ---
 
@@ -1807,3 +1864,24 @@ curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=<tok
 - U-04 運動実施画面（動画再生）
 - U-10 ウェルカム画面
 - ルーティング設定（React Router）
+
+### 2026-01-27: APIレート制限実装
+
+**実装内容**:
+- Rack::Attack によるセッション別レート制限（利用者: 60/分、職員: 120/分）
+- 認証エンドポイント: 10リクエスト/分（ブルートフォース対策）
+- パスワードリセット: 5リクエスト/時
+- `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset` ヘッダー付与
+- 制限超過時: 429 Too Many Requests + `Retry-After` ヘッダー
+- 不正リクエスト（SQLi/XSS）の Fail2Ban 自動遮断
+- 監査ログ記録（`rate_limit_exceeded`, `blocked_request`）
+
+**変更ファイル**:
+| ファイル | 変更 |
+|---------|------|
+| `config/initializers/rack_attack.rb` | セッション別スロットル、API仕様準拠の制限値に全面改修 |
+| `app/middleware/rate_limit_headers.rb` | 新規: X-RateLimit-* ヘッダー付与ミドルウェア |
+| `config/initializers/rate_limit_headers.rb` | 新規: ミドルウェア登録 |
+| `spec/initializers/rack_attack_spec.rb` | 新規: 23テストケース（100%カバレッジ） |
+
+**テスト結果**: 460テスト、全体カバレッジ 94.85%

@@ -55,36 +55,122 @@
 ## 3. 動画配信のアクセス制御
 
 ### 配信方式
-- **格納先**: 自社サーバー内専用ストレージ
+- **格納先**: 自社サーバー内専用ストレージ (`storage/videos/`)
 - **配信経路**: Rails APIサーバー経由の専用エンドポイント
 - **直接アクセス**: 禁止（Webサーバー経由の直接アクセス不可）
 
-### アクセス制御
+### 実装済みエンドポイント ✅
+
+| エンドポイント | 機能 | 認証 |
+|--------------|------|------|
+| GET /api/v1/videos/:exercise_id/token | 一時トークン発行 | セッション認証 |
+| GET /api/v1/videos/:exercise_id/stream?token=xxx | 動画ストリーミング | トークン認証 |
+
+### アクセス制御フロー
+
+```
+1. 利用者がログイン（セッション認証）
+   ↓
+2. トークン発行API呼び出し
+   - セッション認証確認
+   - 運動割り当て確認（patient_exercises テーブル）
+   - 一時トークン生成（1時間有効）
+   ↓
+3. 動画ストリーミングAPI呼び出し
+   - トークン検証（有効期限、使用済み、ユーザー一致、運動一致）
+   - Range requestサポート（動画シーク対応）
+   - 監査ログ記録
+   ↓
+4. 動画配信
+```
+
+### 実装コード
+
 ```ruby
-# 動画アクセス制御の実装方針
-def authorize_video_access
-  # 1. セッション認証確認
-  return unauthorized unless session[:user_id]
+# app/models/video_access_token.rb
+class VideoAccessToken < ApplicationRecord
+  belongs_to :user
+  belongs_to :exercise
 
-  # 2. 患者への運動メニュー割り当て確認
-  user = User.find(session[:user_id])
-  video = Video.find(params[:video_id])
+  scope :valid, -> { where('expires_at > ? AND used_at IS NULL', Time.current) }
 
-  return forbidden unless user.assigned_exercises.include?(video.exercise)
+  def self.generate_for(user:, exercise:, expires_in: 1.hour)
+    create!(
+      user: user,
+      exercise: exercise,
+      token: SecureRandom.hex(32),  # 64文字
+      expires_at: Time.current + expires_in
+    )
+  end
 
-  # 3. 一時トークン生成（5分間有効）
-  token = generate_temporary_token(user.id, video.id)
+  def valid_for_streaming?
+    !expired? && !used?
+  end
+end
+```
 
-  # 4. トークン付きURL返却
-  redirect_to video_stream_path(video_id: video.id, token: token)
+```ruby
+# app/controllers/api/v1/videos_controller.rb
+class VideosController < BaseController
+  def token
+    # セッション認証 + 運動割り当て確認
+    verify_exercise_assignment
+    access_token = VideoAccessToken.generate_for(user: current_user, exercise: @exercise)
+    render_success(token: access_token.token, ...)
+  end
+
+  def stream
+    # トークン検証
+    access_token = VideoAccessToken.find_valid_token(params[:token])
+    # ユーザー・運動一致確認
+    # 監査ログ記録
+    # Range request対応でストリーミング
+    stream_video(video_path)
+  end
 end
 ```
 
 ### セキュリティ対策
-- **セッション認証**: ログイン済みユーザーのみアクセス可能
-- **割り当て確認**: 職員が患者に割り当てた運動動画のみ視聴可能
-- **一時トークン**: 動画URL に5分間有効の使い捨てトークン付与
-- **リファラーチェック**: アプリ内からのリクエストのみ許可
+- **セッション認証**: ログイン済みユーザーのみトークン発行可能
+- **割り当て確認**: 職員が患者に割り当てた運動動画のみ視聴可能（`patient_exercises` テーブルで管理）
+- **一時トークン**: 1時間有効、暗号学的に安全な乱数（SecureRandom.hex(32)）
+- **トークンバインディング**: ユーザーIDと運動IDに紐付け、他ユーザーは使用不可
+- **監査ログ**: 動画アクセスを `audit_logs` に記録（action: 'video_access'）
+- **Range request**: 動画シーク対応、不正なRangeは416エラー
+
+### データベーステーブル
+
+```sql
+CREATE TABLE video_access_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  exercise_id UUID NOT NULL REFERENCES exercises(id),
+  token VARCHAR(64) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_video_access_tokens_valid ON video_access_tokens(expires_at, used_at);
+```
+
+### テストカバレッジ
+
+| ファイル | カバレッジ | テスト数 |
+|---------|-----------|---------|
+| VideoAccessToken モデル | 100% | 23件 |
+| VideosController | 100% | 24件 |
+
+**テストシナリオ**:
+- トークン生成・検証
+- 期限切れトークンの拒否
+- 使用済みトークンの拒否
+- 未割当運動へのアクセス拒否（403）
+- 他ユーザーのトークン使用拒否（403）
+- Range request処理（206 Partial Content）
+- 不正なRange headerの拒否（416）
+- 監査ログ記録
 
 ## 4. 権限制御
 
@@ -100,11 +186,47 @@ end
 | ダッシュボード閲覧 | ✓ | ✓ |
 | 担当患者情報閲覧 | ✓ | ✓ |
 | 全患者情報閲覧 | ✓ | ✗ |
+| **患者登録** | ✓ | ✗ |
 | 測定値入力 | ✓ | ✓（担当患者のみ） |
 | 運動メニュー設定 | ✓ | ✓（担当患者のみ） |
 | レポート出力 | ✓ | ✓（担当患者のみ） |
 | 職員管理 | ✓ | ✗ |
 | システム設定 | ✓ | ✗ |
+
+### 患者登録セキュリティフロー
+
+```
+1. マネージャーがS-03画面で「新規患者登録」ボタンをクリック
+   - 認証: 職員セッション必須
+   - 認可: role = 'manager' のみ
+   ↓
+2. フロントエンドでバリデーション
+   - 必須項目チェック
+   - メールアドレス形式
+   - パスワード複雑性表示
+   ↓
+3. POST /api/v1/patients API呼び出し
+   ↓
+4. バックエンド処理
+   - セッション認証確認
+   - マネージャー権限確認（403 Forbidden for non-managers）
+   - 入力検証（SQLインジェクション対策）
+   - user_code一意性チェック
+   - email一意性チェック（blind index使用）
+   - PII暗号化（name, name_kana, email, birth_date → AES-256-GCM）
+   - パスワードハッシュ化（bcrypt）
+   - DB保存
+   - 監査ログ記録（action: 'create', resource_type: 'User'）
+   ↓
+5. 成功レスポンス + 初期パスワード通知
+   - 画面表示（印刷して患者に渡す）
+   - または パスワードリセットメール送信
+```
+
+**初期パスワードの取り扱い**:
+- ランダム生成推奨（SecureRandom.base64(12)）
+- 固定初期パスワードは禁止
+- 登録後、患者にパスワードリセットを促す運用を推奨
 
 ## 5. 入力検証
 

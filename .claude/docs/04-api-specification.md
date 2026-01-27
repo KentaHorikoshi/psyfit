@@ -24,6 +24,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/exercises | ⏳ 未実装 | - |
 | GET /api/v1/patients | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:id | ✅ 実装済み | ✅ |
+| POST /api/v1/patients | ⏳ 未実装 | - |
 | POST /api/v1/patients/:patient_id/exercises | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
@@ -32,6 +33,8 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff/me/password | ⏳ バックエンド未実装 | - |
+| GET /api/v1/videos/:exercise_id/token | ✅ 実装済み | ✅ |
+| GET /api/v1/videos/:exercise_id/stream | ✅ 実装済み | ✅ |
 
 ## フロントエンド実装状況
 
@@ -187,6 +190,8 @@ try {
 - `spec/requests/api/v1/patient_reports_spec.rb` - 患者レポートAPI
 - `spec/models/user_continue_days_spec.rb` - 継続日数ロジック
 - `spec/models/password_reset_token_spec.rb` - パスワードリセットトークンモデル
+- `spec/models/video_access_token_spec.rb` - 動画アクセストークンモデル（23テスト）
+- `spec/requests/api/v1/videos_spec.rb` - 動画配信API（24テスト）
 
 **実装ファイル**:
 - `app/mailers/user_mailer.rb` - パスワードリセットメール送信
@@ -199,7 +204,9 @@ try {
 - `app/controllers/api/v1/patient_exercises_controller.rb` - 運動メニュー割当コントローラ（職員用）
 - `app/controllers/api/v1/staff_controller.rb` - 職員管理コントローラ（マネージャー用）
 - `app/controllers/api/v1/patient_reports_controller.rb` - 患者レポートコントローラ（職員用）
+- `app/controllers/api/v1/videos_controller.rb` - 動画配信コントローラ（利用者用）
 - `app/services/patient_report_service.rb` - PDF生成サービス
+- `app/models/video_access_token.rb` - 動画アクセストークンモデル
 - `app/models/daily_condition.rb` - 体調記録モデル
 - `app/models/measurement.rb` - 測定値モデル
 - `app/models/patient_staff_assignment.rb` - 患者担当職員割当モデル
@@ -863,6 +870,98 @@ Cookie: _psyfit_session=<session_id>
 - PII（name, name_kana, email, birth_date）は暗号化されてDBに保存
 - 監査ログにアクセス履歴が記録される
 
+#### POST /api/v1/patients (職員用) ⏳
+
+患者を新規登録。
+
+**認証**: 職員セッション必須（マネージャーのみ）
+
+**認可ルール**:
+- マネージャーのみ患者登録可能
+- 一般職員は403 Forbiddenが返される
+
+```json
+// Request
+{
+  "user_code": "USR006",
+  "name": "新規 太郎",
+  "name_kana": "シンキ タロウ",
+  "email": "shinki@example.com",
+  "birth_date": "1980-01-01",
+  "password": "Patient1!",
+  "gender": "male",
+  "phone": "090-1234-5678",
+  "status": "回復期",
+  "condition": "変形性膝関節症"
+}
+
+// Response (201 Created)
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "user_code": "USR006",
+    "name": "新規 太郎",
+    "email": "shinki@example.com",
+    "status": "回復期",
+    "message": "患者を登録しました。初期パスワードは別途お知らせください。"
+  }
+}
+```
+
+**リクエストフィールド**:
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|:----:|------|
+| user_code | string | YES | 患者コード（一意） |
+| name | string | YES | 患者氏名 |
+| name_kana | string | NO | 患者氏名カナ |
+| email | string | YES | メールアドレス（一意） |
+| birth_date | date | YES | 生年月日（YYYY-MM-DD） |
+| password | string | YES | 初期パスワード（8文字以上、2種類以上の文字） |
+| gender | string | NO | 性別（`male`, `female`, `other`） |
+| phone | string | NO | 電話番号 |
+| status | string | NO | 病期（`急性期`, `回復期`, `維持期`）デフォルト: `維持期` |
+| condition | string | NO | 疾患・身体状態 |
+
+**バリデーション**:
+| フィールド | ルール |
+|-----------|--------|
+| user_code | 必須、一意、英数字 |
+| name | 必須、100文字以内 |
+| email | 必須、一意、メール形式（blind index使用） |
+| birth_date | 必須、過去の日付 |
+| password | 必須、8文字以上、2種類以上の文字タイプ（大文字/小文字/数字/特殊文字） |
+| status | `急性期`, `回復期`, `維持期` のいずれか |
+| gender | `male`, `female`, `other` のいずれか |
+
+**セキュリティ**:
+- PII（name, name_kana, email, birth_date）は暗号化されてDB保存（AES-256-GCM）
+- パスワードはbcryptでハッシュ化
+- 監査ログに記録される（action: 'create', resource_type: 'User', status: 'success'）
+- マネージャー権限チェック（require_manager!）
+
+**副作用**:
+- 監査ログに記録される（action: 'create', status: 'success'）
+- 患者作成後、担当職員の割り当てが必要（別API: patient_staff_assignments）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `403 Forbidden`: 一般職員がアクセスした場合
+- `422 Unprocessable Entity`: バリデーションエラー
+
+```json
+// Error Response (422)
+{
+  "status": "error",
+  "message": "バリデーションエラー",
+  "errors": {
+    "user_code": ["はすでに存在します"],
+    "email": ["はすでに存在します"],
+    "password": ["は8文字以上で入力してください"]
+  }
+}
+```
+
 #### POST /api/v1/patients/:patient_id/exercises (職員用)
 
 患者に運動メニューを割り当てる。
@@ -1177,6 +1276,125 @@ Cookie: _psyfit_session=<session_id>
 
 ---
 
+### 動画配信 (Video Streaming) ✅
+
+#### GET /api/v1/videos/:exercise_id/token (利用者用) ✅
+
+動画アクセス用の一時トークンを発行する。
+
+**認証**: 利用者セッション必須
+
+**認可ルール**:
+- ログイン済みの利用者のみ
+- 運動メニューが割り当てられている（`patient_exercises` でアクティブな割り当てが存在）
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| exercise_id | UUID | 運動ID |
+
+```json
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "token": "a1b2c3d4e5f6...",
+    "expires_at": "2026-01-27T12:00:00Z",
+    "exercise_id": "uuid"
+  }
+}
+```
+
+**セキュリティ**:
+- トークンは暗号学的に安全な乱数（64文字のhex）
+- 有効期限: 1時間
+- ユーザーIDと運動IDに紐づけ
+- 未割当の運動には403 Forbidden
+
+**エラー**:
+- `401 Unauthorized`: 認証が必要
+- `403 Forbidden`: 運動が割り当てられていない
+- `404 Not Found`: 運動が存在しない
+
+#### GET /api/v1/videos/:exercise_id/stream (利用者用) ✅
+
+動画をストリーミング配信する。
+
+**認証**: トークン認証（セッション認証も必要）
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| exercise_id | UUID | 運動ID |
+
+**クエリパラメータ**:
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|-----|------|
+| token | string | YES | アクセストークン |
+
+**リクエストヘッダ（オプション）**:
+| ヘッダー | 説明 |
+|---------|------|
+| Range | `bytes=0-1023` 形式でパーシャルコンテンツ要求 |
+
+```
+// Response (200 OK) - フル配信
+Content-Type: video/mp4
+Accept-Ranges: bytes
+Content-Length: 12345678
+[動画バイナリデータ]
+
+// Response (206 Partial Content) - Range request
+Content-Type: video/mp4
+Accept-Ranges: bytes
+Content-Range: bytes 0-1023/12345678
+Content-Length: 1024
+[動画部分バイナリデータ]
+```
+
+**セキュリティ**:
+- トークン検証（有効期限、使用済み、ユーザー一致、運動一致）
+- Range requestサポート（動画シーク対応）
+- 監査ログに`video_access`として記録
+
+**副作用**:
+- 監査ログに記録される（action: 'video_access', status: 'success'）
+
+**エラー**:
+- `401 Unauthorized`: トークンが無効、期限切れ、または認証が必要
+- `403 Forbidden`: トークンと運動が一致しない、またはユーザーが一致しない
+- `404 Not Found`: 動画ファイルが見つからない
+- `416 Range Not Satisfiable`: Range headerが無効
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/videos_controller.rb`
+- モデル: `app/models/video_access_token.rb`
+- テスト: `spec/models/video_access_token_spec.rb`, `spec/requests/api/v1/videos_spec.rb`
+- マイグレーション: `db/migrate/20260126100000_create_video_access_tokens.rb`
+
+**使用例**:
+
+```bash
+# 1. トークン取得
+curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/token" \
+  -H "Cookie: _psyfit_session=<session_id>"
+
+# Response: { "status": "success", "data": { "token": "abc123...", ... } }
+
+# 2. 動画ストリーミング
+curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=abc123..." \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -o video.mp4
+
+# 3. Range request（シーク）
+curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=abc123..." \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -H "Range: bytes=0-1048575" \
+  -o video_part.mp4
+```
+
+---
+
 ## エラーコード
 
 | HTTPステータス | 説明 |
@@ -1412,6 +1630,73 @@ curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>/report" \
 
 **次のステップ**:
 - 運動マスタAPI（`GET /api/v1/exercises`）
+
+---
+
+### 2026-01-27: 動画配信アクセス制御API実装
+
+**実装内容**:
+- `GET /api/v1/videos/:exercise_id/token` - 一時アクセストークン発行
+- `GET /api/v1/videos/:exercise_id/stream` - 動画ストリーミング配信
+
+**アクセス制御**:
+- トークン発行: セッション認証 + 運動割り当て確認
+- ストリーミング: トークン認証（ユーザー・運動バインディング）
+
+**セキュリティ機能**:
+- 暗号学的に安全な一時トークン（SecureRandom.hex(32)、64文字）
+- トークン有効期限: 1時間
+- ユーザーIDと運動IDへのバインディング
+- 期限切れ・使用済みトークンの拒否
+- 未割当運動へのアクセス拒否（403 Forbidden）
+- 他ユーザーのトークン使用拒否（403 Forbidden）
+- Range requestサポート（動画シーク対応）
+- 監査ログ記録（action: 'video_access'）
+
+**データベース変更**:
+- `video_access_tokens` テーブル作成
+
+**テストカバレッジ**:
+- 47テストケース
+- VideoAccessToken モデル: **100%**
+- VideosController: **100%**
+- テストシナリオ:
+  - トークン生成・検証
+  - 期限切れ/使用済みトークンの拒否
+  - 未割当運動へのアクセス拒否
+  - 他ユーザーのトークン使用拒否
+  - Range request処理（206 Partial Content）
+  - 不正なRange headerの拒否（416）
+  - 監査ログ記録
+
+**ファイル一覧**:
+- コントローラ: `app/controllers/api/v1/videos_controller.rb`
+- モデル: `app/models/video_access_token.rb`
+- マイグレーション: `db/migrate/20260126100000_create_video_access_tokens.rb`
+- テスト:
+  - `spec/models/video_access_token_spec.rb` (23件)
+  - `spec/requests/api/v1/videos_spec.rb` (24件)
+- ファクトリ: `test/factories/video_access_tokens.rb`
+- ルーティング: `config/routes.rb` に `scope :videos` 追加
+
+**使用例**:
+
+```bash
+# 1. トークン取得（セッション認証必須）
+curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/token" \
+  -H "Cookie: _psyfit_session=<session_id>"
+
+# 2. 動画ストリーミング
+curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=<token>" \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -o video.mp4
+
+# 3. Range request（シーク対応）
+curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=<token>" \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -H "Range: bytes=0-1048575" \
+  -o video_part.mp4
+```
 
 ---
 

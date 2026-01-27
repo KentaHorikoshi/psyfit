@@ -8,14 +8,16 @@ users (患者・利用者)
   ├── daily_conditions (体調記録)
   ├── measurements (測定値)
   ├── patient_exercises (運動メニュー割当)
-  └── patient_staff_assignments (担当職員)
+  ├── patient_staff_assignments (担当職員)
+  └── video_access_tokens (動画アクセストークン)
 
 staff (職員)
   └── audit_logs (操作ログ)
 
 exercises (運動マスタ)
-  ├── exercise_videos (動画)
-  └── patient_exercises (患者割当)
+  ├── videos (動画)
+  ├── patient_exercises (患者割当)
+  └── video_access_tokens (動画アクセストークン)
 ```
 
 ## テーブル定義
@@ -25,6 +27,7 @@ exercises (運動マスタ)
 | カラム名 | 型 | NULL | 暗号化 | 説明 |
 |---------|-----|------|--------|------|
 | id | UUID | NO | - | プライマリキー |
+| user_code | VARCHAR(50) | NO | - | 患者コード（一意） |
 | email | VARCHAR(255) | NO | YES | メールアドレス |
 | password_digest | VARCHAR(255) | NO | - | パスワードハッシュ |
 | name | VARCHAR(100) | NO | YES | 患者氏名 |
@@ -42,6 +45,7 @@ exercises (運動マスタ)
 
 **インデックス:**
 - PRIMARY KEY (id)
+- UNIQUE INDEX (user_code)
 - UNIQUE INDEX (email)
 - INDEX (deleted_at)
 
@@ -185,7 +189,36 @@ exercises (運動マスタ)
 - INDEX (user_id)
 - INDEX (staff_id)
 
-### 9. audit_logs (監査ログ)
+### 9. video_access_tokens (動画アクセストークン)
+
+| カラム名 | 型 | NULL | 説明 |
+|---------|-----|------|------|
+| id | UUID | NO | プライマリキー |
+| user_id | UUID | NO | 利用者ID (FK: users.id) |
+| exercise_id | UUID | NO | 運動ID (FK: exercises.id) |
+| token | VARCHAR(64) | NO | アクセストークン（64文字hex） |
+| expires_at | TIMESTAMP | NO | 有効期限 |
+| used_at | TIMESTAMP | YES | 使用日時（使い捨て対応用） |
+| created_at | TIMESTAMP | NO | 作成日時 |
+| updated_at | TIMESTAMP | NO | 更新日時 |
+
+**インデックス:**
+- PRIMARY KEY (id)
+- UNIQUE INDEX (token)
+- INDEX (user_id, exercise_id)
+- INDEX (expires_at)
+- INDEX (expires_at, used_at) - 有効トークン検索用
+
+**外部キー:**
+- user_id → users.id (ON DELETE CASCADE)
+- exercise_id → exercises.id
+
+**使用目的:**
+- 動画ストリーミングの一時的なアクセス制御
+- 1時間有効の使い捨てトークンを発行
+- ユーザーと運動の紐付けで不正アクセス防止
+
+### 10. audit_logs (監査ログ)
 
 | カラム名 | 型 | NULL | 説明 |
 |---------|-----|------|------|

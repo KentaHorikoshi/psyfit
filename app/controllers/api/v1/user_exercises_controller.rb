@@ -5,6 +5,13 @@ module Api
     class UserExercisesController < BaseController
       before_action :authenticate_user!
 
+      # Category mapping from Japanese (DB) to English (frontend)
+      CATEGORY_MAP = {
+        '筋力' => 'lower_body',
+        'バランス' => 'core',
+        '柔軟性' => 'stretch'
+      }.freeze
+
       # GET /api/v1/users/me/exercises
       # Returns assigned exercises for the current user
       def index
@@ -13,28 +20,22 @@ module Api
           .active
           .includes(:exercise)
 
-        # Get today's exercise records for completed_today calculation
-        today_records = current_user
-          .exercise_records
-          .today
-          .pluck(:exercise_id)
-
-        assigned_exercises = patient_exercises.map do |pe|
+        exercises = patient_exercises.map do |pe|
+          ex = pe.exercise
           {
-            id: pe.id,
-            exercise: {
-              id: pe.exercise.id,
-              name: pe.exercise.name,
-              video_url: pe.exercise.video_url,
-              thumbnail_url: pe.exercise.thumbnail_url
-            },
-            target_reps: pe.target_reps,
-            target_sets: pe.target_sets,
-            completed_today: today_records.include?(pe.exercise_id)
+            id: ex.id,
+            name: ex.name,
+            description: ex.description.to_s,
+            video_url: ex.video_url,
+            thumbnail_url: ex.thumbnail_url,
+            sets: pe.target_sets || ex.recommended_sets || 1,
+            reps: pe.target_reps || ex.recommended_reps || 1,
+            duration_seconds: ex.duration_seconds,
+            category: CATEGORY_MAP[ex.category] || 'lower_body'
           }
         end
 
-        render_success({ assigned_exercises: assigned_exercises })
+        render_success({ exercises: exercises })
       end
     end
   end

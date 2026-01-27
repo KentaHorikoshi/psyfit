@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Dumbbell, FileText } from 'lucide-react'
 import { api } from '../lib/api'
 import type { PatientDetail as PatientDetailType, PatientStatus } from '../lib/api-types'
 
@@ -58,6 +58,14 @@ export function PatientDetail() {
     navigate(`/patients/${id}/measurements/new`)
   }
 
+  const handleExerciseMenu = () => {
+    navigate(`/patients/${id}/exercise-menu`)
+  }
+
+  const handleReport = () => {
+    navigate(`/patients/${id}/report`)
+  }
+
   if (isLoading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
@@ -104,14 +112,32 @@ export function PatientDetail() {
         </button>
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold text-gray-900">患者詳細</h1>
-          <button
-            onClick={handleAddMeasurement}
-            className="flex items-center gap-2 bg-[#1E40AF] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#1E3A8A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
-            aria-label="測定値を入力"
-          >
-            <Plus size={20} />
-            測定値を入力
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExerciseMenu}
+              className="flex items-center gap-2 bg-white text-[#1E40AF] border border-[#1E40AF] px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
+              aria-label="運動メニュー設定"
+            >
+              <Dumbbell size={20} />
+              運動メニュー設定
+            </button>
+            <button
+              onClick={handleReport}
+              className="flex items-center gap-2 bg-white text-[#1E40AF] border border-[#1E40AF] px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
+              aria-label="レポート出力"
+            >
+              <FileText size={20} />
+              レポート出力
+            </button>
+            <button
+              onClick={handleAddMeasurement}
+              className="flex items-center gap-2 bg-[#1E40AF] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#1E3A8A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
+              aria-label="測定値を入力"
+            >
+              <Plus size={20} />
+              測定値を入力
+            </button>
+          </div>
         </div>
       </div>
 

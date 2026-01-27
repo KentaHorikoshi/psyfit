@@ -59,9 +59,12 @@ module Api
       def apply_search(scope)
         return scope unless params[:search].present?
 
-        # Search by name (encrypted field - need to use Ruby-level filtering)
+        # Search by name and name_kana (encrypted fields - need Ruby-level filtering)
         search_term = params[:search].downcase
-        scope.select { |user| user.name&.downcase&.include?(search_term) }
+        scope.select do |user|
+          user.name&.downcase&.include?(search_term) ||
+            user.name_kana&.downcase&.include?(search_term)
+        end
       end
 
       def paginate(patients)

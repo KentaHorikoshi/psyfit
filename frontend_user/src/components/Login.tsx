@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from './ui/Button'
@@ -28,10 +28,11 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
+  const isLoggingInRef = useRef(false)
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (but not during login flow)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoggingInRef.current) {
       navigate('/home', { replace: true })
     }
   }, [isAuthenticated, navigate])
@@ -63,9 +64,11 @@ export function Login() {
     }
 
     try {
+      isLoggingInRef.current = true
       await login(email, password)
       navigate('/welcome')
     } catch {
+      isLoggingInRef.current = false
       // Error is handled by AuthContext
     }
   }

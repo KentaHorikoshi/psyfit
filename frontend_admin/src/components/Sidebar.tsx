@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { LayoutDashboard, Users, UserCog, LogOut, Heart } from 'lucide-react'
+import { LayoutDashboard, Users, UserCog, KeyRound, LogOut, Heart } from 'lucide-react'
 import type { Staff } from '../lib/api-types'
 
 interface SidebarProps {
@@ -66,6 +66,12 @@ export function Sidebar({ staff, onLogout, currentPath }: SidebarProps) {
             isActive={currentPath === '/staff'}
           />
         )}
+        <NavItem
+          href="/password-reset"
+          icon={<KeyRound className="w-5 h-5" />}
+          label="パスワードリセット"
+          isActive={currentPath === '/password-reset'}
+        />
       </nav>
 
       {/* User Profile & Logout */}

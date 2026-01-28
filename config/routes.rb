@@ -40,7 +40,7 @@ Rails.application.routes.draw do
       resources :daily_conditions, only: [ :create ]
 
       # Staff endpoints (patients management)
-      resources :patients, only: [ :index, :show ] do
+      resources :patients, only: [ :index, :show, :create ] do
         resources :measurements, only: [ :index, :create ], controller: "measurements"
         resources :exercises, only: [ :index, :create ], controller: "patient_exercises"
         get "report", to: "patient_reports#show"

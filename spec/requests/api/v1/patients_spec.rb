@@ -388,6 +388,161 @@ RSpec.describe 'Api::V1::Patients', type: :request do
     end
   end
 
+  describe 'POST /api/v1/patients' do
+    let(:valid_params) do
+      {
+        user_code: 'USR006',
+        name: '新規 太郎',
+        name_kana: 'シンキ タロウ',
+        email: 'shinki@example.com',
+        birth_date: '1980-01-01',
+        password: 'Patient1!',
+        gender: 'male',
+        phone: '090-1234-5678',
+        status: '回復期',
+        condition: '変形性膝関節症'
+      }
+    end
+
+    context 'when authenticated as manager' do
+      before { staff_login(manager) }
+
+      it 'creates a patient successfully' do
+        expect {
+          post '/api/v1/patients', params: valid_params
+        }.to change(User, :count).by(1)
+
+        expect(response).to have_http_status(:created)
+        expect(json_response['status']).to eq('success')
+        expect(json_response['data']).to include(
+          'id',
+          'user_code' => 'USR006',
+          'name' => '新規 太郎',
+          'email' => 'shinki@example.com',
+          'status' => '回復期',
+          'message' => '患者を登録しました。初期パスワードは別途お知らせください。'
+        )
+      end
+
+      it 'returns 422 when user_code is duplicated' do
+        create(:user, user_code: 'USR006')
+
+        post '/api/v1/patients', params: valid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+        expect(json_response['errors']).to have_key('user_code')
+      end
+
+      it 'returns 422 when email is duplicated' do
+        create(:user, email: 'shinki@example.com')
+
+        post '/api/v1/patients', params: valid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+        expect(json_response['errors']).to have_key('email_bidx')
+      end
+
+      it 'returns 422 when required fields are missing' do
+        post '/api/v1/patients', params: { user_code: 'USR006' }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+      end
+
+      it 'returns 422 when password is too weak' do
+        post '/api/v1/patients', params: valid_params.merge(password: 'weak')
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['errors']).to have_key('password')
+      end
+
+      it 'returns 422 when status is invalid' do
+        post '/api/v1/patients', params: valid_params.merge(status: '無効な状態')
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['errors']).to have_key('status')
+      end
+
+      it 'returns 422 when gender is invalid' do
+        post '/api/v1/patients', params: valid_params.merge(gender: 'invalid')
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['errors']).to have_key('gender')
+      end
+
+      it 'returns 422 when birth_date is in the future' do
+        post '/api/v1/patients', params: valid_params.merge(birth_date: 1.year.from_now.to_date.to_s)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['errors']).to have_key('birth_date')
+      end
+
+      it 'encrypts PII fields in database' do
+        post '/api/v1/patients', params: valid_params
+
+        user = User.find(json_response['data']['id'])
+
+        # Encrypted fields should be readable via model but stored encrypted
+        expect(user.name).to eq('新規 太郎')
+        expect(user.email).to eq('shinki@example.com')
+
+        # Verify raw database values are encrypted (not plaintext)
+        raw = ActiveRecord::Base.connection.select_one(
+          "SELECT name_encrypted, email_encrypted FROM users WHERE id = '#{user.id}'"
+        )
+        expect(raw['name_encrypted']).not_to eq('新規 太郎')
+        expect(raw['email_encrypted']).not_to eq('shinki@example.com')
+      end
+
+      it 'creates audit log entry' do
+        expect {
+          post '/api/v1/patients', params: valid_params
+        }.to change(AuditLog, :count).by(1)
+
+        audit = AuditLog.order(:created_at).last
+        expect(audit.action).to eq('create')
+        expect(audit.status).to eq('success')
+        expect(audit.staff_id).to eq(manager.id)
+        info = JSON.parse(audit.additional_info)
+        expect(info['resource_type']).to eq('Patient')
+      end
+    end
+
+    context 'when authenticated as regular staff' do
+      before { staff_login(staff_member) }
+
+      it 'returns 403 Forbidden' do
+        post '/api/v1/patients', params: valid_params
+
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response['message']).to include('マネージャー権限')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns 401 Unauthorized' do
+        post '/api/v1/patients', params: valid_params
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when session is expired' do
+      before do
+        staff_login(manager)
+        Timecop.travel(16.minutes.from_now)
+      end
+
+      it 'returns 401 Unauthorized' do
+        post '/api/v1/patients', params: valid_params
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   private
 
   def staff_login(staff)

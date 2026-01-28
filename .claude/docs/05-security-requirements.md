@@ -233,7 +233,7 @@ CREATE INDEX idx_video_access_tokens_valid ON video_access_tokens(expires_at, us
    - PII暗号化（name, name_kana, email, birth_date → AES-256-GCM）
    - パスワードハッシュ化（bcrypt）
    - DB保存
-   - 監査ログ記録（action: 'create', resource_type: 'User'）
+   - 監査ログ記録（action: 'create', resource_type: 'Patient'）
    ↓
 5. 成功レスポンス + 初期パスワード通知
    - 画面表示（印刷して患者に渡す）

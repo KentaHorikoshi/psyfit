@@ -24,7 +24,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/exercises | ⏳ 未実装 | - |
 | GET /api/v1/patients | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:id | ✅ 実装済み | ✅ |
-| POST /api/v1/patients | ⏳ 未実装 | - |
+| POST /api/v1/patients | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/exercises | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
@@ -32,7 +32,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/patients/:patient_id/report | ✅ 実装済み | ✅ |
 | GET /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff | ✅ 実装済み | ✅ |
-| POST /api/v1/staff/me/password | ⏳ バックエンド未実装 | - |
+| POST /api/v1/staff/me/password | ✅ 実装済み | ✅ |
 | GET /api/v1/videos/:exercise_id/token | ✅ 実装済み | ✅ |
 | GET /api/v1/videos/:exercise_id/stream | ✅ 実装済み | ✅ |
 
@@ -186,7 +186,7 @@ try {
 - `spec/requests/api/v1/measurements_spec.rb` - 測定値API
 - `spec/requests/api/v1/patients_spec.rb` - 患者一覧・詳細API
 - `spec/requests/api/v1/patient_exercises_spec.rb` - 運動メニュー割当API
-- `spec/requests/api/v1/staff_spec.rb` - 職員管理API
+- `spec/requests/api/v1/staff_spec.rb` - 職員管理API + パスワード変更API（12テスト追加）
 - `spec/requests/api/v1/patient_reports_spec.rb` - 患者レポートAPI
 - `spec/models/user_continue_days_spec.rb` - 継続日数ロジック
 - `spec/models/password_reset_token_spec.rb` - パスワードリセットトークンモデル
@@ -202,7 +202,7 @@ try {
 - `app/controllers/api/v1/user_measurements_controller.rb` - 測定値コントローラ（利用者用）
 - `app/controllers/api/v1/patients_controller.rb` - 患者管理コントローラ（職員用）
 - `app/controllers/api/v1/patient_exercises_controller.rb` - 運動メニュー割当コントローラ（職員用）
-- `app/controllers/api/v1/staff_controller.rb` - 職員管理コントローラ（マネージャー用）
+- `app/controllers/api/v1/staff_controller.rb` - 職員管理コントローラ（マネージャー用） + パスワード変更（全職員）
 - `app/controllers/api/v1/patient_reports_controller.rb` - 患者レポートコントローラ（職員用）
 - `app/controllers/api/v1/videos_controller.rb` - 動画配信コントローラ（利用者用）
 - `app/services/patient_report_service.rb` - PDF生成サービス
@@ -870,7 +870,7 @@ Cookie: _psyfit_session=<session_id>
 - PII（name, name_kana, email, birth_date）は暗号化されてDBに保存
 - 監査ログにアクセス履歴が記録される
 
-#### POST /api/v1/patients (職員用) ⏳
+#### POST /api/v1/patients (職員用) ✅
 
 患者を新規登録。
 
@@ -937,7 +937,7 @@ Cookie: _psyfit_session=<session_id>
 **セキュリティ**:
 - PII（name, name_kana, email, birth_date）は暗号化されてDB保存（AES-256-GCM）
 - パスワードはbcryptでハッシュ化
-- 監査ログに記録される（action: 'create', resource_type: 'User', status: 'success'）
+- 監査ログに記録される（action: 'create', resource_type: 'Patient', status: 'success'）
 - マネージャー権限チェック（require_manager!）
 
 **副作用**:
@@ -1232,11 +1232,11 @@ Cookie: _psyfit_session=<session_id>
 - `403 Forbidden`: 一般職員がアクセスした場合
 - `422 Unprocessable Entity`: バリデーションエラー
 
-#### POST /api/v1/staff/me/password (S-09: パスワード変更) ⏳
+#### POST /api/v1/staff/me/password (S-09: パスワード変更) ✅
 
 ログイン中の職員が自分のパスワードを変更する。
 
-**認証**: 職員セッション必須
+**認証**: 職員セッション必須（マネージャー・一般職員どちらもアクセス可能）
 
 **フロントエンド実装**: ✅ `frontend_admin/src/components/PasswordReset.tsx`
 
@@ -1260,19 +1260,57 @@ Cookie: _psyfit_session=<session_id>
 **バリデーション**:
 | フィールド | ルール |
 |-----------|--------|
-| current_password | 必須、現在のパスワードと一致 |
+| current_password | 必須、現在のパスワードと一致（bcrypt authenticate） |
 | new_password | 必須、8文字以上、2種類以上の文字タイプ |
 | new_password_confirmation | 必須、new_passwordと一致 |
 
 **セキュリティ**:
-- 現在のパスワード検証必須
-- 新パスワードはbcryptでハッシュ化
+- 現在のパスワード検証必須（bcrypt `authenticate`）
+- 新パスワードはbcryptでハッシュ化（`has_secure_password`）
+- 監査ログに記録される（action: 'password_change', status: 'success'）
+- 変更成功後は `reset_session` でセッションを無効化し、再ログインを要求
+
+**副作用**:
+- パスワードが更新される（bcryptハッシュ）
+- セッションが無効化される（再ログイン必須）
 - 監査ログに記録される（action: 'password_change'）
-- 変更成功後はセッションを無効化し、再ログインを要求
 
 **エラー**:
 - `401 Unauthorized`: 職員セッションがない場合
-- `422 Unprocessable Entity`: バリデーションエラー（現在のパスワード不一致など）
+- `401 Unauthorized`: セッション期限切れの場合（15分）
+- `422 Unprocessable Entity`: 現在のパスワードが不正
+- `422 Unprocessable Entity`: 新パスワードが短すぎる（8文字未満）
+- `422 Unprocessable Entity`: 新パスワードの文字種が不足（2種類未満）
+- `422 Unprocessable Entity`: 確認パスワードが不一致
+- `422 Unprocessable Entity`: 必須パラメータ未指定
+
+```json
+// Error Response (422) - 現在のパスワード不正
+{
+  "status": "error",
+  "message": "現在のパスワードが正しくありません"
+}
+
+// Error Response (422) - 確認パスワード不一致
+{
+  "status": "error",
+  "message": "新しいパスワードが一致しません"
+}
+
+// Error Response (422) - バリデーションエラー
+{
+  "status": "error",
+  "message": "パスワードの更新に失敗しました",
+  "errors": {
+    "password": ["is too short (minimum is 8 characters)"]
+  }
+}
+```
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/staff_controller.rb`（`change_password` アクション）
+- テスト: `spec/requests/api/v1/staff_spec.rb`（12テストケース）
+- ルーティング: `config/routes.rb`（`post "me/password", to: "staff#change_password"`）
 
 ---
 
@@ -1513,7 +1551,7 @@ SQLインジェクション・XSSパターンを検出した場合、Fail2Banで
 - 一般職員は担当外患者にアクセス不可（403 Forbidden）
 
 **テストカバレッジ**:
-- 36テストケース（`spec/requests/api/v1/patients_spec.rb`）
+- 49テストケース（`spec/requests/api/v1/patients_spec.rb`）
 - 全体カバレッジ: 86.52%（目標80%達成）
 - テストシナリオ:
   - マネージャー/一般職員の権限制御
@@ -1585,8 +1623,9 @@ curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>" \
 - role: `manager` または `staff`
 
 **テストカバレッジ**:
-- 29テストケース（`spec/requests/api/v1/staff_spec.rb`）
-- 全体カバレッジ: 87.47%（目標80%達成）
+- 41テストケース（`spec/requests/api/v1/staff_spec.rb`）
+  - 職員一覧・作成: 29件
+  - パスワード変更: 12件
 - テストシナリオ:
   - マネージャーのみアクセス可能（403 Forbidden for non-managers）
   - 未認証時は401 Unauthorized
@@ -1885,3 +1924,89 @@ curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=<tok
 | `spec/initializers/rack_attack_spec.rb` | 新規: 23テストケース（100%カバレッジ） |
 
 **テスト結果**: 460テスト、全体カバレッジ 94.85%
+
+---
+
+### 2026-01-28: 職員パスワード変更API実装
+
+**実装内容**:
+- `POST /api/v1/staff/me/password` - ログイン中の職員が自分のパスワードを変更
+
+**アクセス制御**:
+- 全職員（マネージャー・一般職員）がアクセス可能
+- `before_action :authenticate_staff!`（`require_manager!` ではない）
+
+**実装詳細**:
+- 現在のパスワードをbcrypt `authenticate` で検証
+- 新パスワードは `has_secure_password` でハッシュ化（モデルバリデーション活用）
+- 変更成功後に `reset_session` でセッション無効化（再ログイン要求）
+- `AuditLog.log_action` で `password_change` アクションを記録
+
+**変更ファイル**:
+| ファイル | 変更 |
+|---------|------|
+| `app/controllers/api/v1/staff_controller.rb` | `change_password` アクション追加、`before_action` 調整 |
+| `spec/requests/api/v1/staff_spec.rb` | パスワード変更テスト12件追加 |
+
+**テストカバレッジ**:
+- 12テストケース
+- テストシナリオ:
+  - 正常にパスワード変更
+  - セッション無効化確認
+  - 新パスワードでログイン可能
+  - 現在のパスワード不正 → 422
+  - 新パスワード短すぎ → 422
+  - 文字種不足 → 422
+  - 確認パスワード不一致 → 422
+  - 必須パラメータ未指定 → 422
+  - 未認証 → 401
+  - セッション期限切れ → 401
+  - 監査ログ記録確認
+
+---
+
+### 2026-01-28: 患者新規登録API実装
+
+**実装内容**:
+- `POST /api/v1/patients` - 患者新規登録（マネージャーのみ）
+
+**アクセス制御**:
+- マネージャーのみ患者登録可能
+- 一般職員は403 Forbiddenが返される
+- `before_action :require_manager!`
+
+**実装詳細**:
+- `User.new` + `patient_create_params` でStrong Parameters許可
+- バリデーション成功時に201 Created + 患者情報を返却
+- バリデーション失敗時に422 + エラー詳細を返却
+- 監査ログに `create` アクションを記録
+
+**モデル変更（User）**:
+- `validates :name, presence: true, length: { maximum: 100 }` 追加
+- `validates :birth_date, presence: true` 追加
+- `validate :birth_date_must_be_in_past` 追加（未来日付の拒否）
+
+**変更ファイル**:
+| ファイル | 変更 |
+|---------|------|
+| `config/routes.rb` | `resources :patients` に `:create` 追加 |
+| `app/controllers/api/v1/patients_controller.rb` | `create` アクション、`patient_create_params`、`require_manager!` 追加 |
+| `app/models/user.rb` | `name` presence/length、`birth_date` presence/past バリデーション追加 |
+| `spec/requests/api/v1/patients_spec.rb` | `POST /api/v1/patients` テスト13件追加 |
+
+**テストカバレッジ**:
+- 13テストケース（認証・認可・セキュリティ100%）
+- テストシナリオ:
+  - マネージャーが患者を正常に作成（201 Created）
+  - user_code重複 → 422
+  - email重複 → 422
+  - 必須フィールド欠落 → 422
+  - パスワード複雑性不足 → 422
+  - 無効なstatus値 → 422
+  - 無効なgender値 → 422
+  - birth_dateが未来日 → 422
+  - PII暗号化の確認（DB生データが平文でないことを検証）
+  - 監査ログ記録確認
+  - 一般職員 → 403 Forbidden
+  - 未認証 → 401
+  - セッション期限切れ → 401

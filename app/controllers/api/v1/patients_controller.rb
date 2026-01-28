@@ -3,7 +3,8 @@
 module Api
   module V1
     class PatientsController < BaseController
-      before_action :authenticate_staff!
+      before_action :authenticate_staff!, except: [ :create ]
+      before_action :require_manager!, only: [ :create ]
       before_action :set_patient, only: [ :show ]
       before_action :authorize_patient_access!, only: [ :show ]
 
@@ -30,7 +31,41 @@ module Api
         render_success(serialize_patient_detail(@patient))
       end
 
+      # POST /api/v1/patients
+      def create
+        patient = User.new(patient_create_params)
+
+        if patient.save
+          log_audit("create", "success", resource_id: patient.id)
+
+          render json: {
+            status: "success",
+            data: {
+              id: patient.id,
+              user_code: patient.user_code,
+              name: patient.name,
+              email: patient.email,
+              status: patient.status,
+              message: "患者を登録しました。初期パスワードは別途お知らせください。"
+            }
+          }, status: :created
+        else
+          render_error(
+            "バリデーションエラー",
+            errors: patient.errors.to_hash,
+            status: :unprocessable_entity
+          )
+        end
+      end
+
       private
+
+      def patient_create_params
+        params.permit(
+          :user_code, :name, :name_kana, :email, :birth_date,
+          :password, :gender, :phone, :status, :condition
+        )
+      end
 
       def set_patient
         @patient = User.active.find(params[:id])

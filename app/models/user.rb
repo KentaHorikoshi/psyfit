@@ -41,7 +41,10 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :gender, inclusion: { in: GENDERS }, allow_blank: true
+  validates :name, presence: true, length: { maximum: 100 }
+  validates :birth_date, presence: true
   validate :password_complexity, if: :password_digest_changed?
+  validate :birth_date_must_be_in_past
 
   # Soft delete scope
   scope :active, -> { where(deleted_at: nil) }
@@ -144,6 +147,17 @@ class User < ApplicationRecord
   end
 
   private
+
+  def birth_date_must_be_in_past
+    return if birth_date.blank?
+
+    parsed = birth_date.is_a?(String) ? Date.parse(birth_date) : birth_date
+    if parsed >= Date.current
+      errors.add(:birth_date, "must be in the past")
+    end
+  rescue ArgumentError
+    errors.add(:birth_date, "is invalid")
+  end
 
   def password_complexity
     return if password.blank?

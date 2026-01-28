@@ -315,4 +315,143 @@ RSpec.describe 'Api::V1::Staff', type: :request do
       end
     end
   end
+
+  describe 'POST /api/v1/staff/me/password' do
+    let(:current_password) { 'Password123' }
+    let(:new_password) { 'NewSecure456!' }
+    let(:staff_user) do
+      create(:staff, password: current_password, password_confirmation: current_password)
+    end
+
+    let(:valid_params) do
+      {
+        current_password: current_password,
+        new_password: new_password,
+        new_password_confirmation: new_password
+      }
+    end
+
+    context 'when authenticated as staff' do
+      before { sign_in_as_staff(staff_user) }
+
+      it 'changes password successfully' do
+        post '/api/v1/staff/me/password', params: valid_params
+
+        expect(response).to have_http_status(:ok)
+        json = json_response
+        expect(json['status']).to eq('success')
+        expect(json['data']['message']).to eq('パスワードを変更しました')
+      end
+
+      it 'invalidates session after password change' do
+        post '/api/v1/staff/me/password', params: valid_params
+        expect(response).to have_http_status(:ok)
+
+        # Session should be invalidated - subsequent request should fail
+        get '/api/v1/auth/me'
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'allows login with new password after change' do
+        post '/api/v1/staff/me/password', params: valid_params
+        expect(response).to have_http_status(:ok)
+
+        # Login with new password
+        post '/api/v1/auth/staff/login', params: {
+          staff_id: staff_user.staff_id,
+          password: new_password
+        }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns 422 when current_password is incorrect' do
+        post '/api/v1/staff/me/password', params: valid_params.merge(
+          current_password: 'WrongPassword1!'
+        )
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+
+      it 'returns 422 when new_password is too short' do
+        post '/api/v1/staff/me/password', params: valid_params.merge(
+          new_password: 'Short1!',
+          new_password_confirmation: 'Short1!'
+        )
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+
+      it 'returns 422 when new_password lacks character type diversity' do
+        post '/api/v1/staff/me/password', params: valid_params.merge(
+          new_password: 'onlylowercase',
+          new_password_confirmation: 'onlylowercase'
+        )
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+
+      it 'returns 422 when new_password_confirmation does not match' do
+        post '/api/v1/staff/me/password', params: valid_params.merge(
+          new_password_confirmation: 'Mismatch456!'
+        )
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+
+      it 'returns 422 when current_password is missing' do
+        post '/api/v1/staff/me/password', params: valid_params.except(:current_password)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+
+      it 'returns 422 when new_password is missing' do
+        post '/api/v1/staff/me/password', params: valid_params.except(:new_password)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+
+      it 'records audit log for password change' do
+        expect {
+          post '/api/v1/staff/me/password', params: valid_params
+        }.to change { AuditLog.where(action: 'password_change', staff_id: staff_user.id).count }.by(1)
+
+        audit_log = AuditLog.where(action: 'password_change', staff_id: staff_user.id).last
+        expect(audit_log.status).to eq('success')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns 401 unauthorized' do
+        post '/api/v1/staff/me/password', params: valid_params
+
+        expect(response).to have_http_status(:unauthorized)
+        json = json_response
+        expect(json['status']).to eq('error')
+      end
+    end
+
+    context 'when session has expired' do
+      it 'returns 401 unauthorized' do
+        sign_in_as_staff(staff_user)
+
+        travel 20.minutes do
+          post '/api/v1/staff/me/password', params: valid_params
+        end
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
 end

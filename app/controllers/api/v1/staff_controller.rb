@@ -3,7 +3,40 @@
 module Api
   module V1
     class StaffController < BaseController
-      before_action :require_manager!
+      before_action :require_manager!, except: [ :change_password ]
+      before_action :authenticate_staff!, only: [ :change_password ]
+
+      # POST /api/v1/staff/me/password
+      def change_password
+        staff = current_staff
+
+        unless staff.authenticate(change_password_params[:current_password].to_s)
+          return render_error("現在のパスワードが正しくありません", status: :unprocessable_entity)
+        end
+
+        new_password = change_password_params[:new_password]
+        new_password_confirmation = change_password_params[:new_password_confirmation]
+
+        if new_password.blank?
+          return render_error("新しいパスワードを入力してください", status: :unprocessable_entity)
+        end
+
+        if new_password != new_password_confirmation
+          return render_error("新しいパスワードが一致しません", status: :unprocessable_entity)
+        end
+
+        if staff.update(password: new_password, password_confirmation: new_password_confirmation)
+          log_password_change(staff)
+          reset_session
+          render_success({ message: "パスワードを変更しました" })
+        else
+          render_error(
+            "パスワードの更新に失敗しました",
+            errors: staff.errors.to_hash,
+            status: :unprocessable_entity
+          )
+        end
+      end
 
       # GET /api/v1/staff
       def index
@@ -64,6 +97,10 @@ module Api
         }
       end
 
+      def change_password_params
+        params.permit(:current_password, :new_password, :new_password_confirmation)
+      end
+
       def log_audit(action, status, resource_id: nil)
         AuditLog.create!(
           user_type: "staff",
@@ -73,6 +110,16 @@ module Api
           ip_address: client_ip,
           user_agent: user_agent,
           additional_info: { resource_type: "Staff", resource_id: resource_id }.to_json
+        )
+      end
+
+      def log_password_change(staff)
+        AuditLog.log_action(
+          action: "password_change",
+          status: "success",
+          staff: staff,
+          ip_address: client_ip,
+          user_agent: user_agent
         )
       end
     end

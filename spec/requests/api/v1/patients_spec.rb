@@ -543,6 +543,208 @@ RSpec.describe 'Api::V1::Patients', type: :request do
     end
   end
 
+  describe 'PATCH /api/v1/patients/:id' do
+    let(:update_params) do
+      {
+        name: '田中 健一',
+        name_kana: 'タナカ ケンイチ',
+        email: 'tanaka_new@example.com',
+        phone: '090-9876-5432',
+        status: '回復期',
+        condition: '変形性膝関節症（改善傾向）',
+        gender: 'male',
+        birth_date: '1960-05-15'
+      }
+    end
+
+    context 'when authenticated as manager' do
+      before { staff_login(manager) }
+
+      it 'updates patient information successfully' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: update_params
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['status']).to eq('success')
+
+        data = json_response['data']
+        expect(data['name']).to eq('田中 健一')
+        expect(data['name_kana']).to eq('タナカ ケンイチ')
+        expect(data['email']).to eq('tanaka_new@example.com')
+        expect(data['phone']).to eq('090-9876-5432')
+        expect(data['status']).to eq('回復期')
+        expect(data['condition']).to eq('変形性膝関節症（改善傾向）')
+        expect(data['gender']).to eq('male')
+        expect(data['birth_date']).to eq('1960-05-15')
+      end
+
+      it 'returns all expected fields in response' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: update_params
+
+        data = json_response['data']
+        expect(data).to include(
+          'id', 'name', 'name_kana', 'email', 'birth_date',
+          'age', 'gender', 'phone', 'status', 'condition', 'continue_days'
+        )
+      end
+
+      it 'updates status from 急性期 to 回復期' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['data']['status']).to eq('回復期')
+
+        patient_acute.reload
+        expect(patient_acute.status).to eq('回復期')
+      end
+
+      it 'updates multiple fields simultaneously' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: {
+          status: '回復期',
+          condition: '改善傾向',
+          phone: '080-1111-2222'
+        }
+
+        expect(response).to have_http_status(:ok)
+        data = json_response['data']
+        expect(data['status']).to eq('回復期')
+        expect(data['condition']).to eq('改善傾向')
+        expect(data['phone']).to eq('080-1111-2222')
+      end
+
+      it 'updates a single field only (partial update)' do
+        original_name = patient_acute.name
+
+        patch "/api/v1/patients/#{patient_acute.id}", params: { phone: '080-9999-0000' }
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['data']['phone']).to eq('080-9999-0000')
+        expect(json_response['data']['name']).to eq(original_name)
+      end
+
+      it 'returns 422 for invalid status value' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { status: '無効な状態' }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+        expect(json_response['errors']).to have_key('status')
+      end
+
+      it 'returns 422 for invalid gender value' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { gender: 'invalid' }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+        expect(json_response['errors']).to have_key('gender')
+      end
+
+      it 'returns 422 for duplicate email' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { email: patient_recovery.email }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+        expect(json_response['errors']).to have_key('email_bidx')
+      end
+
+      it 'returns 422 for future birth_date' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { birth_date: 1.year.from_now.to_date.to_s }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['status']).to eq('error')
+        expect(json_response['errors']).to have_key('birth_date')
+      end
+
+      it 'returns 404 for non-existent patient' do
+        patch '/api/v1/patients/00000000-0000-0000-0000-000000000000', params: { status: '回復期' }
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'returns 404 for soft deleted patient' do
+        patient_acute.soft_delete
+
+        patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'does not update user_code even if provided' do
+        original_code = patient_acute.user_code
+
+        patch "/api/v1/patients/#{patient_acute.id}", params: { user_code: 'HACKED001', name: '更新太郎' }
+
+        expect(response).to have_http_status(:ok)
+        patient_acute.reload
+        expect(patient_acute.user_code).to eq(original_code)
+      end
+
+      it 'does not update password even if provided' do
+        original_digest = patient_acute.password_digest
+
+        patch "/api/v1/patients/#{patient_acute.id}", params: { password: 'NewPass1!', name: '更新太郎' }
+
+        expect(response).to have_http_status(:ok)
+        patient_acute.reload
+        expect(patient_acute.password_digest).to eq(original_digest)
+      end
+
+      it 'creates audit log entry' do
+        expect {
+          patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
+        }.to change(AuditLog, :count).by(1)
+
+        audit = AuditLog.order(:created_at).last
+        expect(audit.action).to eq('update')
+        expect(audit.status).to eq('success')
+        expect(audit.staff_id).to eq(manager.id)
+        info = JSON.parse(audit.additional_info)
+        expect(info['resource_type']).to eq('Patient')
+        expect(info['resource_id']).to eq(patient_acute.id)
+      end
+    end
+
+    context 'when authenticated as regular staff' do
+      before do
+        create(:patient_staff_assignment, user: patient_acute, staff: staff_member)
+        staff_login(staff_member)
+      end
+
+      it 'updates assigned patient successfully' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['data']['status']).to eq('回復期')
+      end
+
+      it 'returns 403 for non-assigned patient' do
+        patch "/api/v1/patients/#{patient_maintenance.id}", params: { status: '回復期' }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response['message']).to include('アクセス権限')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns 401 Unauthorized' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when session is expired' do
+      before do
+        staff_login(manager)
+        Timecop.travel(16.minutes.from_now)
+      end
+
+      it 'returns 401 Unauthorized' do
+        patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   private
 
   def staff_login(staff)

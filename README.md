@@ -200,7 +200,7 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | Video | ✅ | ✅ | - |
 | AuditLog | ✅ | ✅ | - |
 
-#### APIエンドポイント（最新更新: 2026-01-24）
+#### APIエンドポイント（最新更新: 2026-01-28）
 | エンドポイント | 実装 | テスト |
 |---------------|:---:|:-----:|
 | **認証** | | |
@@ -224,21 +224,26 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 | **患者管理（職員）** | | |
 | GET /api/v1/patients | ✅ | ✅ |
 | GET /api/v1/patients/:id | ✅ | ✅ |
+| POST /api/v1/patients | ✅ | ✅ |
+| PATCH /api/v1/patients/:id | ✅ | ✅ |
 | **運動メニュー管理（職員・S-06）** | | |
-| GET /api/v1/exercise_masters | ⬜ | ⬜ |
-| POST /api/v1/patients/:id/exercises | ⬜ | ⬜ |
-| GET /api/v1/patients/:id/exercises | ⬜ | ⬜ |
+| GET /api/v1/exercise_masters | ✅ | ✅ |
+| GET /api/v1/patients/:id/exercises | ✅ | ✅ |
+| POST /api/v1/patients/:id/exercises | ✅ | ✅ |
 | **レポート出力（職員・S-07）** | | |
 | GET /api/v1/patients/:id/report | ✅ | ✅ |
 | **職員管理（マネージャー・S-08）** | | |
 | GET /api/v1/staff | ✅ | ✅ |
 | POST /api/v1/staff | ✅ | ✅ |
 | **パスワード変更（職員・S-09）** | | |
-| POST /api/v1/staff/me/password | ⬜ | ⬜ |
+| POST /api/v1/staff/me/password | ✅ | ✅ |
+| **動画配信** | | |
+| GET /api/v1/videos/:exercise_id/token | ✅ | ✅ |
+| GET /api/v1/videos/:exercise_id/stream | ✅ | ✅ |
 | **その他** | | |
 | GET /api/v1/health | ✅ | ✅ |
 
-**テストカバレッジ**: 86.52% (249テストケース、全パス)
+**テストカバレッジ**: 90%+ (全テストパス)
 
 ### データベース
 - 全テーブルマイグレーション: ✅
@@ -270,18 +275,17 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 - [x] フロントエンドAPI接続完了（利用者向け・職員向け全画面）
 - [x] フロントエンドAPIクライアント実装・テスト完了
 
-### Phase 2: 本番デプロイ準備（次のステップ）
-- [ ] バックエンド未実装APIエンドポイント
-  - [ ] GET /api/v1/exercise_masters（運動マスタ一覧）
-  - [ ] GET /api/v1/patients/:id/exercises（患者運動割当一覧）
-  - [ ] POST /api/v1/staff/me/password（職員パスワード変更）
-- [ ] frontend_admin App.tsx ルーティング完成
-- [ ] パスワードリセットメール送信実装（現在スタブ）
-- [ ] 動画アクセス制御の実装
-- [ ] レート制限の実装
-- [ ] Docker環境構築
-  - [ ] docker-compose.yml
-  - [ ] .env.example作成
+### Phase 2: 本番デプロイ準備
+- [x] バックエンド未実装APIエンドポイント
+  - [x] GET /api/v1/exercise_masters（運動マスタ一覧）
+  - [x] GET /api/v1/patients/:id/exercises（患者運動割当一覧）
+  - [x] POST /api/v1/staff/me/password（職員パスワード変更）
+  - [x] POST /api/v1/patients（患者新規登録）
+  - [x] PATCH /api/v1/patients/:id（患者情報更新）
+- [x] パスワードリセットメール送信実装
+- [x] 動画アクセス制御の実装
+- [x] レート制限の実装
+- [x] Docker環境構築（docker-compose.yml, .env.example, bin/docker-*）
 - [ ] CI/CDパイプライン構築
 - [ ] SSL証明書設定
 - [ ] 本番環境デプロイ

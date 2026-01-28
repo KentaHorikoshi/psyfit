@@ -5,8 +5,8 @@ module Api
     class PatientsController < BaseController
       before_action :authenticate_staff!, except: [ :create ]
       before_action :require_manager!, only: [ :create ]
-      before_action :set_patient, only: [ :show ]
-      before_action :authorize_patient_access!, only: [ :show ]
+      before_action :set_patient, only: [ :show, :update ]
+      before_action :authorize_patient_access!, only: [ :show, :update ]
 
       # GET /api/v1/patients
       def index
@@ -58,7 +58,29 @@ module Api
         end
       end
 
+      # PATCH /api/v1/patients/:id
+      def update
+        if @patient.update(patient_update_params)
+          log_audit("update", "success", resource_id: @patient.id)
+
+          render_success(serialize_patient_detail(@patient))
+        else
+          render_error(
+            "バリデーションエラー",
+            errors: @patient.errors.to_hash,
+            status: :unprocessable_entity
+          )
+        end
+      end
+
       private
+
+      def patient_update_params
+        params.permit(
+          :name, :name_kana, :email, :birth_date,
+          :gender, :phone, :status, :condition
+        )
+      end
 
       def patient_create_params
         params.permit(

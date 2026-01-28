@@ -25,6 +25,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/patients | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:id | ✅ 実装済み | ✅ |
 | POST /api/v1/patients | ✅ 実装済み | ✅ |
+| PATCH /api/v1/patients/:id | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/exercises | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
@@ -184,7 +185,7 @@ try {
 - `spec/requests/api/v1/exercise_records_spec.rb` - 運動記録API
 - `spec/requests/api/v1/daily_conditions_spec.rb` - 体調記録API
 - `spec/requests/api/v1/measurements_spec.rb` - 測定値API
-- `spec/requests/api/v1/patients_spec.rb` - 患者一覧・詳細API
+- `spec/requests/api/v1/patients_spec.rb` - 患者一覧・詳細・登録・更新API
 - `spec/requests/api/v1/patient_exercises_spec.rb` - 運動メニュー割当API
 - `spec/requests/api/v1/staff_spec.rb` - 職員管理API + パスワード変更API（12テスト追加）
 - `spec/requests/api/v1/patient_reports_spec.rb` - 患者レポートAPI
@@ -703,11 +704,21 @@ Cookie: _psyfit_session=<session_id>
 
 ---
 
-### 運動マスタ (Exercises) ⏳
+### 運動マスタ (Exercise Masters) ✅
 
-#### GET /api/v1/exercises
+#### GET /api/v1/exercise_masters (職員用) ✅
 
-運動マスタ一覧を取得。
+運動マスタ一覧を取得。S-06運動メニュー設定画面で患者に割り当て可能な運動一覧の取得に使用。
+
+**認証**: 職員セッション必須（マネージャー・一般職員どちらもアクセス可能）
+
+**クエリパラメータ**:
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| category | string | NO | カテゴリで絞り込み（`筋力`, `バランス`, `柔軟性`） |
+| difficulty | string | NO | 難易度で絞り込み（`easy`, `medium`, `hard`） |
+
+**監査ログ**: `action: 'read'`, `resource_type: 'Exercise'`
 
 ```json
 // Query Parameters
@@ -733,7 +744,18 @@ Cookie: _psyfit_session=<session_id>
     ]
   }
 }
+
+// 未認証時 (401 Unauthorized)
+{
+  "status": "error",
+  "message": "認証が必要です"
+}
 ```
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/exercise_masters_controller.rb`
+- テスト: `spec/requests/api/v1/exercise_masters_spec.rb` (16件)
+- ルーティング: `config/routes.rb` に `resources :exercise_masters, only: [:index]` 定義済み
 
 ---
 
@@ -961,6 +983,95 @@ Cookie: _psyfit_session=<session_id>
   }
 }
 ```
+
+#### PATCH /api/v1/patients/:id (職員用) ✅
+
+患者情報を更新。病期変更、疾患・連絡先の更新などに使用。
+
+**認証**: 職員セッション必須
+
+**認可ルール**:
+- マネージャー: 全患者を更新可能
+- 一般職員: 担当患者のみ更新可能（`patient_staff_assignments` テーブルで関連付け）
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | 患者ID |
+
+```json
+// Request（全フィールドオプション、指定されたもののみ更新）
+{
+  "name": "田中 健一",
+  "name_kana": "タナカ ケンイチ",
+  "email": "tanaka_new@example.com",
+  "phone": "090-9876-5432",
+  "status": "回復期",
+  "condition": "変形性膝関節症（改善傾向）",
+  "gender": "male",
+  "birth_date": "1960-05-15"
+}
+
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "name": "田中 健一",
+    "name_kana": "タナカ ケンイチ",
+    "email": "tanaka_new@example.com",
+    "birth_date": "1960-05-15",
+    "age": 65,
+    "gender": "male",
+    "phone": "090-9876-5432",
+    "status": "回復期",
+    "condition": "変形性膝関節症（改善傾向）",
+    "continue_days": 14,
+    "assigned_staff": [...]
+  }
+}
+```
+
+**リクエストフィールド**（全てオプション）:
+| フィールド | 型 | バリデーション |
+|-----------|-----|---------------|
+| name | string | 100文字以内 |
+| name_kana | string | - |
+| email | string | メール形式、一意（blind index） |
+| birth_date | date | 過去の日付（YYYY-MM-DD） |
+| gender | string | `male`, `female`, `other` のいずれか |
+| phone | string | - |
+| status | string | `急性期`, `回復期`, `維持期` のいずれか |
+| condition | string | - |
+
+**セキュリティ**:
+- `user_code` と `password` はStrong Parametersで除外（更新不可）
+- PII（name, name_kana, email, birth_date）は暗号化されてDB保存（AES-256-GCM）
+- 監査ログに記録（action: 'update', resource_type: 'Patient', resource_id: patient.id）
+
+**副作用**:
+- 監査ログに記録される（action: 'update', status: 'success'）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `401 Unauthorized`: セッション期限切れの場合（15分）
+- `403 Forbidden`: 一般職員が担当外の患者を更新しようとした場合
+- `404 Not Found`: 患者が存在しない、または論理削除されている場合
+- `422 Unprocessable Entity`: バリデーションエラー
+
+```json
+// Error Response (422)
+{
+  "status": "error",
+  "message": "バリデーションエラー",
+  "errors": {
+    "status": ["is not included in the list"],
+    "email_bidx": ["has already been taken"]
+  }
+}
+```
+
+---
 
 #### POST /api/v1/patients/:patient_id/exercises (職員用)
 
@@ -1551,8 +1662,10 @@ SQLインジェクション・XSSパターンを検出した場合、Fail2Banで
 - 一般職員は担当外患者にアクセス不可（403 Forbidden）
 
 **テストカバレッジ**:
-- 49テストケース（`spec/requests/api/v1/patients_spec.rb`）
-- 全体カバレッジ: 86.52%（目標80%達成）
+- 67テストケース（`spec/requests/api/v1/patients_spec.rb`）
+  - 一覧・詳細: 49件
+  - 新規登録: 13件（2026-01-28追加）
+  - 更新: 18件（2026-01-28追加）
 - テストシナリオ:
   - マネージャー/一般職員の権限制御
   - ページネーション（デフォルト20件、最大100件）
@@ -1668,7 +1781,7 @@ curl -X POST "http://localhost:3000/api/v1/staff" \
 **次のステップ**:
 - ~~運動メニュー割当API（`POST /api/v1/patients/:patient_id/exercises`）~~ ✅ 完了
 - ~~患者レポート生成API（`GET /api/v1/patients/:patient_id/report`）~~ ✅ 完了
-- 運動マスタAPI（`GET /api/v1/exercises`）
+- ~~運動マスタAPI（`GET /api/v1/exercise_masters`）~~ ✅ 完了
 
 ---
 
@@ -1725,7 +1838,7 @@ curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>/report" \
 ```
 
 **次のステップ**:
-- 運動マスタAPI（`GET /api/v1/exercises`）
+- ~~運動マスタAPI（`GET /api/v1/exercise_masters`）~~ ✅ 完了
 
 ---
 
@@ -2008,5 +2121,53 @@ curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=<tok
   - PII暗号化の確認（DB生データが平文でないことを検証）
   - 監査ログ記録確認
   - 一般職員 → 403 Forbidden
+  - 未認証 → 401
+  - セッション期限切れ → 401
+
+---
+
+### 2026-01-28: 患者情報更新API実装
+
+**実装内容**:
+- `PATCH /api/v1/patients/:id` - 患者情報更新（マネージャーまたは担当職員）
+
+**アクセス制御**:
+- マネージャー: 全患者を更新可能
+- 一般職員: 担当患者のみ更新可能（`patient_staff_assignments` で関連付け）
+
+**実装詳細**:
+- `@patient.update(patient_update_params)` でStrong Parameters適用
+- `patient_update_params`: name, name_kana, email, birth_date, gender, phone, status, condition のみ許可
+- `user_code` と `password` はStrong Parametersから除外（更新不可）
+- 既存の `set_patient` / `authorize_patient_access!` before_action を再利用
+- レスポンスは `serialize_patient_detail` を再利用（showアクションと同一形式）
+- 監査ログに `update` アクションを記録
+
+**変更ファイル**:
+| ファイル | 変更 |
+|---------|------|
+| `config/routes.rb` | `resources :patients` に `:update` 追加 |
+| `app/controllers/api/v1/patients_controller.rb` | `update` アクション、`patient_update_params` 追加、before_action に `:update` 追加 |
+| `spec/requests/api/v1/patients_spec.rb` | `PATCH /api/v1/patients/:id` テスト18件追加（合計67件） |
+
+**テストカバレッジ**:
+- 18テストケース（認証・認可・セキュリティ100%）
+- テストシナリオ:
+  - マネージャーが全フィールドを正常に更新（200 OK）
+  - レスポンスに必要なフィールドが含まれる
+  - status を 急性期→回復期 に更新
+  - 複数フィールド同時更新
+  - 単一フィールドの部分更新
+  - 無効なstatus値 → 422
+  - 無効なgender値 → 422
+  - email重複 → 422
+  - birth_dateが未来日 → 422
+  - 存在しない患者ID → 404
+  - 論理削除済み患者 → 404
+  - user_code は更新されないことを確認
+  - password は更新されないことを確認
+  - 監査ログ記録確認
+  - 担当職員が担当患者を更新 → 200 OK
+  - 担当外患者を更新 → 403 Forbidden
   - 未認証 → 401
   - セッション期限切れ → 401

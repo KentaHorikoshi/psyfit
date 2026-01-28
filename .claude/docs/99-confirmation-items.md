@@ -318,7 +318,7 @@ npm run test:e2e:report   # レポート表示
 |---------|------|------|
 | 利用者向けUI | ✅ 完了 | 12画面、277テスト、97%+カバレッジ |
 | 職員向けUI | ✅ 完了 | 9画面、210テスト、95%+カバレッジ |
-| バックエンドAPI | ✅ 完了 | 12コントローラー、385+テスト（患者登録13件追加）、90%+カバレッジ |
+| バックエンドAPI | ✅ 完了 | 13コントローラー、400+テスト（運動マスタ16件追加）、90%+カバレッジ |
 | E2Eテスト | ✅ 完了 | Playwright、利用者5件+職員5件 |
 | ESLintエラー | ✅ 完了 | 0エラー |
 
@@ -331,6 +331,8 @@ npm run test:e2e:report   # レポート表示
 | Docker環境構築 | ✅ 完了 (2026-01-27) | 高 |
 | 職員パスワード変更API | ✅ 完了 (2026-01-28) | 中 |
 | 患者新規登録API | ✅ 完了 (2026-01-28) | 高 |
+| 患者情報更新API | ✅ 完了 (2026-01-28) | 高 |
+| 運動マスタ一覧API | ✅ 完了 (2026-01-28) | 中 |
 | CI/CDパイプライン | 未着手 | 中 |
 | 本番環境デプロイ | 未着手 | 高 |
 
@@ -466,6 +468,8 @@ TDDで実装完了。利用者・職員両方に対応。
 - [x] Docker環境構築（docker-compose.yml, .env.example） ← **完了（2026-01-27）**
 - [x] 職員パスワード変更API ← **完了（2026-01-28）**
 - [x] 患者新規登録API ← **完了（2026-01-28）**
+- [x] 患者情報更新API ← **完了（2026-01-28）**
+- [x] 運動マスタ一覧API ← **完了（2026-01-28）**
 - [ ] CI/CDパイプライン構築（GitHub Actions）
 - [ ] 本番環境デプロイ準備
 
@@ -648,3 +652,46 @@ bin/docker-test
 DOCKER_BUILD_TEST=true bin/docker-test
 DOCKER_BUILD_TEST=true DOCKER_UP_TEST=true bin/docker-test
 ```
+
+## 運動マスタ一覧API実装サマリー（2026-01-28）
+
+### 実装内容
+
+TDDで実装。S-06運動メニュー設定画面で使用する運動マスタ一覧取得API。
+
+**エンドポイント**:
+
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/v1/exercise_masters` | 運動マスタ一覧取得（職員認証必須） |
+
+### 作成ファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `app/controllers/api/v1/exercise_masters_controller.rb` | コントローラ（51行） |
+| `spec/requests/api/v1/exercise_masters_spec.rb` | リクエストテスト（16件） |
+
+### 機能
+
+- 職員認証必須（`authenticate_staff!`）
+- カテゴリフィルタ（`?category=筋力`）— 既存スコープ `by_category` 使用
+- 難易度フィルタ（`?difficulty=easy`）— 既存スコープ `by_difficulty` 使用
+- 複合フィルタ（category + difficulty）
+- 監査ログ記録（`action: 'read'`, `resource_type: 'Exercise'`）
+
+### テスト結果
+
+- **テストケース**: 16件 全パス
+- テストシナリオ:
+  - 全運動一覧取得（4件のテストデータ）
+  - レスポンスフィールド検証（id, name, description, category, difficulty, recommended_reps, recommended_sets, video_url, thumbnail_url, duration_seconds）
+  - カテゴリフィルタ（筋力/バランス/柔軟性）
+  - 難易度フィルタ（easy/medium/hard）
+  - 複合フィルタ（category + difficulty）
+  - 0件時の空配列レスポンス
+  - 監査ログ記録
+  - 一般職員のアクセス許可
+  - 利用者セッションでの401
+  - 未認証での401
+  - セッション期限切れでの401

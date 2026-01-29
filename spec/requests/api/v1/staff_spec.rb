@@ -364,6 +364,18 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it 'prevents login with old password after change' do
+        post '/api/v1/staff/me/password', params: valid_params
+        expect(response).to have_http_status(:ok)
+
+        # Login with old password should fail
+        post '/api/v1/auth/staff/login', params: {
+          staff_id: staff_user.staff_id,
+          password: current_password
+        }
+        expect(response).to have_http_status(:unauthorized)
+      end
+
       it 'returns 422 when current_password is incorrect' do
         post '/api/v1/staff/me/password', params: valid_params.merge(
           current_password: 'WrongPassword1!'
@@ -372,6 +384,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json = json_response
         expect(json['status']).to eq('error')
+        expect(json['message']).to eq('現在のパスワードが正しくありません')
       end
 
       it 'returns 422 when new_password is too short' do
@@ -404,6 +417,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json = json_response
         expect(json['status']).to eq('error')
+        expect(json['message']).to eq('新しいパスワードが一致しません')
       end
 
       it 'returns 422 when current_password is missing' do

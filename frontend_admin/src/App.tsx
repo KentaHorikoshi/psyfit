@@ -16,6 +16,7 @@ import type { PatientsListResponse, PatientStatus, DashboardStats, Patient } fro
 import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
 import { PatientList } from './components/PatientList'
+import { PatientCreateDialog } from './components/PatientCreateDialog'
 import { PatientDetail } from './components/PatientDetail'
 import { MeasurementInput } from './components/MeasurementInput'
 import { ExerciseMenu } from './components/ExerciseMenu'
@@ -142,6 +143,7 @@ function DashboardPage() {
  * Patient list page wrapper - manages search, filter, pagination state and fetches data.
  */
 function PatientListPage() {
+  const { staff } = useAuth()
   const navigate = useNavigate()
   const [data, setData] = useState<PatientsListResponse>({
     patients: [],
@@ -151,6 +153,9 @@ function PatientListPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<PatientStatus | 'all'>('all')
   const [page, setPage] = useState(1)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+
+  const isManager = staff?.role === 'manager'
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -184,15 +189,29 @@ function PatientListPage() {
     setPage(1)
   }, [])
 
+  const handleCreateSuccess = useCallback(() => {
+    // Refresh patient list after successful creation
+    fetchPatients()
+  }, [fetchPatients])
+
   return (
-    <PatientList
-      data={data}
-      isLoading={isLoading}
-      onSearch={handleSearch}
-      onFilterStatus={handleFilterStatus}
-      onPageChange={setPage}
-      onPatientClick={(path) => navigate(path)}
-    />
+    <>
+      <PatientList
+        data={data}
+        isLoading={isLoading}
+        onSearch={handleSearch}
+        onFilterStatus={handleFilterStatus}
+        onPageChange={setPage}
+        onPatientClick={(path) => navigate(path)}
+        isManager={isManager}
+        onCreatePatient={() => setIsCreateDialogOpen(true)}
+      />
+      <PatientCreateDialog
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSuccess={handleCreateSuccess}
+      />
+    </>
   )
 }
 

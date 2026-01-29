@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react'
 import type { PatientsListResponse, PatientStatus } from '../lib/api-types'
 
 interface PatientListProps {
@@ -9,6 +9,8 @@ interface PatientListProps {
   onFilterStatus: (status: PatientStatus | 'all') => void
   onPageChange: (page: number) => void
   onPatientClick: (path: string) => void
+  isManager?: boolean
+  onCreatePatient?: () => void
 }
 
 function StatusBadge({ status }: { status: PatientStatus }) {
@@ -34,6 +36,8 @@ export function PatientList({
   onFilterStatus,
   onPageChange,
   onPatientClick,
+  isManager = false,
+  onCreatePatient,
 }: PatientListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<PatientStatus | 'all'>('all')
@@ -72,9 +76,21 @@ export function PatientList({
   return (
     <div className="p-8">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">患者一覧</h1>
-        <p className="text-gray-600">全{data.meta.total}件の患者を管理できます</p>
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">患者一覧</h1>
+          <p className="text-gray-600">全{data.meta.total}件の患者を管理できます</p>
+        </div>
+        {isManager && onCreatePatient && (
+          <button
+            onClick={onCreatePatient}
+            className="flex items-center gap-2 px-4 py-3 bg-[#1E40AF] text-white font-medium rounded-lg hover:bg-[#1E3A8A] transition-colors min-h-[44px]"
+            aria-label="新規患者登録"
+          >
+            <UserPlus className="w-5 h-5" />
+            新規患者登録
+          </button>
+        )}
       </div>
 
       {/* Filters */}

@@ -229,3 +229,26 @@ export interface ChangePasswordRequest {
 export interface ChangePasswordResponse {
   message: string
 }
+
+// Patient Create Types (S-03)
+export interface CreatePatientRequest {
+  user_code: string
+  name: string
+  name_kana?: string
+  email: string
+  birth_date: string
+  password: string
+  gender?: string
+  phone?: string
+  status?: PatientStatus
+  condition?: string
+}
+
+export interface CreatePatientResponse {
+  id: string
+  user_code: string
+  name: string
+  email: string
+  status: PatientStatus
+  message: string
+}

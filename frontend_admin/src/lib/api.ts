@@ -18,6 +18,8 @@ import type {
   CreateStaffResponse,
   ChangePasswordRequest,
   ChangePasswordResponse,
+  CreatePatientRequest,
+  CreatePatientResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -200,6 +202,11 @@ class ApiClient {
   // Password Change endpoint (S-09)
   async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<ChangePasswordResponse>> {
     return this.post<ChangePasswordResponse>('/staff/me/password', data)
+  }
+
+  // Patient Create endpoint (S-03)
+  async createPatient(data: CreatePatientRequest): Promise<ApiResponse<CreatePatientResponse>> {
+    return this.post<CreatePatientResponse>('/patients', data)
   }
 }
 

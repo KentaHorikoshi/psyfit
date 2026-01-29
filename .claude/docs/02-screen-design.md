@@ -166,7 +166,7 @@
   - バックエンドAPI: `POST /api/v1/patients` ✅ 実装済み
 - 実装: `frontend_admin/src/components/PatientList.tsx` ✅
 - 新規登録ダイアログ: `frontend_admin/src/components/PatientCreateDialog.tsx` ✅
-- テスト: PatientList 29件 + PatientCreateDialog 24件
+- テスト: PatientList 29件 + PatientCreateDialog 30件
 
 ### S-04: 患者詳細
 - 個人情報

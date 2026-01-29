@@ -89,7 +89,8 @@
 - メールアドレス入力
 - リセット用リンク送信
 - 新パスワード設定
-- 実装: 未着手
+- 実装: `frontend_user/src/components/PasswordReset.tsx` ✅
+- テスト: 31 tests passed
 
 ### U-10: ウェルカム
 - 継続日数の大きな表示
@@ -154,7 +155,7 @@
 - 検索・フィルタ機能（患者名、カナ検索 + ステータス絞り込み）
 - ステータスバッジ表示（急性期:赤/回復期:黄/維持期:緑）
 - ページネーション機能
-- **新規患者登録機能**（マネージャーのみ）- バックエンドAPI ✅ / フロントエンドUI ⏳
+- **新規患者登録機能**（マネージャーのみ）✅
   - 「新規患者登録」ボタン（マネージャーのみ表示）
   - 登録ダイアログ/モーダル
   - 必須項目: 患者コード、氏名、メール、生年月日、初期パスワード
@@ -162,10 +163,10 @@
   - パスワード複雑性チェック表示（8文字以上、2種類以上の文字）
   - 初期パスワード生成機能（ランダム生成 or 手動入力）
   - 登録成功時に初期パスワードを表示（印刷用）
-  - バックエンドAPI: `POST /api/v1/patients` ✅ 実装済み（13テスト）
+  - バックエンドAPI: `POST /api/v1/patients` ✅ 実装済み
 - 実装: `frontend_admin/src/components/PatientList.tsx` ✅
-- 新規登録ダイアログ: `frontend_admin/src/components/PatientCreateDialog.tsx` ⏳
-- テスト: 29 tests passed (97.9% coverage)
+- 新規登録ダイアログ: `frontend_admin/src/components/PatientCreateDialog.tsx` ✅
+- テスト: PatientList 29件 + PatientCreateDialog 24件
 
 ### S-04: 患者詳細
 - 個人情報

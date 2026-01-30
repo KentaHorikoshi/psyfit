@@ -16,7 +16,7 @@ describe('ApiClient', () => {
   describe('error handling', () => {
     it('should throw AuthenticationError on 401 response', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/users/me`, () => {
+        http.get(`${API_BASE_URL}/auth/me`, () => {
           return HttpResponse.json(
             { status: 'error', message: '認証が必要です' },
             { status: 401 }
@@ -81,7 +81,7 @@ describe('ApiClient', () => {
 
     it('should handle network errors gracefully', async () => {
       server.use(
-        http.get(`${API_BASE_URL}/users/me`, () => {
+        http.get(`${API_BASE_URL}/auth/me`, () => {
           return HttpResponse.error()
         })
       )
@@ -169,7 +169,7 @@ describe('ApiClient', () => {
         }
 
         server.use(
-          http.get(`${API_BASE_URL}/users/me`, () => {
+          http.get(`${API_BASE_URL}/auth/me`, () => {
             return HttpResponse.json({
               status: 'success',
               data: { user: mockUser },
@@ -250,20 +250,24 @@ describe('ApiClient', () => {
 
   describe('exercise record APIs', () => {
     describe('createExerciseRecord', () => {
-      it('should send POST request to create exercise record', async () => {
+      it('should send POST request to create exercise record with correct parameter names', async () => {
+        // バックエンドのパラメータ名に統一: completed_sets, completed_reps
         const mockRecord = {
           id: 'record-123',
           exercise_id: 'exercise-1',
           user_id: 'user-1',
           completed_at: '2026-01-25T10:00:00Z',
-          sets_completed: 3,
-          reps_completed: 10,
+          completed_sets: 3,
+          completed_reps: 10,
         }
 
         server.use(
           http.post(`${API_BASE_URL}/exercise_records`, async ({ request }) => {
-            const body = await request.json() as { exercise_id: string }
+            const body = await request.json() as { exercise_id: string; completed_sets: number; completed_reps: number }
             expect(body.exercise_id).toBe('exercise-1')
+            // バックエンドのパラメータ名を検証
+            expect(body.completed_sets).toBe(3)
+            expect(body.completed_reps).toBe(10)
             return HttpResponse.json({
               status: 'success',
               data: mockRecord,
@@ -273,8 +277,8 @@ describe('ApiClient', () => {
 
         const response = await apiClient.createExerciseRecord({
           exercise_id: 'exercise-1',
-          sets_completed: 3,
-          reps_completed: 10,
+          completed_sets: 3,
+          completed_reps: 10,
         })
 
         expect(response.status).toBe('success')
@@ -284,7 +288,9 @@ describe('ApiClient', () => {
       it('should include pain_level and notes when provided', async () => {
         server.use(
           http.post(`${API_BASE_URL}/exercise_records`, async ({ request }) => {
-            const body = await request.json() as { pain_level?: number; notes?: string }
+            const body = await request.json() as { completed_sets: number; completed_reps: number; pain_level?: number; notes?: string }
+            expect(body.completed_sets).toBe(3)
+            expect(body.completed_reps).toBe(10)
             expect(body.pain_level).toBe(3)
             expect(body.notes).toBe('少し痛みあり')
             return HttpResponse.json({
@@ -296,8 +302,8 @@ describe('ApiClient', () => {
 
         await apiClient.createExerciseRecord({
           exercise_id: 'exercise-1',
-          sets_completed: 3,
-          reps_completed: 10,
+          completed_sets: 3,
+          completed_reps: 10,
           pain_level: 3,
           notes: '少し痛みあり',
         })
@@ -312,8 +318,8 @@ describe('ApiClient', () => {
             exercise_id: 'exercise-1',
             user_id: 'user-1',
             completed_at: '2026-01-25T10:00:00Z',
-            sets_completed: 3,
-            reps_completed: 10,
+            completed_sets: 3,
+            completed_reps: 10,
             exercise_name: 'スクワット',
             exercise_category: 'lower_body',
           },

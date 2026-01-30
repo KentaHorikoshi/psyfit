@@ -1,7 +1,9 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User } from 'lucide-react'
+import { apiClient } from '../lib/api-client'
+import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
+import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User, ClipboardEdit, CheckCircle2, Circle } from 'lucide-react'
 
 function getGreeting(): { text: string; Icon: typeof Sun } {
   const hour = new Date().getHours()
@@ -39,6 +41,10 @@ export function Home() {
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading } = useAuth()
 
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [todayRecords, setTodayRecords] = useState<ExerciseRecordWithExercise[]>([])
+  const [exercisesLoading, setExercisesLoading] = useState(true)
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -46,8 +52,48 @@ export function Home() {
     }
   }, [isAuthenticated, isLoading, navigate])
 
+  // Fetch today's exercises and records
+  useEffect(() => {
+    async function fetchTodayData() {
+      if (!isAuthenticated) return
+
+      try {
+        setExercisesLoading(true)
+        const today = new Date().toISOString().split('T')[0]
+
+        const [exercisesRes, recordsRes] = await Promise.all([
+          apiClient.getUserExercises(),
+          apiClient.getExerciseRecords({ start_date: today, end_date: today }),
+        ])
+
+        if (exercisesRes.status === 'success' && exercisesRes.data) {
+          setExercises(exercisesRes.data.exercises)
+        }
+        if (recordsRes.status === 'success' && recordsRes.data) {
+          setTodayRecords(recordsRes.data.records)
+        }
+      } catch {
+        // Silently handle errors for exercise list
+      } finally {
+        setExercisesLoading(false)
+      }
+    }
+
+    fetchTodayData()
+  }, [isAuthenticated])
+
   const greeting = useMemo(() => getGreeting(), [])
   const GreetingIcon = greeting.Icon
+
+  // Calculate completed exercise IDs from today's records
+  const completedExerciseIds = useMemo(() => {
+    return new Set(todayRecords.map(record => record.exercise_id))
+  }, [todayRecords])
+
+  // Calculate remaining exercises count
+  const remainingCount = useMemo(() => {
+    return exercises.filter(ex => !completedExerciseIds.has(ex.id)).length
+  }, [exercises, completedExerciseIds])
 
   // Show loading state
   if (isLoading) {
@@ -100,6 +146,74 @@ export function Home() {
         </div>
       </section>
 
+      {/* Today's exercise menu */}
+      <section className="px-6 mb-6" aria-label="今日の運動メニュー">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-gray-900">今日の運動</h2>
+          {!exercisesLoading && exercises.length > 0 && (
+            remainingCount > 0 ? (
+              <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                残り {remainingCount} 件
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                完了
+              </span>
+            )
+          )}
+        </div>
+        {exercisesLoading ? (
+          <div className="bg-gray-50 rounded-xl p-4 text-center text-gray-500">
+            読み込み中...
+          </div>
+        ) : exercises.length === 0 ? (
+          <div className="bg-gray-50 rounded-xl p-4 text-center text-gray-500">
+            今日の運動メニューはありません
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {exercises.map(exercise => {
+              const isCompleted = completedExerciseIds.has(exercise.id)
+              return (
+                <div
+                  key={exercise.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    isCompleted
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {isCompleted ? (
+                      <CheckCircle2 size={20} className="text-green-600 shrink-0" />
+                    ) : (
+                      <Circle size={20} className="text-gray-300 shrink-0" />
+                    )}
+                    <div>
+                      <p className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                        {exercise.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {exercise.sets}セット × {exercise.reps}回
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`text-sm font-medium px-2 py-0.5 rounded ${
+                      isCompleted
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {isCompleted ? '実施済み' : '未実施'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
       {/* Main menu */}
       <main className="px-6 mb-6 flex-1">
         <div className="space-y-3">
@@ -117,6 +231,11 @@ export function Home() {
             icon={<History size={24} className="text-[#1E40AF]" />}
             label="履歴を見る"
             onClick={() => navigate('/history')}
+          />
+          <MenuCard
+            icon={<ClipboardEdit size={24} className="text-[#1E40AF]" />}
+            label="体調を入力"
+            onClick={() => navigate('/daily-condition')}
           />
         </div>
 

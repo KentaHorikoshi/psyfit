@@ -49,16 +49,16 @@ export interface ExerciseRecord {
   exercise_id: string
   user_id: string
   completed_at: string
-  sets_completed: number
-  reps_completed: number
+  completed_sets: number
+  completed_reps: number
   pain_level?: number
   notes?: string
 }
 
 export interface CreateExerciseRecordRequest {
   exercise_id: string
-  sets_completed: number
-  reps_completed: number
+  completed_sets: number
+  completed_reps: number
   pain_level?: number
   notes?: string
 }

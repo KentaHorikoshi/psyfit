@@ -74,8 +74,8 @@ export function BatchRecord() {
 
         return apiClient.createExerciseRecord({
           exercise_id: exerciseId,
-          sets_completed: exercise.sets,
-          reps_completed: exercise.reps,
+          completed_sets: exercise.sets,
+          completed_reps: exercise.reps,
         })
       })
 

@@ -83,8 +83,8 @@ export function ExercisePlayer() {
 
       await apiClient.createExerciseRecord({
         exercise_id: exercise.id,
-        sets_completed: currentSet,
-        reps_completed: exercise.reps,
+        completed_sets: currentSet,
+        completed_reps: exercise.reps,
       })
 
       setIsCompleted(true)

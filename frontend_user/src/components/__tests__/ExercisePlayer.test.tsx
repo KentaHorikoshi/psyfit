@@ -234,11 +234,12 @@ describe('U-04 ExercisePlayer', () => {
       const completeButton = screen.getByRole('button', { name: /完了/ })
       await user.click(completeButton)
 
+      // バックエンドのパラメータ名に統一: completed_sets, completed_reps
       await waitFor(() => {
         expect(mockCreateExerciseRecord).toHaveBeenCalledWith({
           exercise_id: '1',
-          sets_completed: 1,
-          reps_completed: 10,
+          completed_sets: 1,
+          completed_reps: 10,
         })
       })
     })

@@ -94,8 +94,8 @@ describe('U-15 BatchRecord', () => {
         exercise_id: '1',
         user_id: '1',
         completed_at: new Date().toISOString(),
-        sets_completed: 3,
-        reps_completed: 10,
+        completed_sets: 3,
+        completed_reps: 10,
       },
     })
   })

@@ -201,8 +201,8 @@ export function ExerciseHistory() {
                         <span className="text-sm text-gray-500">{formatTime(record.completed_at)}</span>
                       </div>
                       <div className="flex gap-4 text-sm text-gray-600">
-                        <span>{record.sets_completed}セット</span>
-                        <span>{record.reps_completed}回</span>
+                        <span>{record.completed_sets}セット</span>
+                        <span>{record.completed_reps}回</span>
                       </div>
                     </div>
                   ))}

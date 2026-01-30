@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { Home } from '../Home'
+import type { Exercise } from '../../lib/api-types'
 
 // Mock the AuthContext
 const mockLogout = vi.fn()
@@ -21,6 +22,37 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   }
 })
+
+// Mock API client
+const mockGetUserExercises = vi.fn()
+const mockGetExerciseRecords = vi.fn()
+vi.mock('../../lib/api-client', () => ({
+  apiClient: {
+    getUserExercises: () => mockGetUserExercises(),
+    getExerciseRecords: (params?: { start_date?: string; end_date?: string }) => mockGetExerciseRecords(params),
+  },
+}))
+
+const mockExercises: Exercise[] = [
+  {
+    id: '1',
+    name: 'スクワット',
+    description: '膝の筋力強化',
+    video_url: '/videos/squat.mp4',
+    sets: 3,
+    reps: 10,
+    category: 'lower_body',
+  },
+  {
+    id: '2',
+    name: '腕上げ運動',
+    description: '肩の可動域訓練',
+    video_url: '/videos/arm-raise.mp4',
+    sets: 2,
+    reps: 15,
+    category: 'upper_body',
+  },
+]
 
 function renderHome() {
   return render(
@@ -43,6 +75,15 @@ describe('U-02 Home', () => {
       logout: mockLogout,
       isAuthenticated: true,
       isLoading: false,
+    })
+    // Default mock: 2 exercises, 0 completed today
+    mockGetUserExercises.mockResolvedValue({
+      status: 'success',
+      data: { exercises: mockExercises },
+    })
+    mockGetExerciseRecords.mockResolvedValue({
+      status: 'success',
+      data: { records: [] },
     })
   })
 
@@ -303,6 +344,159 @@ describe('U-02 Home', () => {
 
       // Should show loading indicator or skeleton
       expect(screen.getByRole('status') || screen.getByText(/読み込み中/)).toBeInTheDocument()
+    })
+  })
+
+  describe('today exercise menu (タスク2)', () => {
+    it('should display today assigned exercises', async () => {
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByText('スクワット')).toBeInTheDocument()
+        expect(screen.getByText('腕上げ運動')).toBeInTheDocument()
+      })
+    })
+
+    it('should display sets and reps for each exercise', async () => {
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByText(/3セット.*10回/)).toBeInTheDocument()
+        expect(screen.getByText(/2セット.*15回/)).toBeInTheDocument()
+      })
+    })
+
+    it('should show incomplete status when exercise not done today', async () => {
+      renderHome()
+
+      await waitFor(() => {
+        // 未実施マークが2つ表示されるはず
+        const incompleteMarkers = screen.getAllByText('未実施')
+        expect(incompleteMarkers).toHaveLength(2)
+      })
+    })
+
+    it('should show completed status when exercise is done today', async () => {
+      // 1つの運動が完了した状態
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            {
+              id: 'record-1',
+              exercise_id: '1',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 3,
+              completed_reps: 10,
+              exercise_name: 'スクワット',
+              exercise_category: 'lower_body',
+            },
+          ],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByText('実施済み')).toBeInTheDocument()
+        expect(screen.getByText('未実施')).toBeInTheDocument()
+      })
+    })
+
+    it('should display remaining exercise count badge', async () => {
+      renderHome()
+
+      await waitFor(() => {
+        // 残り2件のバッジ
+        expect(screen.getByText(/残り.*2.*件/)).toBeInTheDocument()
+      })
+    })
+
+    it('should display remaining 1 when one exercise is completed', async () => {
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            {
+              id: 'record-1',
+              exercise_id: '1',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 3,
+              completed_reps: 10,
+              exercise_name: 'スクワット',
+              exercise_category: 'lower_body',
+            },
+          ],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByText(/残り.*1.*件/)).toBeInTheDocument()
+      })
+    })
+
+    it('should show all completed message when all exercises done', async () => {
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            {
+              id: 'record-1',
+              exercise_id: '1',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 3,
+              completed_reps: 10,
+              exercise_name: 'スクワット',
+              exercise_category: 'lower_body',
+            },
+            {
+              id: 'record-2',
+              exercise_id: '2',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 2,
+              completed_reps: 15,
+              exercise_name: '腕上げ運動',
+              exercise_category: 'upper_body',
+            },
+          ],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByText(/完了/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('daily condition button (タスク2)', () => {
+    it('should render daily condition button', async () => {
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /体調.*入力|体調を入力/ })).toBeInTheDocument()
+      })
+    })
+
+    it('should navigate to /daily-condition on click', async () => {
+      const user = userEvent.setup()
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /体調.*入力|体調を入力/ })).toBeInTheDocument()
+      })
+
+      const conditionButton = screen.getByRole('button', { name: /体調.*入力|体調を入力/ })
+      await user.click(conditionButton)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/daily-condition')
     })
   })
 })

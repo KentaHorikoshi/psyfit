@@ -866,3 +866,78 @@ READMEに追加可能:
 - [ ] 本番環境デプロイワークフロー（CD）
 - [ ] Slack/メール通知設定
 - [ ] デプロイ承認フロー（環境保護ルール）
+
+## 運動履歴APIレスポンス形式修正サマリー（2026-01-30）
+
+### 修正内容
+
+TDDで実装。フロントエンドの型定義との整合性を確保するため、`GET /api/v1/users/me/exercise_records` のレスポンス形式を修正。
+
+### 変更前後の比較
+
+| 項目 | 変更前 | 変更後 |
+|------|--------|--------|
+| 運動名 | `exercise.name` (ネスト) | `exercise_name` (フラット) |
+| 運動ID | `exercise.id` (ネスト) | `exercise_id` (フラット) |
+| 運動カテゴリ | なし | `exercise_category` |
+| 回数 | `completed_reps` | `reps_completed` |
+| セット | `completed_sets` | `sets_completed` |
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `app/controllers/api/v1/exercise_records_controller.rb` | `record_with_exercise` メソッドのレスポンス形式を修正 |
+| `spec/requests/api/v1/exercise_records_spec.rb` | テストの期待値を新形式に更新 |
+
+### 新レスポンス形式
+
+```json
+{
+  "status": "success",
+  "data": {
+    "records": [
+      {
+        "id": "uuid",
+        "exercise_id": "uuid",
+        "exercise_name": "スクワット",
+        "exercise_category": "筋力",
+        "completed_at": "2026-01-30T10:00:00+09:00",
+        "sets_completed": 3,
+        "reps_completed": 10
+      }
+    ],
+    "summary": {
+      "total_exercises": 1,
+      "total_minutes": 3,
+      "continue_days": 14
+    }
+  }
+}
+```
+
+### フロントエンド型定義（参照）
+
+`frontend_user/src/lib/api-types.ts`:
+```typescript
+interface ExerciseRecordWithExercise extends ExerciseRecord {
+  exercise_name: string
+  exercise_category: string
+}
+
+interface ExerciseRecord {
+  id: string
+  exercise_id: string
+  user_id: string
+  completed_at: string
+  sets_completed: number
+  reps_completed: number
+  pain_level?: number
+  notes?: string
+}
+```
+
+### テスト結果
+
+- **テストケース**: 29件 全パス
+- **回帰なし**: 既存の全テストが正常通過

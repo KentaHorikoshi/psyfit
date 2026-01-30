@@ -61,13 +61,12 @@ module Api
       def record_with_exercise(record)
         {
           id: record.id,
-          exercise: {
-            id: record.exercise.id,
-            name: record.exercise.name
-          },
-          completed_reps: record.completed_reps,
-          completed_sets: record.completed_sets,
-          completed_at: record.completed_at.iso8601
+          exercise_id: record.exercise_id,
+          exercise_name: record.exercise.name,
+          exercise_category: record.exercise.category,
+          completed_at: record.completed_at.iso8601,
+          sets_completed: record.completed_sets,
+          reps_completed: record.completed_reps
         }
       end
 

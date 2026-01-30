@@ -309,14 +309,20 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
           expect(records.last['id']).to eq(record1.id)
         end
 
-        it 'includes exercise details' do
+        it 'includes exercise details in flat format' do
           get '/api/v1/users/me/exercise_records'
 
           first_record = json_response['data']['records'].first
-          expect(first_record['exercise']).to include(
-            'id' => exercise2.id,
-            'name' => '片足立ち'
+          expect(first_record).to include(
+            'exercise_id' => exercise2.id,
+            'exercise_name' => '片足立ち',
+            'exercise_category' => exercise2.category,
+            'sets_completed' => 2,
+            'reps_completed' => 15
           )
+          expect(first_record).not_to have_key('exercise')
+          expect(first_record).not_to have_key('completed_reps')
+          expect(first_record).not_to have_key('completed_sets')
         end
 
         it 'includes summary with total_exercises and continue_days' do

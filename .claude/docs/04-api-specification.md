@@ -1280,7 +1280,7 @@ Cookie: _psyfit_session=<session_id>
 
 #### GET /api/v1/patients/:patient_id/report (職員用) ✅
 
-患者レポートをPDFで生成。
+患者レポートをPDFまたはCSVで生成。
 
 **認証**: 職員セッション必須
 
@@ -1293,17 +1293,29 @@ Cookie: _psyfit_session=<session_id>
 |-----------|-----|-----------|------|
 | start_date | date | 30日前 | レポート開始日 |
 | end_date | date | 当日 | レポート終了日 |
-| format | string | pdf | 出力形式（現在はpdfのみ対応） |
+| format | string | pdf | 出力形式（pdf または csv） |
 
 ```json
-// Query Parameters
+// Query Parameters (PDF)
 ?start_date=2026-01-01&end_date=2026-01-31&format=pdf
 
 // Response (200 OK)
 // Content-Type: application/pdf
 // Content-Disposition: attachment; filename="patient_report_<患者名>_<開始日>_<終了日>.pdf"
 // PDFファイルがダウンロードされる
+
+// Query Parameters (CSV)
+?start_date=2026-01-01&end_date=2026-01-31&format=csv
+
+// Response (200 OK)
+// Content-Type: text/csv; charset=utf-8
+// Content-Disposition: attachment; filename="patient_report_<患者名>_<開始日>_<終了日>.csv"
+// CSVファイルがダウンロードされる（UTF-8 BOM付きでExcel互換）
 ```
+
+**CSV出力仕様**:
+- UTF-8 BOM（\xEF\xBB\xBF）付きでExcelでの文字化けを防止
+- Content-Type: text/csv; charset=utf-8
 
 **レポート内容**:
 - 患者基本情報（氏名、年齢、性別、病期、疾患、継続日数）
@@ -2233,3 +2245,46 @@ curl -X GET "http://localhost:4001/api/v1/videos/<exercise_id>/stream?token=<tok
   - 担当外患者を更新 → 403 Forbidden
   - 未認証 → 401
   - セッション期限切れ → 401
+
+---
+
+### 2026-01-30: 患者レポートCSV出力機能追加
+
+**実装内容**:
+- `GET /api/v1/patients/:patient_id/report?format=csv` - 患者レポートCSV生成
+
+**CSV出力仕様**:
+- UTF-8 BOM（\xEF\xBB\xBF）付きでExcelでの文字化けを防止
+- Content-Type: text/csv; charset=utf-8
+- レポート内容はPDFと同一（患者情報、測定値推移、運動実施状況、体調記録）
+
+**変更ファイル**:
+| ファイル | 変更 |
+|---------|------|
+| `app/controllers/api/v1/patient_reports_controller.rb` | format分岐（pdf/csv）、`send_csv_report` 追加 |
+| `app/services/patient_report_csv_service.rb` | CSV生成サービス新規作成 |
+| `spec/requests/api/v1/patient_reports_spec.rb` | CSV出力テスト10件追加（合計27件） |
+| `Gemfile` | `csv` gem追加（Ruby 4.0+ bundled gem） |
+
+**テストカバレッジ**:
+- 10テストケース追加
+- テストシナリオ:
+  - CSVファイル返却（Content-Type確認）
+  - UTF-8 BOM付与確認（Excel互換性）
+  - charset=utf-8 ヘッダー確認
+  - Content-Disposition に .csv 拡張子
+  - 測定値データがCSVに含まれる
+  - 運動実施データがCSVに含まれる
+  - 監査ログ記録確認
+  - 担当職員がCSVダウンロード可能
+  - 担当外患者 → 403 Forbidden
+  - 未認証 → 401
+
+**使用例**:
+
+```bash
+# 患者レポートCSV取得
+curl -X GET "http://localhost:3000/api/v1/patients/<patient_id>/report?start_date=2026-01-01&end_date=2026-01-31&format=csv" \
+  -H "Cookie: _psyfit_session=<session_id>" \
+  -o patient_report.csv
+```

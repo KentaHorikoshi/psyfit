@@ -30,14 +30,14 @@ export function Celebration() {
   const state = (location.state as CelebrationState) || {}
   const { exerciseName = '運動', setsCompleted = 0, repsCompleted = 0 } = state
 
-  // Auto-navigate after 3 seconds
+  // Auto-navigate after 3 seconds to condition input screen
   useEffect(() => {
     if (hasNavigatedRef.current) return
 
     const timer = setTimeout(() => {
       if (!hasNavigatedRef.current) {
         hasNavigatedRef.current = true
-        navigate('/home', { replace: true })
+        navigate('/condition', { replace: true })
       }
     }, 3000)
 
@@ -49,7 +49,7 @@ export function Celebration() {
   const handleContinue = () => {
     if (hasNavigatedRef.current) return
     hasNavigatedRef.current = true
-    navigate('/home', { replace: true })
+    navigate('/condition', { replace: true })
   }
 
   // Generate confetti pieces

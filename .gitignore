@@ -43,3 +43,4 @@ frontend_admin/e2e-report/
 frontend_admin/e2e/.auth/
 frontend_admin/test-results/
 
+node_modules

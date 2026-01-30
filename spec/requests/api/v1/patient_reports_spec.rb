@@ -232,6 +232,133 @@ RSpec.describe 'Api::V1::PatientReports', type: :request do
     end
   end
 
+  describe 'GET /api/v1/patients/:patient_id/report (CSV format)' do
+    let(:start_date) { '2026-01-01' }
+    let(:end_date) { '2026-01-31' }
+
+    context 'when staff is authenticated as manager' do
+      before { staff_login(manager) }
+
+      it 'returns CSV file' do
+        get "/api/v1/patients/#{patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.content_type).to include('text/csv')
+      end
+
+      it 'includes UTF-8 BOM for Excel compatibility' do
+        get "/api/v1/patients/#{patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response.body.bytes[0..2]).to eq([0xEF, 0xBB, 0xBF])
+      end
+
+      it 'sets charset=utf-8 in Content-Type header' do
+        get "/api/v1/patients/#{patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response.headers['Content-Type']).to include('charset=utf-8')
+      end
+
+      it 'sets correct Content-Disposition header with .csv extension' do
+        get "/api/v1/patients/#{patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response.headers['Content-Disposition']).to include('attachment')
+        expect(response.headers['Content-Disposition']).to include('.csv')
+      end
+
+      context 'with measurement data' do
+        before do
+          create(:measurement,
+                 user: patient,
+                 measured_by_staff: manager,
+                 measured_date: Date.parse('2026-01-15'),
+                 weight_kg: 65.5,
+                 tug_seconds: 12.3,
+                 nrs_pain_score: 3)
+        end
+
+        it 'includes measurement data in CSV' do
+          get "/api/v1/patients/#{patient.id}/report",
+              params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+          # Skip BOM (3 bytes) and check content
+          csv_content = response.body[3..]
+          expect(csv_content).to include('測定値')
+          expect(csv_content).to include('65.5')
+        end
+      end
+
+      context 'with exercise record data' do
+        let(:exercise) { create(:exercise, name: 'スクワット') }
+
+        before do
+          create(:exercise_record,
+                 user: patient,
+                 exercise: exercise,
+                 completed_at: Time.zone.parse('2026-01-15 10:00:00'),
+                 completed_reps: 10,
+                 completed_sets: 3)
+        end
+
+        it 'includes exercise data in CSV' do
+          get "/api/v1/patients/#{patient.id}/report",
+              params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+          csv_content = response.body[3..]
+          expect(csv_content).to include('運動実施')
+          expect(csv_content).to include('スクワット')
+        end
+      end
+
+      it 'creates audit log entry for CSV download' do
+        expect {
+          get "/api/v1/patients/#{patient.id}/report",
+              params: { start_date: start_date, end_date: end_date, format: 'csv' }
+        }.to change(AuditLog, :count).by(1)
+
+        audit = AuditLog.order(:created_at).last
+        expect(audit.action).to eq('read')
+        expect(audit.status).to eq('success')
+      end
+    end
+
+    context 'as regular staff' do
+      before do
+        create(:patient_staff_assignment, user: patient, staff: staff_member)
+        staff_login(staff_member)
+      end
+
+      it 'can download assigned patient CSV report' do
+        get "/api/v1/patients/#{patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.content_type).to include('text/csv')
+      end
+
+      it 'returns forbidden for non-assigned patient CSV' do
+        other_patient = create(:user, name: '佐藤花子')
+
+        get "/api/v1/patients/#{other_patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        get "/api/v1/patients/#{patient.id}/report",
+            params: { start_date: start_date, end_date: end_date, format: 'csv' }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   private
 
   def staff_login(staff)

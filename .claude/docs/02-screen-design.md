@@ -109,13 +109,17 @@
 - 運動完了時の祝福演出
 - クラッカーアニメーション
 - 達成感の演出
+- 3秒後に自動遷移、または「続ける」ボタンで即時遷移
+- **画面遷移**: ExercisePlayer → /celebration → /condition → /home
 - 実装: `frontend_user/src/components/Celebration.tsx` ✅
-- テスト: 7 tests passed
+- テスト: 24 tests passed
 
 ### U-14: 体調入力
 - 痛みレベル（0-10スライダー）
 - 身体の調子（0-10スライダー）
 - 主観的評価の記録
+- スキップボタンで入力をスキップ可能
+- 保存またはスキップ後にホーム画面へ遷移
 - 実装: `frontend_user/src/components/ConditionInput.tsx` ✅
 - テスト: 13 tests passed
 

@@ -21,7 +21,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/users/me/exercise_records | ✅ 実装済み | ✅ |
 | POST /api/v1/daily_conditions | ✅ 実装済み | ✅ |
 | GET /api/v1/users/me/daily_conditions | ✅ 実装済み | ✅ |
-| GET /api/v1/exercises | ⏳ 未実装 | - |
+| GET /api/v1/exercises/:id | ✅ 実装済み | ✅ |
 | GET /api/v1/patients | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:id | ✅ 実装済み | ✅ |
 | POST /api/v1/patients | ✅ 実装済み | ✅ |
@@ -543,6 +543,68 @@ Cookie: _psyfit_session=<session_id>
 | target_reps | Integer | 目標回数 |
 | target_sets | Integer | 目標セット数 |
 | completed_today | Boolean | 本日実施済みかどうか |
+
+---
+
+#### GET /api/v1/exercises/:id ✅
+
+指定された運動の詳細情報を取得。利用者に割り当てられた運動のみアクセス可能。
+
+**認証**: 利用者セッション必須
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | 運動ID |
+
+```json
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "exercise": {
+      "id": "uuid",
+      "name": "スクワット",
+      "description": "下半身の筋力強化",
+      "category": "筋力",
+      "difficulty": "easy",
+      "recommended_reps": 10,
+      "recommended_sets": 3,
+      "video_url": "/videos/squat.mp4",
+      "thumbnail_url": "/thumbnails/squat.jpg",
+      "duration_seconds": 180
+    }
+  }
+}
+```
+
+**レスポンスフィールド**:
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | 運動ID |
+| name | String | 運動名 |
+| description | String | 運動の説明 |
+| category | String | カテゴリ（筋力/バランス/柔軟性） |
+| difficulty | String | 難易度（easy/medium/hard） |
+| recommended_reps | Integer | 推奨回数 |
+| recommended_sets | Integer | 推奨セット数 |
+| video_url | String | 動画URL |
+| thumbnail_url | String | サムネイルURL |
+| duration_seconds | Integer | 運動時間（秒） |
+
+**エラーレスポンス**:
+| ステータス | 説明 |
+|-----------|------|
+| 401 | 未認証（セッションなし/期限切れ） |
+| 403 | 割り当てられていない運動へのアクセス |
+| 404 | 存在しない運動ID |
+
+**監査ログ**: `action: 'read'`, `resource_type: 'Exercise'`, `exercise_id: <uuid>`
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/exercises_controller.rb`
+- テスト: `spec/requests/api/v1/exercises_spec.rb` (10件)
+- ルーティング: `config/routes.rb` に `resources :exercises, only: [:show]` 定義済み
 
 ---
 

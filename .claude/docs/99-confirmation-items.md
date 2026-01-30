@@ -2,8 +2,8 @@
 
 このファイルには、基本設計書から派生した確認事項やTODO項目を記録します。
 
-**最終更新**: 2026-01-28
-**ステータス**: **Phase 2 進行中** - Docker環境構築完了、CI/CD・本番デプロイ準備中
+**最終更新**: 2026-01-30
+**ステータス**: **Phase 2 進行中** - Docker環境構築完了、CI/CDパイプライン構築完了、本番デプロイ準備中
 
 ---
 
@@ -333,7 +333,8 @@ npm run test:e2e:report   # レポート表示
 | 患者新規登録API | ✅ 完了 (2026-01-28) | 高 |
 | 患者情報更新API | ✅ 完了 (2026-01-28) | 高 |
 | 運動マスタ一覧API | ✅ 完了 (2026-01-28) | 中 |
-| CI/CDパイプライン | 未着手 | 中 |
+| 運動詳細API | ✅ 完了 (2026-01-30) | 中 |
+| CI/CDパイプライン | ✅ 完了 (2026-01-30) | 中 |
 | 本番環境デプロイ | 未着手 | 高 |
 
 ## パスワードリセットAPI実装サマリー（2026-01-25）
@@ -695,3 +696,173 @@ TDDで実装。S-06運動メニュー設定画面で使用する運動マスタ�
   - 利用者セッションでの401
   - 未認証での401
   - セッション期限切れでの401
+
+## 運動詳細API実装サマリー（2026-01-30）
+
+### 実装内容
+
+TDDで実装。利用者向け運動詳細取得API。
+
+**エンドポイント**:
+
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/v1/exercises/:id` | 運動詳細取得（利用者認証必須） |
+
+### 作成ファイル
+
+| ファイル | 説明 |
+|---------|------|
+| `app/controllers/api/v1/exercises_controller.rb` | コントローラ（63行） |
+| `spec/requests/api/v1/exercises_spec.rb` | リクエストテスト（10件） |
+
+### 機能
+
+- 利用者認証必須（`authenticate_user!`）
+- 利用者に割り当てられた運動のみアクセス可能（`patient_exercises` でアクティブな割り当てが存在）
+- 監査ログ記録（`action: 'read'`, `resource_type: 'Exercise'`, `exercise_id: <uuid>`）
+
+### レスポンス形式
+
+```json
+{
+  "status": "success",
+  "data": {
+    "exercise": {
+      "id": "uuid",
+      "name": "スクワット",
+      "description": "下半身の筋力強化",
+      "category": "筋力",
+      "difficulty": "easy",
+      "recommended_reps": 10,
+      "recommended_sets": 3,
+      "video_url": "/videos/squat.mp4",
+      "thumbnail_url": "/thumbnails/squat.jpg",
+      "duration_seconds": 180
+    }
+  }
+}
+```
+
+### エラーケース
+
+| ステータス | 説明 |
+|-----------|------|
+| 401 | 未認証（セッションなし/期限切れ） |
+| 403 | 割り当てられていない運動へのアクセス |
+| 404 | 存在しない運動ID |
+
+### テスト結果
+
+- **テストケース**: 10件 全パス
+- テストシナリオ:
+  - 未認証時の401
+  - 認証済み利用者で割り当て運動の取得成功
+  - 監査ログ記録確認
+  - 非アクティブ割り当ての403
+  - 未割り当て運動の403
+  - 他ユーザー割り当て運動の403
+  - 存在しない運動IDの404
+  - 職員セッションでの401
+  - セッションタイムアウト後の401（30分）
+  - セッション有効内のアクセス成功（29分）
+
+## CI/CDパイプライン構築サマリー（2026-01-30）
+
+### 実装内容
+
+GitHub Actionsによる統合CI/CDパイプラインを構築。プルリクエスト・プッシュ時に自動実行。
+
+### ワークフロー構成
+
+**ファイル**: `.github/workflows/ci.yml`
+
+**トリガー**:
+- push: main, develop ブランチ
+- pull_request: main, develop ブランチ
+
+### ジョブ一覧
+
+| ジョブ名 | 説明 | 依存関係 |
+|---------|------|---------|
+| scan-ruby | Brakeman + bundler-audit | なし（並列） |
+| scan-js | importmap audit | なし（並列） |
+| lint-ruby | RuboCop | なし（並列） |
+| backend-test | RSpec + PostgreSQL 16 + Redis 7 | なし（並列） |
+| frontend-user-test | ESLint + tsc + Vitest | なし（並列） |
+| frontend-admin-test | ESLint + tsc + Vitest | なし（並列） |
+| build-check | npm run build (両アプリ) | なし（並列） |
+| e2e-test | Playwright E2E | backend-test 完了後 |
+| ci-success | 全ジョブ成功確認 | 全ジョブ完了後 |
+
+### 主要機能
+
+#### 1. バックエンドテスト (backend-test)
+- **サービスコンテナ**: PostgreSQL 16-alpine, Redis 7-alpine
+- **テスト**: RSpec + SimpleCov
+- **カバレッジ**: 80%必須（SimpleCov minimum_coverage）
+- **出力**: JUnit XML形式（rspec_junit_formatter）
+- **環境変数**:
+  - `DATABASE_URL`: postgres://postgres:postgres@localhost:5432/psyfit_test
+  - `REDIS_URL`: redis://localhost:6379/1
+  - `SECRET_KEY_BASE`: test-secret-key-for-ci-environment
+
+#### 2. フロントエンドテスト (frontend-user-test, frontend-admin-test)
+- **Node.js**: 20
+- **ステップ**: npm ci → ESLint → tsc --noEmit → Vitest
+- **カバレッジ**: 80%必須（coverage-summary.json で検証）
+- **キャッシュ**: npm (package-lock.json ベース)
+
+#### 3. ビルドチェック (build-check)
+- **対象**: frontend_user, frontend_admin
+- **マトリクス戦略**: 並列ビルド
+- **アーティファクト**: dist/ を1日間保存
+
+#### 4. E2Eテスト (e2e-test)
+- **ブラウザ**: Chromium (Playwright)
+- **マトリクス戦略**: frontend_user (port 5173), frontend_admin (port 5174)
+- **タイムアウト**: 30分
+- **失敗時**: スクリーンショット保存（7日間）
+- **レポート**: e2e-report/ を14日間保存
+
+### 最適化
+
+- **並列実行**: 依存関係のないジョブは全て並列実行
+- **キャッシュ活用**:
+  - Ruby gems: bundler-cache (ruby/setup-ruby)
+  - npm packages: cache (actions/setup-node)
+  - RuboCop: actions/cache
+- **早期終了**: concurrency設定で同一ブランチの古い実行をキャンセル
+- **失敗時の早期終了**: fail-fast: false (E2E) で全テスト結果を収集
+
+### 追加したGem
+
+| Gem | バージョン | 用途 |
+|-----|-----------|------|
+| rspec_junit_formatter | ~> 0.6 | CI用JUnit XML出力 |
+
+### アーティファクト
+
+| 名前 | 内容 | 保持期間 |
+|------|------|---------|
+| backend-coverage | SimpleCovレポート | 7日 |
+| backend-test-results | RSpec JUnit XML | 7日 |
+| frontend-user-coverage | Vitestカバレッジ | 7日 |
+| frontend-admin-coverage | Vitestカバレッジ | 7日 |
+| frontend_user-build | ビルド成果物 | 1日 |
+| frontend_admin-build | ビルド成果物 | 1日 |
+| e2e-report-* | Playwrightレポート | 14日 |
+| e2e-screenshots-* | 失敗時スクリーンショット | 7日 |
+
+### ステータスバッジ
+
+READMEに追加可能:
+```markdown
+![CI](https://github.com/<owner>/psyfit/actions/workflows/ci.yml/badge.svg)
+```
+
+### 次のステップ
+
+- [ ] 本番環境デプロイワークフロー（CD）
+- [ ] Slack/メール通知設定
+- [ ] デプロイ承認フロー（環境保護ルール）

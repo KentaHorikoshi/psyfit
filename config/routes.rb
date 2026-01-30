@@ -53,8 +53,11 @@ Rails.application.routes.draw do
         end
       end
 
-      # Exercise masters
+      # Exercise masters (staff)
       resources :exercise_masters, only: [ :index ]
+
+      # Exercises (user)
+      resources :exercises, only: [ :show ]
 
       # Video streaming with access control
       scope :videos do

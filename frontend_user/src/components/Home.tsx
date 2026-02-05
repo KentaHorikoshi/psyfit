@@ -235,7 +235,7 @@ export function Home() {
           <MenuCard
             icon={<ClipboardEdit size={24} className="text-[#1E40AF]" />}
             label="体調を入力"
-            onClick={() => navigate('/daily-condition')}
+            onClick={() => navigate('/condition-input')}
           />
         </div>
 

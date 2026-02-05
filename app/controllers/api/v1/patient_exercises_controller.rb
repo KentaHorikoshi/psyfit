@@ -9,6 +9,27 @@ module Api
       before_action :validate_exercise_id, only: [ :create ]
       before_action :set_exercise, only: [ :create ]
 
+      # GET /api/v1/patients/:patient_id/exercises
+      def index
+        patient_exercises = @patient.patient_exercises.active.includes(:exercise, :assigned_by_staff)
+
+        assignments = patient_exercises.map do |pe|
+          {
+            id: pe.id,
+            patient_id: pe.user_id,
+            exercise_id: pe.exercise_id,
+            sets: pe.target_sets || pe.exercise.recommended_sets || 3,
+            reps: pe.target_reps || pe.exercise.recommended_reps || 10,
+            pain_flag: false,
+            reason: "",
+            assigned_at: pe.assigned_at.iso8601,
+            assigned_by: pe.assigned_by_staff&.name || ""
+          }
+        end
+
+        render_success({ assignments: assignments })
+      end
+
       # POST /api/v1/patients/:patient_id/exercises
       def create
         @patient_exercise = PatientExercise.new(patient_exercise_params)

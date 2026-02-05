@@ -485,7 +485,7 @@ describe('U-02 Home', () => {
       })
     })
 
-    it('should navigate to /daily-condition on click', async () => {
+    it('should navigate to /condition-input on click', async () => {
       const user = userEvent.setup()
       renderHome()
 
@@ -496,7 +496,7 @@ describe('U-02 Home', () => {
       const conditionButton = screen.getByRole('button', { name: /体調.*入力|体調を入力/ })
       await user.click(conditionButton)
 
-      expect(mockNavigate).toHaveBeenCalledWith('/daily-condition')
+      expect(mockNavigate).toHaveBeenCalledWith('/condition-input')
     })
   })
 })

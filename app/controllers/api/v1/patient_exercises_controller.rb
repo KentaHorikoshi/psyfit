@@ -6,8 +6,6 @@ module Api
       before_action :authenticate_staff!
       before_action :set_patient
       before_action :authorize_patient_access!
-      before_action :validate_exercise_id, only: [ :create ]
-      before_action :set_exercise, only: [ :create ]
 
       # GET /api/v1/patients/:patient_id/exercises
       def index
@@ -31,34 +29,54 @@ module Api
       end
 
       # POST /api/v1/patients/:patient_id/exercises
+      # 一括割り当て対応: assignments配列を受け取り、既存を非アクティブ化して新規作成
       def create
-        @patient_exercise = PatientExercise.new(patient_exercise_params)
-        @patient_exercise.user = @patient
-        @patient_exercise.exercise = @exercise
-        @patient_exercise.assigned_by_staff = current_staff
-        @patient_exercise.assigned_at = Time.current
+        assignments_params = params[:assignments]
 
-        @patient_exercise.save!
+        # 配列かどうかチェック（ActionController::Parametersの場合も考慮）
+        assignments_array = normalize_assignments(assignments_params)
 
-        log_audit("create", "success")
+        if assignments_array.blank?
+          return render_error("assignmentsは必須です", status: :unprocessable_entity)
+        end
 
-        render_success(serialize_patient_exercise(@patient_exercise), status: :created)
+        created_exercises = []
+
+        ActiveRecord::Base.transaction do
+          # 既存の割り当てを非アクティブ化
+          @patient.patient_exercises.active.update_all(is_active: false)
+
+          # 新しい割り当てを作成
+          assignments_array.each do |assignment|
+            exercise_id = assignment["exercise_id"] || assignment[:exercise_id]
+            exercise = Exercise.find(exercise_id)
+
+            patient_exercise = PatientExercise.new(
+              user: @patient,
+              exercise: exercise,
+              assigned_by_staff: current_staff,
+              assigned_at: Time.current,
+              target_sets: assignment["sets"] || assignment[:sets],
+              target_reps: assignment["reps"] || assignment[:reps],
+              is_active: true
+            )
+
+            patient_exercise.save!
+            created_exercises << patient_exercise
+          end
+        end
+
+        log_audit("create", "success", created_exercises.map(&:exercise_id))
+
+        render_success({
+          assignments: created_exercises.map { |pe| serialize_patient_exercise(pe) }
+        }, status: :created)
       end
 
       private
 
       def set_patient
         @patient = User.active.find(params[:patient_id])
-      end
-
-      def validate_exercise_id
-        return if params[:exercise_id].present?
-
-        render_error("exercise_idは必須です", status: :unprocessable_entity)
-      end
-
-      def set_exercise
-        @exercise = Exercise.find(params[:exercise_id])
       end
 
       def authorize_patient_access!
@@ -72,8 +90,17 @@ module Api
         @patient.patient_staff_assignments.exists?(staff_id: current_staff.id)
       end
 
-      def patient_exercise_params
-        params.permit(:target_reps, :target_sets)
+      def normalize_assignments(assignments_params)
+        return [] if assignments_params.blank?
+
+        # ActionController::Parametersや配列を正規化
+        if assignments_params.respond_to?(:to_a)
+          assignments_params.to_a
+        elsif assignments_params.is_a?(Array)
+          assignments_params
+        else
+          []
+        end
       end
 
       def serialize_patient_exercise(patient_exercise)
@@ -86,7 +113,7 @@ module Api
         }
       end
 
-      def log_audit(action, status)
+      def log_audit(action, status, exercise_ids = [])
         AuditLog.create!(
           user_type: "staff",
           staff_id: current_staff.id,
@@ -97,7 +124,7 @@ module Api
           additional_info: {
             resource_type: "PatientExercise",
             patient_id: @patient.id,
-            exercise_id: @exercise&.id
+            exercise_ids: exercise_ids
           }.to_json
         )
       end

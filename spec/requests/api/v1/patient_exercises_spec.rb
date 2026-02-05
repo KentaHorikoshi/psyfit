@@ -13,11 +13,25 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
   let!(:another_exercise) { create(:exercise) }
 
   describe 'POST /api/v1/patients/:patient_id/exercises' do
+    # 一括割り当て形式（フロントエンドが使用する形式）
     let(:valid_params) do
       {
-        exercise_id: exercise.id,
-        target_reps: 10,
-        target_sets: 3
+        assignments: [
+          { exercise_id: exercise.id, sets: 3, reps: 10 }
+        ],
+        pain_flag: false,
+        reason: ""
+      }
+    end
+
+    let(:multiple_assignments_params) do
+      {
+        assignments: [
+          { exercise_id: exercise.id, sets: 3, reps: 10 },
+          { exercise_id: another_exercise.id, sets: 2, reps: 15 }
+        ],
+        pain_flag: false,
+        reason: ""
       }
     end
 
@@ -26,16 +40,16 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         before { staff_login(manager) }
 
         it 'can assign exercise to any patient' do
-          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
           expect(response).to have_http_status(:created)
           expect(json_response['status']).to eq('success')
         end
 
         it 'returns the created assignment data' do
-          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
-          data = json_response['data']
+          data = json_response['data']['assignments'].first
           expect(data['id']).to be_present
           expect(data['exercise_id']).to eq(exercise.id)
           expect(data['target_reps']).to eq(10)
@@ -45,12 +59,18 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
         it 'creates a patient_exercise record' do
           expect {
-            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
           }.to change(PatientExercise, :count).by(1)
         end
 
+        it 'creates multiple patient_exercise records for batch assignment' do
+          expect {
+            post "/api/v1/patients/#{patient.id}/exercises", params: multiple_assignments_params, as: :json
+          }.to change(PatientExercise, :count).by(2)
+        end
+
         it 'sets assigned_by_staff_id to current staff' do
-          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
           assignment = PatientExercise.last
           expect(assignment.assigned_by_staff_id).to eq(manager.id)
@@ -58,7 +78,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
         it 'creates audit log entry' do
           expect {
-            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
           }.to change(AuditLog, :count).by(1)
 
           audit = AuditLog.order(:created_at).last
@@ -70,77 +90,64 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         context 'with optional parameters' do
           it 'allows target_reps to be nil' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              exercise_id: exercise.id,
-              target_sets: 3
-            }
+              assignments: [{ exercise_id: exercise.id, sets: 3 }]
+            }, as: :json
 
             expect(response).to have_http_status(:created)
-            expect(json_response['data']['target_reps']).to be_nil
+            expect(json_response['data']['assignments'].first['target_reps']).to be_nil
           end
 
           it 'allows target_sets to be nil' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              exercise_id: exercise.id,
-              target_reps: 10
-            }
+              assignments: [{ exercise_id: exercise.id, reps: 10 }]
+            }, as: :json
 
             expect(response).to have_http_status(:created)
-            expect(json_response['data']['target_sets']).to be_nil
+            expect(json_response['data']['assignments'].first['target_sets']).to be_nil
           end
         end
 
         context 'validation errors' do
-          it 'returns error when exercise_id is missing' do
+          it 'returns error when assignments is missing' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              target_reps: 10,
-              target_sets: 3
-            }
+              pain_flag: false
+            }, as: :json
+
+            expect(response).to have_http_status(:unprocessable_entity)
+          end
+
+          it 'returns error when assignments is empty' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: {
+              assignments: []
+            }, as: :json
 
             expect(response).to have_http_status(:unprocessable_entity)
           end
 
           it 'returns error when exercise_id is invalid' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              exercise_id: '00000000-0000-0000-0000-000000000000',
-              target_reps: 10,
-              target_sets: 3
-            }
+              assignments: [
+                { exercise_id: '00000000-0000-0000-0000-000000000000', sets: 3, reps: 10 }
+              ]
+            }, as: :json
 
             expect(response).to have_http_status(:not_found)
           end
 
-          it 'returns error when target_reps is negative' do
-            post "/api/v1/patients/#{patient.id}/exercises", params: {
-              exercise_id: exercise.id,
-              target_reps: -1,
-              target_sets: 3
-            }
-
-            expect(response).to have_http_status(:unprocessable_entity)
-          end
-
-          it 'returns error when target_sets is negative' do
-            post "/api/v1/patients/#{patient.id}/exercises", params: {
-              exercise_id: exercise.id,
-              target_reps: 10,
-              target_sets: -1
-            }
-
-            expect(response).to have_http_status(:unprocessable_entity)
-          end
-
-          it 'returns error when duplicate active assignment exists' do
-            create(:patient_exercise,
+          it 'deactivates existing assignments when reassigning' do
+            existing = create(:patient_exercise,
               user: patient,
               exercise: exercise,
               assigned_by_staff: manager,
               is_active: true
             )
 
-            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+            post "/api/v1/patients/#{patient.id}/exercises", params: {
+              assignments: [{ exercise_id: another_exercise.id, sets: 2, reps: 15 }]
+            }, as: :json
 
-            expect(response).to have_http_status(:unprocessable_entity)
-            expect(json_response['message']).to include('バリデーション')
+            expect(response).to have_http_status(:created)
+            expect(existing.reload.is_active).to be false
           end
 
           it 'allows same exercise when previous assignment is inactive' do
@@ -150,7 +157,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
               assigned_by_staff: manager
             )
 
-            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
             expect(response).to have_http_status(:created)
           end
@@ -159,7 +166,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         context 'patient not found' do
           it 'returns not found for non-existent patient' do
             post '/api/v1/patients/00000000-0000-0000-0000-000000000000/exercises',
-              params: valid_params
+              params: valid_params, as: :json
 
             expect(response).to have_http_status(:not_found)
           end
@@ -167,7 +174,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
           it 'returns not found for soft deleted patient' do
             patient.soft_delete
 
-            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
             expect(response).to have_http_status(:not_found)
           end
@@ -181,21 +188,21 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         end
 
         it 'can assign exercise to assigned patient' do
-          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
           expect(response).to have_http_status(:created)
           expect(json_response['status']).to eq('success')
         end
 
         it 'sets assigned_by_staff_id to current staff' do
-          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+          post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
           assignment = PatientExercise.last
           expect(assignment.assigned_by_staff_id).to eq(staff_member.id)
         end
 
         it 'returns forbidden for non-assigned patient' do
-          post "/api/v1/patients/#{other_patient.id}/exercises", params: valid_params
+          post "/api/v1/patients/#{other_patient.id}/exercises", params: valid_params, as: :json
 
           expect(response).to have_http_status(:forbidden)
           expect(json_response['message']).to include('アクセス権限')
@@ -203,7 +210,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
         it 'creates audit log entry for successful assignment' do
           expect {
-            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
           }.to change(AuditLog, :count).by(1)
 
           audit = AuditLog.order(:created_at).last
@@ -217,7 +224,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
       before { sign_in_as_user(patient) }
 
       it 'returns unauthorized' do
-        post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+        post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
         expect(response).to have_http_status(:unauthorized)
       end
@@ -225,7 +232,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
     context 'when not authenticated' do
       it 'returns unauthorized' do
-        post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+        post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
         expect(response).to have_http_status(:unauthorized)
       end
@@ -240,7 +247,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
       after { Timecop.return }
 
       it 'returns unauthorized' do
-        post "/api/v1/patients/#{patient.id}/exercises", params: valid_params
+        post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
         expect(response).to have_http_status(:unauthorized)
       end

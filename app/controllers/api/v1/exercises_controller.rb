@@ -7,11 +7,18 @@ module Api
       before_action :set_exercise, only: [:show]
       before_action :authorize_exercise_access, only: [:show]
 
+      # Category mapping from Japanese (DB) to English (frontend)
+      CATEGORY_MAP = {
+        '筋力' => 'lower_body',
+        'バランス' => 'core',
+        '柔軟性' => 'stretch'
+      }.freeze
+
       # GET /api/v1/exercises/:id
       def show
         log_audit("read", "success")
 
-        render_success({ exercise: serialize_exercise(@exercise) })
+        render_success(serialize_exercise(@exercise, @patient_exercise))
       end
 
       private
@@ -21,29 +28,28 @@ module Api
       end
 
       def authorize_exercise_access
-        assigned = PatientExercise.exists?(
+        @patient_exercise = PatientExercise.find_by(
           user_id: current_user.id,
           exercise_id: @exercise.id,
           is_active: true
         )
 
-        return if assigned
+        return if @patient_exercise
 
         render_forbidden("この運動へのアクセス権限がありません")
       end
 
-      def serialize_exercise(exercise)
+      def serialize_exercise(exercise, patient_exercise)
         {
           id: exercise.id,
           name: exercise.name,
-          description: exercise.description,
-          category: exercise.category,
-          difficulty: exercise.difficulty,
-          recommended_reps: exercise.recommended_reps,
-          recommended_sets: exercise.recommended_sets,
+          description: exercise.description.to_s,
           video_url: exercise.video_url,
           thumbnail_url: exercise.thumbnail_url,
-          duration_seconds: exercise.duration_seconds
+          sets: patient_exercise&.target_sets || exercise.recommended_sets || 1,
+          reps: patient_exercise&.target_reps || exercise.recommended_reps || 1,
+          duration_seconds: exercise.duration_seconds,
+          category: CATEGORY_MAP[exercise.category] || 'lower_body'
         }
       end
 

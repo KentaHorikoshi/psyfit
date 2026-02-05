@@ -106,7 +106,7 @@ describe('U-13 Celebration', () => {
   })
 
   describe('auto navigation', () => {
-    it('should navigate to condition input after 3 seconds', async () => {
+    it('should navigate to exercise menu after 3 seconds', async () => {
       renderCelebration()
 
       expect(mockNavigate).not.toHaveBeenCalled()
@@ -114,7 +114,7 @@ describe('U-13 Celebration', () => {
       // Fast-forward 3 seconds
       await vi.advanceTimersByTimeAsync(3000)
 
-      expect(mockNavigate).toHaveBeenCalledWith('/condition', { replace: true })
+      expect(mockNavigate).toHaveBeenCalledWith('/exercise-menu', { replace: true })
     })
 
     it('should not navigate before 3 seconds', () => {
@@ -139,7 +139,7 @@ describe('U-13 Celebration', () => {
   })
 
   describe('tap to continue', () => {
-    it('should navigate to condition input when tapped', async () => {
+    it('should navigate to exercise menu when tapped', async () => {
       vi.useRealTimers()
       const user = userEvent.setup()
       renderCelebration()
@@ -147,7 +147,7 @@ describe('U-13 Celebration', () => {
       const continueButton = screen.getByRole('button', { name: /続ける/ })
       await user.click(continueButton)
 
-      expect(mockNavigate).toHaveBeenCalledWith('/condition', { replace: true })
+      expect(mockNavigate).toHaveBeenCalledWith('/exercise-menu', { replace: true })
       vi.useFakeTimers()
     })
 
@@ -224,7 +224,7 @@ describe('U-13 Celebration', () => {
       // Press Enter
       await user.keyboard('{Enter}')
 
-      expect(mockNavigate).toHaveBeenCalledWith('/condition', { replace: true })
+      expect(mockNavigate).toHaveBeenCalledWith('/exercise-menu', { replace: true })
       vi.useFakeTimers()
     })
 

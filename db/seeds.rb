@@ -79,32 +79,32 @@ puts "Creating exercises..."
 
 exercises = []
 exercise_data = [
-  # 筋力トレーニング
-  { name: '椅子からの立ち上がり', category: '筋力', difficulty: 'easy', target_body_part: '下肢', recommended_reps: 10, recommended_sets: 3, description: '椅子に座った状態から、手を使わずにゆっくり立ち上がります。膝に負担をかけないよう注意してください。' },
-  { name: 'かかと上げ運動', category: '筋力', difficulty: 'easy', target_body_part: 'ふくらはぎ', recommended_reps: 15, recommended_sets: 2, description: '壁に手をついて立ち、かかとを上げ下げします。ふくらはぎの筋力強化に効果的です。' },
-  { name: 'スクワット', category: '筋力', difficulty: 'medium', target_body_part: '下肢全体', recommended_reps: 10, recommended_sets: 3, description: '足を肩幅に開き、膝がつま先より前に出ないようにしゃがみます。' },
-  { name: 'レッグレイズ', category: '筋力', difficulty: 'medium', target_body_part: '腹筋・股関節', recommended_reps: 10, recommended_sets: 2, description: '仰向けに寝て、足を伸ばしたまま上に持ち上げます。' },
-
-  # バランストレーニング
-  { name: '片脚立ち', category: 'バランス', difficulty: 'medium', target_body_part: '体幹・下肢', recommended_reps: 5, recommended_sets: 2, description: '壁や椅子に軽く手を添え、片脚で立ちます。慣れたら手を離して挑戦してください。' },
-  { name: 'タンデム歩行', category: 'バランス', difficulty: 'medium', target_body_part: '体幹', recommended_reps: 10, recommended_sets: 2, description: 'かかととつま先をつけながら一直線上を歩きます。' },
-  { name: '重心移動', category: 'バランス', difficulty: 'easy', target_body_part: '体幹', recommended_reps: 10, recommended_sets: 2, description: '足を肩幅に開いて立ち、左右に重心を移動させます。' },
-
   # 柔軟性トレーニング
-  { name: 'ハムストリングストレッチ', category: '柔軟性', difficulty: 'easy', target_body_part: '太もも裏', recommended_reps: 3, recommended_sets: 1, description: '椅子に浅く座り、片足を前に伸ばして、ゆっくり前傾します。20秒キープしてください。' },
-  { name: '腰のストレッチ', category: '柔軟性', difficulty: 'easy', target_body_part: '腰', recommended_reps: 3, recommended_sets: 1, description: '仰向けに寝て、膝を立てた状態で左右にゆっくり倒します。' },
-  { name: 'ふくらはぎストレッチ', category: '柔軟性', difficulty: 'easy', target_body_part: 'ふくらはぎ', recommended_reps: 3, recommended_sets: 1, description: '壁に手をつき、片足を後ろに引いてふくらはぎを伸ばします。' }
+  { name: '肘を曲げる運動', category: '柔軟性', difficulty: 'easy', description: '椅子に座り、右肘を曲げていく動作', video_url: '/videos/0.mp4', thumbnail_url: '/thumbnails/0.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '上肢回旋（ソラシックツイスト）', category: '柔軟性', difficulty: 'medium', description: '横向きに寝て両手を伸ばした状態から上の手を広げて上半身を捻る。', video_url: '/videos/1.mp4', thumbnail_url: '/thumbnails/1.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '下肢回旋（両膝倒しツイスト）', category: '柔軟性', difficulty: 'medium', description: '仰向けに寝た状態で両膝を立てて腰を左右に捻る。', video_url: '/videos/2.mp4', thumbnail_url: '/thumbnails/2.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: 'キャットアンドドッグ', category: '柔軟性', difficulty: 'hard', description: '四つ這いで背中を丸めたり伸ばしたりする背骨周りの筋肉のストレッチ', video_url: '/videos/10.mp4', thumbnail_url: '/thumbnails/10.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+
+  # 筋力トレーニング
+  { name: 'チェアスクワット', category: '筋力', difficulty: 'easy', description: '椅子に座った状態からスクワットを行う。', video_url: '/videos/3.mp4', thumbnail_url: '/thumbnails/3.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '膝伸ばし（座位膝伸展運動）', category: '筋力', difficulty: 'easy', description: '椅子に座った状態で片膝を伸ばす。', video_url: '/videos/4.mp4', thumbnail_url: '/thumbnails/4.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '背中丸め（座位片膝抱えストレッチ）', category: '筋力', difficulty: 'easy', description: '座った状態から片膝を両手で抱え、体を丸めて肩甲骨周りを伸ばす。', video_url: '/videos/8.mp4', thumbnail_url: '/thumbnails/8.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: 'ロールダウン', category: '筋力', difficulty: 'medium', description: '体育座りの姿勢から体を丸めながら後方に倒し、倒れるぎりぎりのところから元の位置まで起こす。', video_url: '/videos/6.mp4', thumbnail_url: '/thumbnails/6.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '殿筋トレーニング(膝屈曲位うつ伏せ股関節伸展運動)', category: '筋力', difficulty: 'medium', description: 'うつ伏せの状態で片膝を90°曲げ、曲げた方の足を持ち上げるお尻のトレーンング', video_url: '/videos/9.mp4', thumbnail_url: '/thumbnails/9.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '膝つきプランク', category: '筋力', difficulty: 'hard', description: 'うつ伏せで両膝と両肘をついた状態から体を一直線に上げる。', video_url: '/videos/5.mp4', thumbnail_url: '/thumbnails/5.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: 'バックブリッジ', category: '筋力', difficulty: 'hard', description: '仰向けで両膝を曲げ、お尻を挙げて体を一直線にするように上げる。', video_url: '/videos/7.mp4', thumbnail_url: '/thumbnails/7.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 }
 ]
 
 exercise_data.each do |data|
   exercise = Exercise.find_or_create_by!(name: data[:name]) do |e|
     e.category = data[:category]
     e.difficulty = data[:difficulty]
-    e.target_body_part = data[:target_body_part]
+    e.description = data[:description]
+    e.video_url = data[:video_url]
+    e.thumbnail_url = data[:thumbnail_url]
+    e.duration_seconds = data[:duration_seconds]
     e.recommended_reps = data[:recommended_reps]
     e.recommended_sets = data[:recommended_sets]
-    e.description = data[:description]
-    e.duration_seconds = rand(60..300)
   end
   exercises << exercise
   puts "  Created exercise: #{exercise.name}"

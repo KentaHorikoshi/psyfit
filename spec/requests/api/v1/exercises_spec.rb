@@ -59,14 +59,13 @@ RSpec.describe 'Api::V1::Exercises', type: :request do
 
           expect(response).to have_http_status(:ok)
           expect(json_response['status']).to eq('success')
-          expect(json_response['data']['exercise']).to include(
+          expect(json_response['data']).to include(
             'id' => exercise.id,
             'name' => 'スクワット',
             'description' => '下半身の筋力強化',
-            'category' => '筋力',
-            'difficulty' => 'easy',
-            'recommended_reps' => 10,
-            'recommended_sets' => 3,
+            'category' => 'lower_body',
+            'reps' => 10,
+            'sets' => 3,
             'video_url' => '/videos/squat.mp4',
             'thumbnail_url' => '/thumbnails/squat.jpg',
             'duration_seconds' => 180

@@ -339,7 +339,7 @@ npm run test:e2e:report # レポート表示
 | [04-api-specification.md](.claude/docs/04-api-specification.md) | API仕様 |
 | [05-security-requirements.md](.claude/docs/05-security-requirements.md) | セキュリティ要件 |
 | [06-non-functional-requirements.md](.claude/docs/06-non-functional-requirements.md) | 非機能要件 |
-| [07-frontend-implementation-status.md](.claude/docs/07-frontend-implementation-status.md) | フロントエンド実装状況 ✨NEW |
+| [07-browser-test-checklist.md](.claude/docs/07-browser-test-checklist.md) | ブラウザ動作テストチェックリスト |
 | [99-confirmation-items.md](.claude/docs/99-confirmation-items.md) | 確認事項・TODO |
 
 ## セキュリティ

@@ -212,7 +212,8 @@ Detailed specifications are in `.claude/docs/`:
 4. `04-api-specification.md` - API endpoints and contracts
 5. `05-security-requirements.md` - Security policies and compliance
 6. `06-non-functional-requirements.md` - Performance, accessibility, etc.
-7. `99-confirmation-items.md` - Outstanding questions and TODOs
+7. `07-browser-test-checklist.md` - Browser testing checklist for manual QA
+8. `99-confirmation-items.md` - Outstanding questions and TODOs
 
 ## Key Principles
 

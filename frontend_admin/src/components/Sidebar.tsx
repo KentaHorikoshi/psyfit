@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { LayoutDashboard, Users, UserCog, KeyRound, LogOut, Heart } from 'lucide-react'
+import { LayoutDashboard, Users, UserCog, KeyRound, LogOut, Heart, Dumbbell } from 'lucide-react'
 import type { Staff } from '../lib/api-types'
 
 interface SidebarProps {
@@ -57,6 +57,12 @@ export function Sidebar({ staff, onLogout, currentPath }: SidebarProps) {
           icon={<Users className="w-5 h-5" />}
           label="患者一覧"
           isActive={currentPath === '/patients' || currentPath.startsWith('/patients/')}
+        />
+        <NavItem
+          href="/exercise-masters"
+          icon={<Dumbbell className="w-5 h-5" />}
+          label="運動メニュー管理"
+          isActive={currentPath === '/exercise-masters'}
         />
         {isManager && (
           <NavItem

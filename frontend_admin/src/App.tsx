@@ -22,6 +22,7 @@ import { MeasurementInput } from './components/MeasurementInput'
 import { ExerciseMenu } from './components/ExerciseMenu'
 import { ReportGeneration } from './components/ReportGeneration'
 import { StaffManagement } from './components/StaffManagement'
+import { ExerciseMenuManagement } from './components/ExerciseMenuManagement'
 import { PasswordReset } from './components/PasswordReset'
 import { Sidebar } from './components/Sidebar'
 import { ConnectionTest } from './components/ConnectionTest'
@@ -235,6 +236,7 @@ export default function App() {
                 <Route path="/patients/:id/measurements/new" element={<MeasurementInput />} />
                 <Route path="/patients/:id/exercise-menu" element={<ExerciseMenu />} />
                 <Route path="/patients/:id/report" element={<ReportGeneration />} />
+                <Route path="/exercise-masters" element={<ExerciseMenuManagement />} />
                 <Route path="/staff" element={<StaffManagement />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
               </Route>

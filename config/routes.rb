@@ -58,7 +58,7 @@ Rails.application.routes.draw do
       end
 
       # Exercise masters (staff)
-      resources :exercise_masters, only: [ :index ]
+      resources :exercise_masters, only: [ :index, :create ]
 
       # Exercises (user)
       resources :exercises, only: [ :show ]

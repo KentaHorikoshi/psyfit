@@ -219,6 +219,42 @@ export interface CreateStaffResponse {
   staff: StaffMember
 }
 
+// Exercise Master Management Types (S-10)
+export interface ExerciseMasterDetail {
+  id: string
+  name: string
+  description: string | null
+  category: '筋力' | 'バランス' | '柔軟性'
+  difficulty: 'easy' | 'medium' | 'hard'
+  target_body_part: string | null
+  recommended_reps: number | null
+  recommended_sets: number | null
+  video_url: string | null
+  thumbnail_url: string | null
+  duration_seconds: number | null
+}
+
+export interface ExerciseMasterListResponse {
+  exercises: ExerciseMasterDetail[]
+}
+
+export interface CreateExerciseMasterRequest {
+  name: string
+  description?: string
+  category: '筋力' | 'バランス' | '柔軟性'
+  difficulty: 'easy' | 'medium' | 'hard'
+  target_body_part?: string
+  recommended_reps?: number
+  recommended_sets?: number
+  video_url?: string
+  thumbnail_url?: string
+  duration_seconds?: number
+}
+
+export interface CreateExerciseMasterResponse {
+  exercise: ExerciseMasterDetail
+}
+
 // Password Change Types (S-09)
 export interface ChangePasswordRequest {
   current_password: string

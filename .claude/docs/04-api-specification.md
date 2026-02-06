@@ -34,6 +34,8 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff/me/password | ✅ 実装済み | ✅ |
+| GET /api/v1/exercise_masters | ✅ 実装済み | ✅ |
+| POST /api/v1/exercise_masters | ✅ 実装済み | - |
 | GET /api/v1/videos/:exercise_id/token | ✅ 実装済み | ✅ |
 | GET /api/v1/videos/:exercise_id/stream | ✅ 実装済み | ✅ |
 
@@ -72,8 +74,9 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | S-07 レポート出力 | ReportGeneration.tsx | ✅ 実装済み | ✅ 14件 |
 | S-08 職員管理 | StaffManagement.tsx | ✅ 実装済み | ✅ 26件 |
 | S-09 パスワードリセット | PasswordReset.tsx | ✅ 実装済み | ✅ 28件 |
+| S-10 運動メニュー管理 | ExerciseMenuManagement.tsx | ✅ 実装済み | - |
 
-**職員向けテスト合計**: 210件
+**職員向けテスト合計**: 210件+
 
 **フロントエンドテストファイル（利用者向け）**:
 - `frontend_user/src/components/__tests__/Login.test.tsx` - ログイン画面 (19件)
@@ -101,6 +104,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 - `frontend_admin/src/components/__tests__/ReportGeneration.test.tsx` - レポート出力
 - `frontend_admin/src/components/__tests__/StaffManagement.test.tsx` - 職員管理
 - `frontend_admin/src/components/__tests__/PasswordReset.test.tsx` - パスワードリセット
+- `frontend_admin/src/components/__tests__/ExerciseMenuManagement.test.tsx` - 運動メニュー管理
 - `frontend_admin/src/components/__tests__/Sidebar.test.tsx` - サイドバー
 - `frontend_admin/src/contexts/__tests__/AuthContext.test.tsx` - 認証コンテキスト
 
@@ -817,7 +821,79 @@ Cookie: _psyfit_session=<session_id>
 **実装ファイル**:
 - コントローラ: `app/controllers/api/v1/exercise_masters_controller.rb`
 - テスト: `spec/requests/api/v1/exercise_masters_spec.rb` (16件)
-- ルーティング: `config/routes.rb` に `resources :exercise_masters, only: [:index]` 定義済み
+- ルーティング: `config/routes.rb` に `resources :exercise_masters, only: [:index, :create]` 定義済み
+
+#### POST /api/v1/exercise_masters (職員用) ✅
+
+新しい運動マスタを登録する。
+
+**認証**: 職員セッション必須（全職員）
+
+**リクエスト**:
+```json
+{
+  "name": "レッグプレス",
+  "description": "下肢の筋力を強化するマシン運動",
+  "category": "筋力",
+  "difficulty": "medium",
+  "target_body_part": "下肢",
+  "recommended_reps": 10,
+  "recommended_sets": 3,
+  "video_url": "/videos/leg_press.mp4",
+  "thumbnail_url": "/thumbnails/leg_press.jpg",
+  "duration_seconds": 180
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|------|------|------|
+| name | string | ○ | 運動名（最大100文字） |
+| description | string | - | 説明 |
+| category | string | ○ | カテゴリ（筋力/バランス/柔軟性） |
+| difficulty | string | ○ | 難易度（easy/medium/hard） |
+| target_body_part | string | - | 対象部位（最大100文字） |
+| recommended_reps | integer | - | 推奨回数（正の整数） |
+| recommended_sets | integer | - | 推奨セット数（正の整数） |
+| video_url | string | - | 動画URL（最大255文字） |
+| thumbnail_url | string | - | サムネイルURL（最大255文字） |
+| duration_seconds | integer | - | 所要時間・秒（正の整数） |
+
+**レスポンス (201 Created)**:
+```json
+{
+  "status": "success",
+  "data": {
+    "exercise": {
+      "id": "uuid",
+      "name": "レッグプレス",
+      "description": "下肢の筋力を強化するマシン運動",
+      "category": "筋力",
+      "difficulty": "medium",
+      "target_body_part": "下肢",
+      "recommended_reps": 10,
+      "recommended_sets": 3,
+      "video_url": "/videos/leg_press.mp4",
+      "thumbnail_url": "/thumbnails/leg_press.jpg",
+      "duration_seconds": 180
+    }
+  }
+}
+```
+
+**エラーレスポンス (422)**:
+```json
+{
+  "status": "error",
+  "message": "バリデーションエラー",
+  "errors": {
+    "name": ["を入力してください"],
+    "category": ["は一覧にありません"]
+  }
+}
+```
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/exercise_masters_controller.rb`
 
 ---
 

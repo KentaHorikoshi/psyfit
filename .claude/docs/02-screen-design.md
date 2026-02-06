@@ -130,11 +130,11 @@
 - 実装: `frontend_user/src/components/BatchRecord.tsx` ✅
 - テスト: 11 tests passed
 
-## 職員向け画面一覧（S-01〜S-09）
+## 職員向け画面一覧（S-01〜S-10）
 
 ### 共通レイアウト: Sidebar
 - サイドバー背景色: #1E40AF
-- ナビゲーション: ダッシュボード、患者一覧
+- ナビゲーション: ダッシュボード、患者一覧、運動メニュー管理
 - 役割ベース表示: マネージャーのみ職員管理メニュー表示
 - 職員プロフィール表示
 - ログアウトボタン
@@ -215,6 +215,20 @@
 - 成功時ログアウト→ログイン画面へ自動遷移
 - 実装: `frontend_admin/src/components/PasswordReset.tsx` ✅
 - テスト: 28 tests passed (100% coverage)
+
+### S-10: 運動メニュー管理
+- 全職員アクセス可能
+- 運動マスタの一覧表示（テーブル形式）
+  - カラム: 運動名、カテゴリ、難易度、対象部位、推奨回数、推奨セット数、所要時間
+  - カテゴリバッジ: 筋力(赤)、バランス(青)、柔軟性(緑)
+  - 難易度バッジ: 易しい(緑)、普通(黄)、難しい(赤)
+- フィルター機能: 名前検索、カテゴリ、難易度
+- 新規運動登録ダイアログ
+  - 必須: 運動名（max 100文字）、カテゴリ、難易度
+  - 任意: 説明、対象部位、推奨回数、推奨セット数、動画URL、サムネイルURL、所要時間
+- ルート: `/exercise-masters`
+- API: `GET /api/v1/exercise_masters`, `POST /api/v1/exercise_masters`
+- 実装: `frontend_admin/src/components/ExerciseMenuManagement.tsx` ✅
 
 ## アクセシビリティ要件
 

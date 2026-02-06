@@ -20,6 +20,9 @@ import type {
   ChangePasswordResponse,
   CreatePatientRequest,
   CreatePatientResponse,
+  ExerciseMasterListResponse,
+  CreateExerciseMasterRequest,
+  CreateExerciseMasterResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -143,6 +146,17 @@ class ApiClient {
   // Exercise Master endpoints (S-06)
   async getExerciseMasters(): Promise<ApiResponse<ExerciseMastersResponse>> {
     return this.get<ExerciseMastersResponse>('/exercise_masters')
+  }
+
+  // Exercise Master Management endpoint (S-10)
+  async getExerciseMasterList(): Promise<ApiResponse<ExerciseMasterListResponse>> {
+    return this.get<ExerciseMasterListResponse>('/exercise_masters')
+  }
+
+  async createExerciseMaster(
+    data: CreateExerciseMasterRequest
+  ): Promise<ApiResponse<CreateExerciseMasterResponse>> {
+    return this.post<CreateExerciseMasterResponse>('/exercise_masters', data)
   }
 
   // Exercise Assignment endpoints (S-06)

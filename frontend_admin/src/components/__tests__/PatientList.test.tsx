@@ -337,6 +337,46 @@ describe('S-03 PatientList', () => {
     })
   })
 
+  describe('new patient registration button (manager only)', () => {
+    it('should show 新規患者登録 button when isManager is true', () => {
+      const onCreatePatient = vi.fn()
+      renderPatientList({ isManager: true, onCreatePatient })
+
+      const createButton = screen.getByRole('button', { name: '新規患者登録' })
+      expect(createButton).toBeInTheDocument()
+    })
+
+    it('should not show 新規患者登録 button when isManager is false', () => {
+      renderPatientList({ isManager: false })
+
+      expect(screen.queryByRole('button', { name: '新規患者登録' })).not.toBeInTheDocument()
+    })
+
+    it('should not show 新規患者登録 button when isManager is not provided', () => {
+      renderPatientList()
+
+      expect(screen.queryByRole('button', { name: '新規患者登録' })).not.toBeInTheDocument()
+    })
+
+    it('should call onCreatePatient when button is clicked', async () => {
+      const user = userEvent.setup()
+      const onCreatePatient = vi.fn()
+      renderPatientList({ isManager: true, onCreatePatient })
+
+      await user.click(screen.getByRole('button', { name: '新規患者登録' }))
+
+      expect(onCreatePatient).toHaveBeenCalledTimes(1)
+    })
+
+    it('should have minimum tap target size', () => {
+      const onCreatePatient = vi.fn()
+      renderPatientList({ isManager: true, onCreatePatient })
+
+      const createButton = screen.getByRole('button', { name: '新規患者登録' })
+      expect(createButton).toHaveClass('min-h-[44px]')
+    })
+  })
+
   describe('accessibility', () => {
     it('should have proper table structure', () => {
       renderPatientList()

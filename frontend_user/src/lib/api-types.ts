@@ -101,6 +101,10 @@ export interface Measurement {
   weight_kg?: number
   body_fat_percentage?: number
   muscle_mass_kg?: number
+  knee_extension_strength_left?: number
+  knee_extension_strength_right?: number
+  wbi_left?: number
+  wbi_right?: number
   tug_seconds?: number
   nrs_pain?: number
   created_at: string

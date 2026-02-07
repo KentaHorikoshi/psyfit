@@ -101,6 +101,8 @@ export interface Measurement {
   weight_kg?: number
   knee_extension_strength_left?: number
   knee_extension_strength_right?: number
+  wbi_left?: number
+  wbi_right?: number
   tug_seconds?: number
   single_leg_stance_seconds?: number
   nrs_pain_score?: number
@@ -113,6 +115,8 @@ export interface MeasurementInput {
   weight_kg?: number
   knee_extension_strength_left?: number
   knee_extension_strength_right?: number
+  wbi_left?: number
+  wbi_right?: number
   tug_seconds?: number
   single_leg_stance_seconds?: number
   nrs_pain_score?: number

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { MeasurementInput } from '../MeasurementInput'
@@ -61,8 +61,10 @@ describe('S-05 MeasurementInput', () => {
 
       expect(screen.getByLabelText(/測定日/)).toBeInTheDocument()
       expect(screen.getByLabelText(/体重.*kg/)).toBeInTheDocument()
-      expect(screen.getByLabelText(/膝伸展筋力.*左.*kg/)).toBeInTheDocument()
-      expect(screen.getByLabelText(/膝伸展筋力.*右.*kg/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/膝伸展筋力.*左.*N/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/膝伸展筋力.*右.*N/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/WBI.*左/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/WBI.*右/)).toBeInTheDocument()
       expect(screen.getByLabelText(/TUG.*秒/)).toBeInTheDocument()
       expect(screen.getByLabelText(/片脚立位.*秒/)).toBeInTheDocument()
       expect(screen.getByLabelText(/NRS痛み/)).toBeInTheDocument()
@@ -90,13 +92,13 @@ describe('S-05 MeasurementInput', () => {
 
       const weightInput = screen.getByLabelText(/体重.*kg/)
       await user.clear(weightInput)
-      await user.type(weightInput, '-10')
+      await user.type(weightInput, '0')
 
       const saveButton = screen.getByRole('button', { name: /保存/ })
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(screen.getByText(/0より大きい値を入力してください/)).toBeInTheDocument()
+        expect(screen.getByText(/0より大きく500未満の値を入力してください/)).toBeInTheDocument()
       })
     })
 
@@ -116,11 +118,11 @@ describe('S-05 MeasurementInput', () => {
 
       const leftKneeInput = screen.getByLabelText(/膝伸展筋力.*左/)
       await user.clear(leftKneeInput)
-      await user.type(leftKneeInput, '25.3')
+      await user.type(leftKneeInput, '250')
 
       const rightKneeInput = screen.getByLabelText(/膝伸展筋力.*右/)
       await user.clear(rightKneeInput)
-      await user.type(rightKneeInput, '26.1')
+      await user.type(rightKneeInput, '260')
 
       const tugInput = screen.getByLabelText(/TUG/)
       await user.clear(tugInput)
@@ -145,17 +147,24 @@ describe('S-05 MeasurementInput', () => {
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(mockCreateMeasurement).toHaveBeenCalledWith(mockPatientId, {
+        expect(mockCreateMeasurement).toHaveBeenCalledWith(mockPatientId, expect.objectContaining({
           measured_date: '2026-01-24',
           weight_kg: 65.5,
-          knee_extension_strength_left: 25.3,
-          knee_extension_strength_right: 26.1,
+          knee_extension_strength_left: 250,
+          knee_extension_strength_right: 260,
           tug_seconds: 12.5,
           single_leg_stance_seconds: 15.2,
           nrs_pain_score: 3,
           mmt_score: 4,
           notes: '前回より改善傾向',
-        })
+        }))
+      })
+
+      // WBI should be auto-calculated and included
+      await waitFor(() => {
+        const callArgs = mockCreateMeasurement.mock.calls[0][1]
+        expect(callArgs.wbi_left).toBeDefined()
+        expect(callArgs.wbi_right).toBeDefined()
       })
     })
   })
@@ -270,10 +279,10 @@ describe('S-05 MeasurementInput', () => {
       const user = userEvent.setup()
       renderMeasurementInput()
 
-      // Enter invalid weight to trigger validation error
+      // Enter invalid weight (0 is <= 0, triggers validation)
       const weightInput = screen.getByLabelText(/体重.*kg/)
       await user.clear(weightInput)
-      await user.type(weightInput, '-10')
+      await user.type(weightInput, '0')
 
       const saveButton = screen.getByRole('button', { name: /保存/ })
       await user.click(saveButton)
@@ -291,6 +300,53 @@ describe('S-05 MeasurementInput', () => {
       buttons.forEach(button => {
         expect(button).toBeInTheDocument()
         // Visual check - implementation should ensure min 44x44px
+      })
+    })
+  })
+
+  describe('WBI auto-calculation', () => {
+    it('should auto-calculate WBI when weight and knee strength are entered', async () => {
+      const user = userEvent.setup()
+      renderMeasurementInput()
+
+      const weightInput = screen.getByLabelText(/体重.*kg/)
+      await user.clear(weightInput)
+      await user.type(weightInput, '65.5')
+
+      const leftKneeInput = screen.getByLabelText(/膝伸展筋力.*左/)
+      await user.clear(leftKneeInput)
+      await user.type(leftKneeInput, '254.8')
+
+      await waitFor(() => {
+        const wbiLeftInput = screen.getByLabelText(/WBI.*左/) as HTMLInputElement
+        expect(parseFloat(wbiLeftInput.value)).toBeGreaterThan(0)
+      })
+    })
+
+    it('should allow manual override of auto-calculated WBI', async () => {
+      const user = userEvent.setup()
+      renderMeasurementInput()
+
+      const wbiLeftInput = screen.getByLabelText(/WBI.*左/)
+      await user.clear(wbiLeftInput)
+      await user.type(wbiLeftInput, '42.5')
+
+      expect((wbiLeftInput as HTMLInputElement).value).toBe('42.5')
+    })
+
+    it('should validate WBI range (0-200)', async () => {
+      const user = userEvent.setup()
+      renderMeasurementInput()
+
+      const wbiLeftInput = screen.getByLabelText(/WBI.*左/)
+      await user.clear(wbiLeftInput)
+      await user.type(wbiLeftInput, '250')
+
+      const saveButton = screen.getByRole('button', { name: /保存/ })
+      await user.click(saveButton)
+
+      await waitFor(() => {
+        expect(screen.getByText(/0〜200の範囲で入力してください/)).toBeInTheDocument()
       })
     })
   })

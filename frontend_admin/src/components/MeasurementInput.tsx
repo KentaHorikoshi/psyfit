@@ -8,10 +8,18 @@ interface FormErrors {
   weight_kg?: string
   knee_extension_strength_left?: string
   knee_extension_strength_right?: string
+  wbi_left?: string
+  wbi_right?: string
   tug_seconds?: string
   single_leg_stance_seconds?: string
   nrs_pain_score?: string
   mmt_score?: string
+}
+
+const calculateWBI = (strengthN: number | undefined, weightKg: number | undefined): number | undefined => {
+  if (strengthN === undefined || weightKg === undefined || weightKg <= 0) return undefined
+  const strengthKgf = strengthN / 9.80665
+  return Math.round((strengthKgf / weightKg) * 100 * 100) / 100
 }
 
 export function MeasurementInput() {
@@ -36,12 +44,20 @@ export function MeasurementInput() {
       newErrors.weight_kg = '0より大きく500未満の値を入力してください'
     }
 
-    if (formData.knee_extension_strength_left !== undefined && (formData.knee_extension_strength_left < 0 || formData.knee_extension_strength_left >= 1000)) {
-      newErrors.knee_extension_strength_left = '0以上1000未満の値を入力してください'
+    if (formData.knee_extension_strength_left !== undefined && (formData.knee_extension_strength_left < 0 || formData.knee_extension_strength_left > 500)) {
+      newErrors.knee_extension_strength_left = '0〜500の範囲で入力してください (N)'
     }
 
-    if (formData.knee_extension_strength_right !== undefined && (formData.knee_extension_strength_right < 0 || formData.knee_extension_strength_right >= 1000)) {
-      newErrors.knee_extension_strength_right = '0以上1000未満の値を入力してください'
+    if (formData.knee_extension_strength_right !== undefined && (formData.knee_extension_strength_right < 0 || formData.knee_extension_strength_right > 500)) {
+      newErrors.knee_extension_strength_right = '0〜500の範囲で入力してください (N)'
+    }
+
+    if (formData.wbi_left !== undefined && (formData.wbi_left < 0 || formData.wbi_left > 200)) {
+      newErrors.wbi_left = '0〜200の範囲で入力してください'
+    }
+
+    if (formData.wbi_right !== undefined && (formData.wbi_right < 0 || formData.wbi_right > 200)) {
+      newErrors.wbi_right = '0〜200の範囲で入力してください'
     }
 
     if (formData.tug_seconds !== undefined && (formData.tug_seconds < 0 || formData.tug_seconds >= 1000)) {
@@ -71,18 +87,30 @@ export function MeasurementInput() {
       if (field === 'measured_date' || field === 'notes') {
         newData[field] = value
       } else {
-        // Numeric fields
         newData[field] = value === '' ? undefined : parseFloat(value)
+      }
+
+      // Auto-calculate WBI when weight or knee strength changes
+      if (field === 'weight_kg' || field === 'knee_extension_strength_left') {
+        const weight = field === 'weight_kg' ? (value === '' ? undefined : parseFloat(value)) : newData.weight_kg
+        const strengthLeft = field === 'knee_extension_strength_left' ? (value === '' ? undefined : parseFloat(value)) : newData.knee_extension_strength_left
+        newData.wbi_left = calculateWBI(strengthLeft, weight)
+      }
+
+      if (field === 'weight_kg' || field === 'knee_extension_strength_right') {
+        const weight = field === 'weight_kg' ? (value === '' ? undefined : parseFloat(value)) : newData.weight_kg
+        const strengthRight = field === 'knee_extension_strength_right' ? (value === '' ? undefined : parseFloat(value)) : newData.knee_extension_strength_right
+        newData.wbi_right = calculateWBI(strengthRight, weight)
       }
 
       return newData
     })
 
     // Clear error for this field
-    if (errors[field]) {
+    if (errors[field as keyof FormErrors]) {
       setErrors(prev => {
         const newErrors = { ...prev }
-        delete newErrors[field]
+        delete newErrors[field as keyof FormErrors]
         return newErrors
       })
     }
@@ -111,6 +139,8 @@ export function MeasurementInput() {
         dataToSubmit.knee_extension_strength_left = formData.knee_extension_strength_left
       if (formData.knee_extension_strength_right !== undefined)
         dataToSubmit.knee_extension_strength_right = formData.knee_extension_strength_right
+      if (formData.wbi_left !== undefined) dataToSubmit.wbi_left = formData.wbi_left
+      if (formData.wbi_right !== undefined) dataToSubmit.wbi_right = formData.wbi_right
       if (formData.tug_seconds !== undefined) dataToSubmit.tug_seconds = formData.tug_seconds
       if (formData.single_leg_stance_seconds !== undefined)
         dataToSubmit.single_leg_stance_seconds = formData.single_leg_stance_seconds
@@ -192,14 +222,14 @@ export function MeasurementInput() {
           {/* Knee Extension Strength Left */}
           <div>
             <label htmlFor="knee_extension_strength_left" className="block text-sm font-medium text-gray-700 mb-2">
-              膝伸展筋力 左 (kg)
+              膝伸展筋力 左 (N)
             </label>
             <input
               id="knee_extension_strength_left"
               type="number"
               step="0.1"
               min="0"
-              max="999.99"
+              max="500"
               value={formData.knee_extension_strength_left ?? ''}
               onChange={e => handleChange('knee_extension_strength_left', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
@@ -216,14 +246,14 @@ export function MeasurementInput() {
           {/* Knee Extension Strength Right */}
           <div>
             <label htmlFor="knee_extension_strength_right" className="block text-sm font-medium text-gray-700 mb-2">
-              膝伸展筋力 右 (kg)
+              膝伸展筋力 右 (N)
             </label>
             <input
               id="knee_extension_strength_right"
               type="number"
               step="0.1"
               min="0"
-              max="999.99"
+              max="500"
               value={formData.knee_extension_strength_right ?? ''}
               onChange={e => handleChange('knee_extension_strength_right', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
@@ -233,6 +263,52 @@ export function MeasurementInput() {
             {errors.knee_extension_strength_right && (
               <p id="knee_extension_strength_right-error" role="alert" className="mt-1 text-sm text-red-600">
                 {errors.knee_extension_strength_right}
+              </p>
+            )}
+          </div>
+
+          {/* WBI Left */}
+          <div>
+            <label htmlFor="wbi_left" className="block text-sm font-medium text-gray-700 mb-2">
+              WBI 左 (0-200)
+            </label>
+            <input
+              id="wbi_left"
+              type="number"
+              step="0.01"
+              value={formData.wbi_left ?? ''}
+              onChange={e => handleChange('wbi_left', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
+              aria-invalid={!!errors.wbi_left}
+              aria-describedby={errors.wbi_left ? 'wbi_left-error' : undefined}
+              placeholder="自動計算されます"
+            />
+            {errors.wbi_left && (
+              <p id="wbi_left-error" role="alert" className="mt-1 text-sm text-red-600">
+                {errors.wbi_left}
+              </p>
+            )}
+          </div>
+
+          {/* WBI Right */}
+          <div>
+            <label htmlFor="wbi_right" className="block text-sm font-medium text-gray-700 mb-2">
+              WBI 右 (0-200)
+            </label>
+            <input
+              id="wbi_right"
+              type="number"
+              step="0.01"
+              value={formData.wbi_right ?? ''}
+              onChange={e => handleChange('wbi_right', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
+              aria-invalid={!!errors.wbi_right}
+              aria-describedby={errors.wbi_right ? 'wbi_right-error' : undefined}
+              placeholder="自動計算されます"
+            />
+            {errors.wbi_right && (
+              <p id="wbi_right-error" role="alert" className="mt-1 text-sm text-red-600">
+                {errors.wbi_right}
               </p>
             )}
           </div>

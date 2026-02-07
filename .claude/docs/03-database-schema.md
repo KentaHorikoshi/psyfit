@@ -160,8 +160,10 @@ exercises (運動マスタ)
 | measured_by_staff_id | UUID | NO | 測定職員ID (FK: staff.id) |
 | measured_date | DATE | NO | 測定日 |
 | weight_kg | DECIMAL(5,2) | YES | 体重 (kg), 0 < value < 500 |
-| knee_extension_strength_left | DECIMAL(5,2) | YES | 左膝伸展筋力 (kgf), 0 ≤ value < 1000 |
-| knee_extension_strength_right | DECIMAL(5,2) | YES | 右膝伸展筋力 (kgf), 0 ≤ value < 1000 |
+| knee_extension_strength_left | DECIMAL(5,2) | YES | 左膝伸展筋力 (N), 0 ≤ value < 500 |
+| knee_extension_strength_right | DECIMAL(5,2) | YES | 右膝伸展筋力 (N), 0 ≤ value < 500 |
+| wbi_left | DECIMAL(5,2) | YES | 左WBI (Weight Bearing Index), 0 ≤ value ≤ 200 |
+| wbi_right | DECIMAL(5,2) | YES | 右WBI (Weight Bearing Index), 0 ≤ value ≤ 200 |
 | tug_seconds | DECIMAL(5,2) | YES | TUG (秒), 0 < value < 1000 |
 | single_leg_stance_seconds | DECIMAL(5,2) | YES | 片脚立位 (秒), 0 ≤ value < 1000 |
 | nrs_pain_score | INTEGER | YES | NRS痛みスコア (0-10) |

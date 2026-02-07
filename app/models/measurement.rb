@@ -11,8 +11,10 @@ class Measurement < ApplicationRecord
   validates :measured_by_staff_id, presence: true
   validates :measured_date, presence: true
   validates :weight_kg, numericality: { greater_than: 0, less_than: 500 }, allow_nil: true
-  validates :knee_extension_strength_left, numericality: { greater_than_or_equal_to: 0, less_than: 1000 }, allow_nil: true
-  validates :knee_extension_strength_right, numericality: { greater_than_or_equal_to: 0, less_than: 1000 }, allow_nil: true
+  validates :knee_extension_strength_left, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 500 }, allow_nil: true
+  validates :knee_extension_strength_right, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 500 }, allow_nil: true
+  validates :wbi_left, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 200 }, allow_nil: true
+  validates :wbi_right, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 200 }, allow_nil: true
   validates :tug_seconds, numericality: { greater_than: 0, less_than: 1000 }, allow_nil: true
   validates :single_leg_stance_seconds, numericality: { greater_than_or_equal_to: 0, less_than: 1000 }, allow_nil: true
   validates :nrs_pain_score, numericality: {
@@ -63,6 +65,7 @@ class Measurement < ApplicationRecord
   # Check if at least one measurement was taken
   def has_measurements?
     [ weight_kg, knee_extension_strength_left, knee_extension_strength_right,
+     wbi_left, wbi_right,
      tug_seconds, single_leg_stance_seconds, nrs_pain_score, mmt_score ].any?(&:present?)
   end
 end

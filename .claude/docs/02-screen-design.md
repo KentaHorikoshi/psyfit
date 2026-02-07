@@ -180,8 +180,21 @@
 - テスト: 16 tests passed
 
 ### S-05: 測定値入力
-- 膝伸展筋力
-- TUG、NRS、MMT等入力
+- 測定日入力
+- 体重 (kg)
+- 膝伸展筋力 (N)：左右
+- WBI (Weight Bearing Index)：左右、自動計算（WBI = 膝伸展筋力 / 体重 × 100）
+- TUG (秒)
+- 片脚立位 (秒)
+- NRS痛みスコア (0-10)
+- MMT筋力スコア (0-5)
+- メモ
+- バリデーション:
+  - 体重: 0 < value < 500
+  - 膝伸展筋力: 0 ≤ value < 500 (単位: N)
+  - WBI: 0 ≤ value ≤ 200 (自動計算)
+  - TUG: 0 < value < 1000
+  - 片脚立位: 0 ≤ value < 1000
 - 実装: `frontend_admin/src/components/MeasurementInput.tsx` ✅
 - テスト: 22 tests passed
 

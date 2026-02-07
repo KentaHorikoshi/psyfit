@@ -1304,8 +1304,10 @@ Cookie: _psyfit_session=<session_id>
 |-----------|-----|------|------|
 | measured_date | Date | YES | - |
 | weight_kg | Decimal | NO | 0 < value < 500 |
-| knee_extension_strength_left | Decimal | NO | 0 ≤ value < 1000 |
-| knee_extension_strength_right | Decimal | NO | 0 ≤ value < 1000 |
+| knee_extension_strength_left | Decimal (N) | NO | 0 ≤ value < 500 |
+| knee_extension_strength_right | Decimal (N) | NO | 0 ≤ value < 500 |
+| wbi_left | Decimal | NO | 0 ≤ value ≤ 200 |
+| wbi_right | Decimal | NO | 0 ≤ value ≤ 200 |
 | tug_seconds | Decimal | NO | 0 < value < 1000 |
 | single_leg_stance_seconds | Decimal | NO | 0 ≤ value < 1000 |
 | nrs_pain_score | Integer | NO | 0〜10 |
@@ -1313,14 +1315,17 @@ Cookie: _psyfit_session=<session_id>
 | notes | Text | NO | - |
 
 ※ DecimalフィールドはDB制約 `DECIMAL(5,2)` のため最大値999.99
+※ 膝伸展筋力の単位は N (ニュートン)
 
 ```json
 // Request
 {
   "measured_date": "2026-01-21",
   "weight_kg": 65.5,
-  "knee_extension_strength_left": 25.3,
-  "knee_extension_strength_right": 26.1,
+  "knee_extension_strength_left": 250.0,
+  "knee_extension_strength_right": 260.0,
+  "wbi_left": 38.46,
+  "wbi_right": 40.00,
   "tug_seconds": 12.5,
   "single_leg_stance_seconds": 15.2,
   "nrs_pain_score": 3,
@@ -1335,7 +1340,10 @@ Cookie: _psyfit_session=<session_id>
     "id": "uuid",
     "measured_date": "2026-01-21",
     "weight_kg": 65.5,
-    "knee_extension_strength_left": 25.3
+    "knee_extension_strength_left": 250.0,
+    "knee_extension_strength_right": 260.0,
+    "wbi_left": 38.46,
+    "wbi_right": 40.00
     // ... 他のフィールド
   }
 }
@@ -1360,8 +1368,10 @@ Cookie: _psyfit_session=<session_id>
         "id": "uuid",
         "measured_date": "2026-01-21",
         "weight_kg": "65.5",
-        "knee_extension_strength_left": "25.3",
-        "knee_extension_strength_right": "26.1",
+        "knee_extension_strength_left": "250.0",
+        "knee_extension_strength_right": "260.0",
+        "wbi_left": "38.46",
+        "wbi_right": "40.00",
         "tug_seconds": "12.5",
         "single_leg_stance_seconds": "15.2",
         "nrs_pain_score": 3,
@@ -1401,8 +1411,10 @@ Cookie: _psyfit_session=<session_id>
         "id": "uuid",
         "measured_date": "2026-01-21",
         "weight_kg": "65.5",
-        "knee_extension_strength_left": "25.3",
-        "knee_extension_strength_right": "26.1",
+        "knee_extension_strength_left": "250.0",
+        "knee_extension_strength_right": "260.0",
+        "wbi_left": "38.46",
+        "wbi_right": "40.00",
         "tug_seconds": "12.5",
         "single_leg_stance_seconds": "15.2",
         "nrs_pain_score": 3,

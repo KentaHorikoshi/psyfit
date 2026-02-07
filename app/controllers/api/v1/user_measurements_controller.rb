@@ -26,6 +26,8 @@ module Api
           weight_kg: measurement.weight_kg&.to_s,
           knee_extension_strength_left: measurement.knee_extension_strength_left&.to_s,
           knee_extension_strength_right: measurement.knee_extension_strength_right&.to_s,
+          wbi_left: measurement.wbi_left&.to_s,
+          wbi_right: measurement.wbi_right&.to_s,
           tug_seconds: measurement.tug_seconds&.to_s,
           single_leg_stance_seconds: measurement.single_leg_stance_seconds&.to_s,
           nrs_pain_score: measurement.nrs_pain_score,

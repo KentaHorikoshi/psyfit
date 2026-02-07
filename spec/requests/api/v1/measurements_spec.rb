@@ -12,8 +12,10 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
       {
         measured_date: Date.current.to_s,
         weight_kg: 65.5,
-        knee_extension_strength_left: 25.3,
-        knee_extension_strength_right: 26.1,
+        knee_extension_strength_left: 250.0,
+        knee_extension_strength_right: 260.0,
+        wbi_left: 38.9,
+        wbi_right: 40.4,
         tug_seconds: 12.5,
         single_leg_stance_seconds: 15.2,
         nrs_pain_score: 3,
@@ -164,6 +166,45 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
 
           expect(response).to have_http_status(:unprocessable_entity)
         end
+
+        it 'returns error when knee_extension_strength exceeds 500' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            knee_extension_strength_left: 501
+          }
+
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it 'returns error when wbi_left exceeds 200' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            wbi_left: 201
+          }
+
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it 'returns error when wbi_right is negative' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            wbi_right: -1
+          }
+
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it 'accepts valid wbi values' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            wbi_left: 45.5,
+            wbi_right: 50.2
+          }
+
+          expect(response).to have_http_status(:created)
+          expect(json_response['data']['wbi_left']).to eq('45.5')
+          expect(json_response['data']['wbi_right']).to eq('50.2')
+        end
       end
 
       context 'when patient does not exist' do
@@ -258,6 +299,8 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             'weight_kg',
             'knee_extension_strength_left',
             'knee_extension_strength_right',
+            'wbi_left',
+            'wbi_right',
             'tug_seconds',
             'single_leg_stance_seconds',
             'nrs_pain_score',
@@ -437,6 +480,8 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             'weight_kg',
             'knee_extension_strength_left',
             'knee_extension_strength_right',
+            'wbi_left',
+            'wbi_right',
             'tug_seconds',
             'single_leg_stance_seconds',
             'nrs_pain_score',

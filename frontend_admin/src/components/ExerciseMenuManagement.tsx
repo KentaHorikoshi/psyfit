@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { ApiError } from '../lib/api'
 import type { ExerciseMasterDetail, CreateExerciseMasterRequest } from '../lib/api-types'
@@ -51,6 +51,70 @@ interface FormErrors {
   video_url?: string
   thumbnail_url?: string
   duration_seconds?: string
+}
+
+interface DeleteConfirmDialogProps {
+  isOpen: boolean
+  exercise: ExerciseMasterDetail | null
+  onClose: () => void
+  onConfirm: () => void
+  isDeleting: boolean
+  error: string | null
+}
+
+function DeleteConfirmDialog({ isOpen, exercise, onClose, onConfirm, isDeleting, error }: DeleteConfirmDialogProps) {
+  if (!isOpen || !exercise) return null
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+    >
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div className="p-6">
+          <h2 id="delete-dialog-title" className="text-xl font-bold text-gray-900 mb-4">
+            運動の削除
+          </h2>
+          <p className="text-base text-gray-700 mb-2">
+            以下の運動を削除しますか？
+          </p>
+          <p className="text-base font-medium text-gray-900 mb-4">
+            {exercise.name}
+          </p>
+          <p className="text-sm text-gray-500">
+            この操作は取り消せません。患者に割り当て済みの運動は削除できません。
+          </p>
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl" role="alert">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isDeleting}
+              className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={isDeleting}
+              className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 min-h-[44px]"
+            >
+              {isDeleting ? '削除中...' : '削除'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 interface CreateExerciseDialogProps {
@@ -471,6 +535,9 @@ export function ExerciseMenuManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all')
   const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'all'>('all')
+  const [deleteTarget, setDeleteTarget] = useState<ExerciseMasterDetail | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     loadExercises()
@@ -488,6 +555,36 @@ export function ExerciseMenuManagement() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleDeleteClick = (exercise: ExerciseMasterDetail) => {
+    setDeleteTarget(exercise)
+    setDeleteError(null)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+
+    try {
+      setIsDeleting(true)
+      setDeleteError(null)
+      await api.deleteExerciseMaster(deleteTarget.id)
+      setDeleteTarget(null)
+      loadExercises()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setDeleteError(err.message)
+      } else {
+        setDeleteError(err instanceof Error ? err.message : '削除に失敗しました')
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteClose = () => {
+    setDeleteTarget(null)
+    setDeleteError(null)
   }
 
   const filteredExercises = useMemo(() => {
@@ -626,6 +723,9 @@ export function ExerciseMenuManagement() {
                   <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
                     所要時間
                   </th>
+                  <th scope="col" className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -655,6 +755,15 @@ export function ExerciseMenuManagement() {
                     <td className="px-6 py-4 text-right text-gray-900">
                       {formatDuration(exercise.duration_seconds)}
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDeleteClick(exercise)}
+                        className="inline-flex items-center justify-center w-11 h-11 rounded-lg text-red-600 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+                        aria-label={`${exercise.name}を削除`}
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -668,6 +777,16 @@ export function ExerciseMenuManagement() {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSuccess={loadExercises}
+      />
+
+      {/* Delete Confirm Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteTarget !== null}
+        exercise={deleteTarget}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+        error={deleteError}
       />
     </div>
   )

@@ -159,6 +159,10 @@ class ApiClient {
     return this.post<CreateExerciseMasterResponse>('/exercise_masters', data)
   }
 
+  async deleteExerciseMaster(id: string): Promise<ApiResponse<{ message: string }>> {
+    return this.delete<{ message: string }>(`/exercise_masters/${id}`)
+  }
+
   // Exercise Assignment endpoints (S-06)
   async assignExercises(
     patientId: string,

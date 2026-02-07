@@ -36,6 +36,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | POST /api/v1/staff/me/password | ✅ 実装済み | ✅ |
 | GET /api/v1/exercise_masters | ✅ 実装済み | ✅ |
 | POST /api/v1/exercise_masters | ✅ 実装済み | - |
+| DELETE /api/v1/exercise_masters/:id | ✅ 実装済み | - |
 | GET /api/v1/videos/:exercise_id/token | ✅ 実装済み | ✅ |
 | GET /api/v1/videos/:exercise_id/stream | ✅ 実装済み | ✅ |
 
@@ -821,7 +822,7 @@ Cookie: _psyfit_session=<session_id>
 **実装ファイル**:
 - コントローラ: `app/controllers/api/v1/exercise_masters_controller.rb`
 - テスト: `spec/requests/api/v1/exercise_masters_spec.rb` (16件)
-- ルーティング: `config/routes.rb` に `resources :exercise_masters, only: [:index, :create]` 定義済み
+- ルーティング: `config/routes.rb` に `resources :exercise_masters, only: [:index, :create, :destroy]` 定義済み
 
 #### POST /api/v1/exercise_masters (職員用) ✅
 
@@ -889,6 +890,41 @@ Cookie: _psyfit_session=<session_id>
     "name": ["を入力してください"],
     "category": ["は一覧にありません"]
   }
+}
+```
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/exercise_masters_controller.rb`
+
+#### DELETE /api/v1/exercise_masters/:id (職員用) ✅
+
+運動マスタを削除する。患者に割り当て済みの運動は削除不可（`dependent: :restrict_with_error`）。
+
+**認証**: 職員セッション必須（全職員）
+
+**レスポンス (200 OK)**:
+```json
+{
+  "status": "success",
+  "data": {
+    "message": "運動を削除しました"
+  }
+}
+```
+
+**エラーレスポンス (422)** - 患者に割り当て済みの場合:
+```json
+{
+  "status": "error",
+  "message": "この運動は患者に割り当てられているため削除できません"
+}
+```
+
+**エラーレスポンス (404)** - 存在しない場合:
+```json
+{
+  "status": "error",
+  "message": "運動が見つかりません"
 }
 ```
 

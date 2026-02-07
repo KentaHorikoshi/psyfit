@@ -219,15 +219,19 @@
 ### S-10: 運動メニュー管理
 - 全職員アクセス可能
 - 運動マスタの一覧表示（テーブル形式）
-  - カラム: 運動名、カテゴリ、難易度、対象部位、推奨回数、推奨セット数、所要時間
+  - カラム: 運動名、カテゴリ、難易度、対象部位、推奨回数、推奨セット数、所要時間、操作
   - カテゴリバッジ: 筋力(赤)、バランス(青)、柔軟性(緑)
   - 難易度バッジ: 易しい(緑)、普通(黄)、難しい(赤)
 - フィルター機能: 名前検索、カテゴリ、難易度
 - 新規運動登録ダイアログ
   - 必須: 運動名（max 100文字）、カテゴリ、難易度
   - 任意: 説明、対象部位、推奨回数、推奨セット数、動画URL、サムネイルURL、所要時間
+- 運動削除（確認ダイアログ付き）
+  - 各行にゴミ箱アイコンの削除ボタン
+  - 確認ダイアログで運動名表示、注意書き
+  - 患者に割り当て済みの運動は削除不可（エラー表示）
 - ルート: `/exercise-masters`
-- API: `GET /api/v1/exercise_masters`, `POST /api/v1/exercise_masters`
+- API: `GET /api/v1/exercise_masters`, `POST /api/v1/exercise_masters`, `DELETE /api/v1/exercise_masters/:id`
 - 実装: `frontend_admin/src/components/ExerciseMenuManagement.tsx` ✅
 
 ## アクセシビリティ要件

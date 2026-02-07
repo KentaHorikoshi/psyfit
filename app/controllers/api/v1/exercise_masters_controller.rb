@@ -32,6 +32,24 @@ module Api
         end
       end
 
+      # DELETE /api/v1/exercise_masters/:id
+      def destroy
+        exercise = Exercise.find(params[:id])
+
+        if exercise.destroy
+          log_audit("delete", "success", resource_id: exercise.id)
+          render_success({ message: "運動を削除しました" })
+        else
+          log_audit("delete", "failure", resource_id: exercise.id)
+          render_error(
+            "この運動は患者に割り当てられているため削除できません",
+            status: :unprocessable_entity
+          )
+        end
+      rescue ActiveRecord::RecordNotFound
+        render_error("運動が見つかりません", status: :not_found)
+      end
+
       private
 
       def exercise_params

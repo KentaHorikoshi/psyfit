@@ -70,7 +70,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   # RSpec for TDD
-  gem "rspec-rails", "~> 7.0"
+  gem "rspec-rails", "~> 8.0"
 
   # TDD dependencies
   gem "factory_bot_rails", "~> 6.4"

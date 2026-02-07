@@ -10,6 +10,7 @@ module Api
       # Exception handling
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
+      rescue_from ActiveRecord::RangeError, with: :range_error
       rescue_from ActionController::ParameterMissing, with: :bad_request
 
       protected
@@ -113,6 +114,10 @@ module Api
 
       def bad_request(exception)
         render_error(exception.message, status: :bad_request)
+      end
+
+      def range_error(_exception)
+        render_error("入力値が許容範囲を超えています", status: :unprocessable_entity)
       end
 
       # Request info helpers

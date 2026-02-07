@@ -11,10 +11,10 @@ class Measurement < ApplicationRecord
   validates :measured_by_staff_id, presence: true
   validates :measured_date, presence: true
   validates :weight_kg, numericality: { greater_than: 0, less_than: 500 }, allow_nil: true
-  validates :knee_extension_strength_left, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :knee_extension_strength_right, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :tug_seconds, numericality: { greater_than: 0 }, allow_nil: true
-  validates :single_leg_stance_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :knee_extension_strength_left, numericality: { greater_than_or_equal_to: 0, less_than: 1000 }, allow_nil: true
+  validates :knee_extension_strength_right, numericality: { greater_than_or_equal_to: 0, less_than: 1000 }, allow_nil: true
+  validates :tug_seconds, numericality: { greater_than: 0, less_than: 1000 }, allow_nil: true
+  validates :single_leg_stance_seconds, numericality: { greater_than_or_equal_to: 0, less_than: 1000 }, allow_nil: true
   validates :nrs_pain_score, numericality: {
     only_integer: true,
     greater_than_or_equal_to: 0,

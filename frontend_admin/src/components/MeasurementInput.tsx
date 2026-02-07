@@ -32,24 +32,24 @@ export function MeasurementInput() {
       newErrors.measured_date = '測定日を入力してください'
     }
 
-    if (formData.weight_kg !== undefined && formData.weight_kg <= 0) {
-      newErrors.weight_kg = '0より大きい値を入力してください'
+    if (formData.weight_kg !== undefined && (formData.weight_kg <= 0 || formData.weight_kg >= 500)) {
+      newErrors.weight_kg = '0より大きく500未満の値を入力してください'
     }
 
-    if (formData.knee_extension_strength_left !== undefined && formData.knee_extension_strength_left < 0) {
-      newErrors.knee_extension_strength_left = '0以上の値を入力してください'
+    if (formData.knee_extension_strength_left !== undefined && (formData.knee_extension_strength_left < 0 || formData.knee_extension_strength_left >= 1000)) {
+      newErrors.knee_extension_strength_left = '0以上1000未満の値を入力してください'
     }
 
-    if (formData.knee_extension_strength_right !== undefined && formData.knee_extension_strength_right < 0) {
-      newErrors.knee_extension_strength_right = '0以上の値を入力してください'
+    if (formData.knee_extension_strength_right !== undefined && (formData.knee_extension_strength_right < 0 || formData.knee_extension_strength_right >= 1000)) {
+      newErrors.knee_extension_strength_right = '0以上1000未満の値を入力してください'
     }
 
-    if (formData.tug_seconds !== undefined && formData.tug_seconds < 0) {
-      newErrors.tug_seconds = '0以上の値を入力してください'
+    if (formData.tug_seconds !== undefined && (formData.tug_seconds < 0 || formData.tug_seconds >= 1000)) {
+      newErrors.tug_seconds = '0以上1000未満の値を入力してください'
     }
 
-    if (formData.single_leg_stance_seconds !== undefined && formData.single_leg_stance_seconds < 0) {
-      newErrors.single_leg_stance_seconds = '0以上の値を入力してください'
+    if (formData.single_leg_stance_seconds !== undefined && (formData.single_leg_stance_seconds < 0 || formData.single_leg_stance_seconds >= 1000)) {
+      newErrors.single_leg_stance_seconds = '0以上1000未満の値を入力してください'
     }
 
     if (formData.nrs_pain_score !== undefined && (formData.nrs_pain_score < 0 || formData.nrs_pain_score > 10)) {
@@ -174,6 +174,8 @@ export function MeasurementInput() {
               id="weight_kg"
               type="number"
               step="0.1"
+              min="0"
+              max="499.99"
               value={formData.weight_kg ?? ''}
               onChange={e => handleChange('weight_kg', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
@@ -196,6 +198,8 @@ export function MeasurementInput() {
               id="knee_extension_strength_left"
               type="number"
               step="0.1"
+              min="0"
+              max="999.99"
               value={formData.knee_extension_strength_left ?? ''}
               onChange={e => handleChange('knee_extension_strength_left', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
@@ -218,6 +222,8 @@ export function MeasurementInput() {
               id="knee_extension_strength_right"
               type="number"
               step="0.1"
+              min="0"
+              max="999.99"
               value={formData.knee_extension_strength_right ?? ''}
               onChange={e => handleChange('knee_extension_strength_right', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
@@ -240,6 +246,8 @@ export function MeasurementInput() {
               id="tug_seconds"
               type="number"
               step="0.1"
+              min="0"
+              max="999.99"
               value={formData.tug_seconds ?? ''}
               onChange={e => handleChange('tug_seconds', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
@@ -262,6 +270,8 @@ export function MeasurementInput() {
               id="single_leg_stance_seconds"
               type="number"
               step="0.1"
+              min="0"
+              max="999.99"
               value={formData.single_leg_stance_seconds ?? ''}
               onChange={e => handleChange('single_leg_stance_seconds', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"

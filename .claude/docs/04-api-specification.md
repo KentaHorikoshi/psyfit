@@ -1280,6 +1280,22 @@ Cookie: _psyfit_session=<session_id>
 
 測定値を入力。
 
+**バリデーションルール:**
+
+| フィールド | 型 | 必須 | 範囲 |
+|-----------|-----|------|------|
+| measured_date | Date | YES | - |
+| weight_kg | Decimal | NO | 0 < value < 500 |
+| knee_extension_strength_left | Decimal | NO | 0 ≤ value < 1000 |
+| knee_extension_strength_right | Decimal | NO | 0 ≤ value < 1000 |
+| tug_seconds | Decimal | NO | 0 < value < 1000 |
+| single_leg_stance_seconds | Decimal | NO | 0 ≤ value < 1000 |
+| nrs_pain_score | Integer | NO | 0〜10 |
+| mmt_score | Integer | NO | 0〜5 |
+| notes | Text | NO | - |
+
+※ DecimalフィールドはDB制約 `DECIMAL(5,2)` のため最大値999.99
+
 ```json
 // Request
 {

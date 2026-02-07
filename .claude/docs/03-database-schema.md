@@ -157,11 +157,11 @@ exercises (運動マスタ)
 | user_id | UUID | NO | 患者ID (FK: users.id) |
 | measured_by_staff_id | UUID | NO | 測定職員ID (FK: staff.id) |
 | measured_date | DATE | NO | 測定日 |
-| weight_kg | DECIMAL(5,2) | YES | 体重 (kg) |
-| knee_extension_strength_left | DECIMAL(5,2) | YES | 左膝伸展筋力 (kgf) |
-| knee_extension_strength_right | DECIMAL(5,2) | YES | 右膝伸展筋力 (kgf) |
-| tug_seconds | DECIMAL(5,2) | YES | TUG (秒) |
-| single_leg_stance_seconds | DECIMAL(5,2) | YES | 片脚立位 (秒) |
+| weight_kg | DECIMAL(5,2) | YES | 体重 (kg), 0 < value < 500 |
+| knee_extension_strength_left | DECIMAL(5,2) | YES | 左膝伸展筋力 (kgf), 0 ≤ value < 1000 |
+| knee_extension_strength_right | DECIMAL(5,2) | YES | 右膝伸展筋力 (kgf), 0 ≤ value < 1000 |
+| tug_seconds | DECIMAL(5,2) | YES | TUG (秒), 0 < value < 1000 |
+| single_leg_stance_seconds | DECIMAL(5,2) | YES | 片脚立位 (秒), 0 ≤ value < 1000 |
 | nrs_pain_score | INTEGER | YES | NRS痛みスコア (0-10) |
 | mmt_score | INTEGER | YES | MMT筋力スコア (0-5) |
 | notes | TEXT | YES | メモ |

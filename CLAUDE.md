@@ -194,7 +194,8 @@ Commands are located in `.claude/skills/`:
 3. Use `/tdd` to implement with tests first
 4. Run tests and ensure 80%+ coverage
 5. Use `/code-review` for final review
-6. Commit with conventional commits format
+6. Update relevant docs in `.claude/docs/` if implementation changes schema, API, screens, or test scope
+7. Commit with conventional commits format
 
 ## Git Workflow
 
@@ -224,3 +225,4 @@ Detailed specifications are in `.claude/docs/`:
 4. **Security-First**: Never compromise on security or patient data protection
 5. **Accessibility**: Follow WCAG 2.1 AA standards
 6. **Design Consistency**: Maintain visual and UX consistency across all screens
+7. **Docs in Sync**: Keep `.claude/docs/` updated when implementation changes spec-level behavior

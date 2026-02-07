@@ -27,7 +27,7 @@ gem "attr_encrypted", "~> 4.0"
 gem "rack-attack", "~> 6.7"
 
 # CORS support for API
-gem "rack-cors", "~> 2.0"
+gem "rack-cors", "~> 3.0"
 
 # PDF generation
 gem "prawn", "~> 2.5"

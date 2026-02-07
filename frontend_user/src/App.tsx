@@ -7,24 +7,12 @@ import { PasswordReset } from './components/PasswordReset'
 import { Home } from './components/Home'
 import { ExerciseMenu } from './components/ExerciseMenu'
 import { ExercisePlayer } from './components/ExercisePlayer'
+import { Celebration } from './components/Celebration'
 import { ExerciseHistory } from './components/ExerciseHistory'
 import { Measurements } from './components/Measurements'
 import { ConditionInput } from './components/ConditionInput'
 import { BatchRecord } from './components/BatchRecord'
 import { Profile } from './components/Profile'
-
-// Placeholder components - to be implemented
-function Celebration() {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center p-4" style={{ maxWidth: '390px', margin: '0 auto' }}>
-      <div className="text-center">
-        <div className="text-6xl mb-4">🎉</div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">お疲れ様でした！</h1>
-        <p className="text-gray-600">運動を完了しました</p>
-      </div>
-    </div>
-  )
-}
 
 export default function App() {
   return (

@@ -23,9 +23,11 @@ vi.mock('react-router-dom', async () => {
 
 // Mock API client
 const mockGetUserExercises = vi.fn()
+const mockGetExerciseRecords = vi.fn()
 vi.mock('../../lib/api-client', () => ({
   apiClient: {
     getUserExercises: () => mockGetUserExercises(),
+    getExerciseRecords: (params?: { start_date?: string; end_date?: string }) => mockGetExerciseRecords(params),
   },
 }))
 
@@ -38,7 +40,7 @@ const mockExercises: Exercise[] = [
     thumbnail_url: '/thumbnails/knee-extension.jpg',
     sets: 3,
     reps: 10,
-    category: 'lower_body',
+    exercise_type: 'training',
   },
   {
     id: '2',
@@ -48,7 +50,7 @@ const mockExercises: Exercise[] = [
     thumbnail_url: '/thumbnails/arm-raise.jpg',
     sets: 2,
     reps: 15,
-    category: 'upper_body',
+    exercise_type: 'training',
   },
   {
     id: '3',
@@ -58,7 +60,7 @@ const mockExercises: Exercise[] = [
     sets: 1,
     reps: 5,
     duration_seconds: 30,
-    category: 'stretch',
+    exercise_type: 'stretch',
   },
 ]
 
@@ -82,6 +84,10 @@ describe('U-03 ExerciseMenu', () => {
       status: 'success',
       data: { exercises: mockExercises },
     })
+    mockGetExerciseRecords.mockResolvedValue({
+      status: 'success',
+      data: { records: [] },
+    })
   })
 
   describe('rendering', () => {
@@ -95,6 +101,7 @@ describe('U-03 ExerciseMenu', () => {
 
     it('should render loading state initially', () => {
       mockGetUserExercises.mockImplementation(() => new Promise(() => {})) // Never resolves
+      mockGetExerciseRecords.mockImplementation(() => new Promise(() => {})) // Never resolves
       renderExerciseMenu()
 
       expect(screen.getByRole('status')).toBeInTheDocument()
@@ -234,6 +241,7 @@ describe('U-03 ExerciseMenu', () => {
 
     it('should have accessible loading state', () => {
       mockGetUserExercises.mockImplementation(() => new Promise(() => {}))
+      mockGetExerciseRecords.mockImplementation(() => new Promise(() => {}))
       renderExerciseMenu()
 
       const loadingElement = screen.getByRole('status')
@@ -250,14 +258,16 @@ describe('U-03 ExerciseMenu', () => {
     })
   })
 
-  describe('category filtering', () => {
-    it('should display exercises grouped by category', async () => {
+  describe('exercise type filtering', () => {
+    it('should display exercises grouped by exercise type', async () => {
       renderExerciseMenu()
 
       await waitFor(() => {
-        // Should have category headers or groupings
-        expect(screen.getByText(/下半身/)).toBeInTheDocument()
-        expect(screen.getByText(/上半身/)).toBeInTheDocument()
+        // Should have exercise type headers or groupings
+        const trainingTexts = screen.getAllByText(/トレーニング/)
+        const stretchTexts = screen.getAllByText(/ストレッチ/)
+        expect(trainingTexts.length).toBeGreaterThan(0)
+        expect(stretchTexts.length).toBeGreaterThan(0)
       })
     })
   })

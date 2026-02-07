@@ -1,18 +1,18 @@
 import type { Exercise } from '../lib/api-types'
 import { Play, Check } from 'lucide-react'
 
-const CATEGORY_LABELS: Record<Exercise['category'], string> = {
-  upper_body: '上半身',
-  lower_body: '下半身',
-  core: '体幹',
+const EXERCISE_TYPE_LABELS: Record<Exercise['exercise_type'], string> = {
   stretch: 'ストレッチ',
+  training: 'トレーニング',
+  massage: 'ほぐす',
+  balance: 'バランス',
 }
 
-const CATEGORY_COLORS: Record<Exercise['category'], string> = {
-  upper_body: 'bg-blue-100 text-blue-700',
-  lower_body: 'bg-purple-100 text-purple-700',
-  core: 'bg-orange-100 text-orange-700',
+const EXERCISE_TYPE_COLORS: Record<Exercise['exercise_type'], string> = {
   stretch: 'bg-green-100 text-green-700',
+  training: 'bg-red-100 text-red-700',
+  massage: 'bg-purple-100 text-purple-700',
+  balance: 'bg-blue-100 text-blue-700',
 }
 
 interface ExerciseCardProps {
@@ -74,9 +74,9 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false }: Exercis
           </div>
         </div>
 
-        {/* Category badge */}
-        <span className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${CATEGORY_COLORS[exercise.category]}`}>
-          {CATEGORY_LABELS[exercise.category]}
+        {/* Exercise type badge */}
+        <span className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${EXERCISE_TYPE_COLORS[exercise.exercise_type]}`}>
+          {EXERCISE_TYPE_LABELS[exercise.exercise_type]}
         </span>
 
         {/* Completed badge */}

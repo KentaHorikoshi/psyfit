@@ -45,7 +45,7 @@ const mockExercise: Exercise = {
   thumbnail_url: '/thumbnails/knee-extension.jpg',
   sets: 3,
   reps: 10,
-  category: 'lower_body',
+  exercise_type: 'training',
 }
 
 function renderExercisePlayer(exerciseId: string = '1') {

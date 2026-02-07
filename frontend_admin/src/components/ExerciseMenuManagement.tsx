@@ -2,15 +2,15 @@ import { useState, useEffect, useMemo } from 'react'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { ApiError } from '../lib/api'
-import type { ExerciseMasterDetail, CreateExerciseMasterRequest } from '../lib/api-types'
+import type { ExerciseMasterDetail, CreateExerciseMasterRequest, ExerciseType, BodyPartMajor, BodyPartMinor } from '../lib/api-types'
 
-type Category = '筋力' | 'バランス' | '柔軟性'
 type Difficulty = 'easy' | 'medium' | 'hard'
 
-const CATEGORY_STYLES: Record<Category, string> = {
-  '筋力': 'bg-red-100 text-red-700 border-red-200',
+const EXERCISE_TYPE_STYLES: Record<ExerciseType, string> = {
+  'ストレッチ': 'bg-green-100 text-green-700 border-green-200',
+  'トレーニング': 'bg-red-100 text-red-700 border-red-200',
+  'ほぐす': 'bg-purple-100 text-purple-700 border-purple-200',
   'バランス': 'bg-blue-100 text-blue-700 border-blue-200',
-  '柔軟性': 'bg-green-100 text-green-700 border-green-200',
 }
 
 const DIFFICULTY_STYLES: Record<Difficulty, string> = {
@@ -25,10 +25,16 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   hard: '難しい',
 }
 
-function CategoryBadge({ category }: { category: Category }) {
+const BODY_PART_MINORS_MAP: Record<BodyPartMajor, BodyPartMinor[]> = {
+  '体幹・脊柱': ['頸部', '胸部', '腹部', '腰椎', 'その他'],
+  '上肢': ['肩・上腕', '肘・前腕', '手関節・手指'],
+  '下肢': ['股関節・大腿', '膝・下腿', '足関節・足部'],
+}
+
+function ExerciseTypeBadge({ exerciseType }: { exerciseType: ExerciseType }) {
   return (
-    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${CATEGORY_STYLES[category]}`}>
-      {category}
+    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${EXERCISE_TYPE_STYLES[exerciseType]}`}>
+      {exerciseType}
     </span>
   )
 }
@@ -43,9 +49,10 @@ function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
 
 interface FormErrors {
   name?: string
-  category?: string
+  exercise_type?: string
   difficulty?: string
-  target_body_part?: string
+  body_part_major?: string
+  body_part_minor?: string
   recommended_reps?: string
   recommended_sets?: string
   video_url?: string
@@ -139,16 +146,12 @@ function CreateExerciseDialog({ isOpen, onClose, onSuccess }: CreateExerciseDial
       newErrors.name = '運動名は100文字以内で入力してください'
     }
 
-    if (!formData.category) {
-      newErrors.category = 'カテゴリを選択してください'
+    if (!formData.exercise_type) {
+      newErrors.exercise_type = '運動種別を選択してください'
     }
 
     if (!formData.difficulty) {
       newErrors.difficulty = '難易度を選択してください'
-    }
-
-    if (formData.target_body_part && formData.target_body_part.length > 100) {
-      newErrors.target_body_part = '対象部位は100文字以内で入力してください'
     }
 
     if (formData.recommended_reps !== undefined && formData.recommended_reps !== null) {
@@ -193,6 +196,22 @@ function CreateExerciseDialog({ isOpen, onClose, onSuccess }: CreateExerciseDial
     }
   }
 
+  const handleBodyPartMajorChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      body_part_major: value as BodyPartMajor,
+      body_part_minor: undefined, // Reset minor when major changes
+    }))
+
+    if (errors.body_part_major) {
+      setErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors.body_part_major
+        return newErrors
+      })
+    }
+  }
+
   const handleNumberChange = (field: keyof CreateExerciseMasterRequest, value: string) => {
     if (value === '') {
       handleChange(field, undefined)
@@ -228,7 +247,7 @@ function CreateExerciseDialog({ isOpen, onClose, onSuccess }: CreateExerciseDial
       if (err instanceof ApiError && err.errors) {
         const serverErrors: FormErrors = {}
         for (const [key, messages] of Object.entries(err.errors)) {
-          if (key in errors || ['name', 'category', 'difficulty'].includes(key)) {
+          if (key in errors || ['name', 'exercise_type', 'difficulty'].includes(key)) {
             serverErrors[key as keyof FormErrors] = messages[0]
           }
         }
@@ -254,6 +273,8 @@ function CreateExerciseDialog({ isOpen, onClose, onSuccess }: CreateExerciseDial
   }
 
   if (!isOpen) return null
+
+  const availableMinors = formData.body_part_major ? BODY_PART_MINORS_MAP[formData.body_part_major] : []
 
   return (
     <div
@@ -306,28 +327,29 @@ function CreateExerciseDialog({ isOpen, onClose, onSuccess }: CreateExerciseDial
             />
           </div>
 
-          {/* Category & Difficulty Row */}
+          {/* Exercise Type & Difficulty Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="exercise-category" className="block text-sm font-medium text-gray-700 mb-1">
-                カテゴリ <span className="text-red-500">*</span>
+              <label htmlFor="exercise-type" className="block text-sm font-medium text-gray-700 mb-1">
+                運動種別 <span className="text-red-500">*</span>
               </label>
               <select
-                id="exercise-category"
-                value={formData.category || ''}
-                onChange={(e) => handleChange('category', e.target.value as Category)}
+                id="exercise-type"
+                value={formData.exercise_type || ''}
+                onChange={(e) => handleChange('exercise_type', e.target.value as ExerciseType)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-                aria-invalid={!!errors.category}
-                aria-describedby={errors.category ? 'category-error' : undefined}
+                aria-invalid={!!errors.exercise_type}
+                aria-describedby={errors.exercise_type ? 'exercise-type-error' : undefined}
               >
                 <option value="">選択してください</option>
-                <option value="筋力">筋力</option>
+                <option value="ストレッチ">ストレッチ</option>
+                <option value="トレーニング">トレーニング</option>
+                <option value="ほぐす">ほぐす</option>
                 <option value="バランス">バランス</option>
-                <option value="柔軟性">柔軟性</option>
               </select>
-              {errors.category && (
-                <p id="category-error" role="alert" className="mt-1 text-sm text-red-600">
-                  {errors.category}
+              {errors.exercise_type && (
+                <p id="exercise-type-error" role="alert" className="mt-1 text-sm text-red-600">
+                  {errors.exercise_type}
                 </p>
               )}
             </div>
@@ -357,27 +379,58 @@ function CreateExerciseDialog({ isOpen, onClose, onSuccess }: CreateExerciseDial
             </div>
           </div>
 
-          {/* Target Body Part */}
-          <div>
-            <label htmlFor="exercise-target" className="block text-sm font-medium text-gray-700 mb-1">
-              対象部位
-            </label>
-            <input
-              id="exercise-target"
-              type="text"
-              value={formData.target_body_part || ''}
-              onChange={(e) => handleChange('target_body_part', e.target.value)}
-              placeholder="例: 下肢、上肢、体幹"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-              aria-invalid={!!errors.target_body_part}
-              aria-describedby={errors.target_body_part ? 'target-error' : undefined}
-              maxLength={100}
-            />
-            {errors.target_body_part && (
-              <p id="target-error" role="alert" className="mt-1 text-sm text-red-600">
-                {errors.target_body_part}
-              </p>
-            )}
+          {/* Body Part Major & Minor Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="body-part-major" className="block text-sm font-medium text-gray-700 mb-1">
+                大分類
+              </label>
+              <select
+                id="body-part-major"
+                value={formData.body_part_major || ''}
+                onChange={(e) => handleBodyPartMajorChange(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
+                aria-invalid={!!errors.body_part_major}
+                aria-describedby={errors.body_part_major ? 'body-part-major-error' : undefined}
+              >
+                <option value="">選択してください</option>
+                <option value="体幹・脊柱">体幹・脊柱</option>
+                <option value="上肢">上肢</option>
+                <option value="下肢">下肢</option>
+              </select>
+              {errors.body_part_major && (
+                <p id="body-part-major-error" role="alert" className="mt-1 text-sm text-red-600">
+                  {errors.body_part_major}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="body-part-minor" className="block text-sm font-medium text-gray-700 mb-1">
+                中分類
+              </label>
+              <select
+                id="body-part-minor"
+                value={formData.body_part_minor || ''}
+                onChange={(e) => handleChange('body_part_minor', e.target.value as BodyPartMinor)}
+                disabled={!formData.body_part_major}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                aria-invalid={!!errors.body_part_minor}
+                aria-describedby={errors.body_part_minor ? 'body-part-minor-error' : undefined}
+              >
+                <option value="">選択してください</option>
+                {availableMinors.map((minor) => (
+                  <option key={minor} value={minor}>
+                    {minor}
+                  </option>
+                ))}
+              </select>
+              {errors.body_part_minor && (
+                <p id="body-part-minor-error" role="alert" className="mt-1 text-sm text-red-600">
+                  {errors.body_part_minor}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Reps & Sets Row */}
@@ -533,7 +586,8 @@ export function ExerciseMenuManagement() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all')
+  const [exerciseTypeFilter, setExerciseTypeFilter] = useState<ExerciseType | 'all'>('all')
+  const [bodyPartMajorFilter, setBodyPartMajorFilter] = useState<BodyPartMajor | 'all'>('all')
   const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'all'>('all')
   const [deleteTarget, setDeleteTarget] = useState<ExerciseMasterDetail | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -589,7 +643,10 @@ export function ExerciseMenuManagement() {
 
   const filteredExercises = useMemo(() => {
     return exercises.filter((exercise) => {
-      if (categoryFilter !== 'all' && exercise.category !== categoryFilter) {
+      if (exerciseTypeFilter !== 'all' && exercise.exercise_type !== exerciseTypeFilter) {
+        return false
+      }
+      if (bodyPartMajorFilter !== 'all' && exercise.body_part_major !== bodyPartMajorFilter) {
         return false
       }
       if (difficultyFilter !== 'all' && exercise.difficulty !== difficultyFilter) {
@@ -600,12 +657,13 @@ export function ExerciseMenuManagement() {
         return (
           exercise.name.toLowerCase().includes(query) ||
           (exercise.description?.toLowerCase().includes(query) ?? false) ||
-          (exercise.target_body_part?.toLowerCase().includes(query) ?? false)
+          (exercise.body_part_major?.toLowerCase().includes(query) ?? false) ||
+          (exercise.body_part_minor?.toLowerCase().includes(query) ?? false)
         )
       }
       return true
     })
-  }, [exercises, categoryFilter, difficultyFilter, searchQuery])
+  }, [exercises, exerciseTypeFilter, bodyPartMajorFilter, difficultyFilter, searchQuery])
 
   const formatDuration = (seconds: number | null): string => {
     if (seconds === null) return '-'
@@ -649,17 +707,31 @@ export function ExerciseMenuManagement() {
             />
           </div>
 
-          {/* Category Filter */}
+          {/* Exercise Type Filter */}
           <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value as Category | 'all')}
+            value={exerciseTypeFilter}
+            onChange={(e) => setExerciseTypeFilter(e.target.value as ExerciseType | 'all')}
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-            aria-label="カテゴリフィルター"
+            aria-label="運動種別フィルター"
           >
-            <option value="all">すべてのカテゴリ</option>
-            <option value="筋力">筋力</option>
+            <option value="all">すべての運動種別</option>
+            <option value="ストレッチ">ストレッチ</option>
+            <option value="トレーニング">トレーニング</option>
+            <option value="ほぐす">ほぐす</option>
             <option value="バランス">バランス</option>
-            <option value="柔軟性">柔軟性</option>
+          </select>
+
+          {/* Body Part Major Filter */}
+          <select
+            value={bodyPartMajorFilter}
+            onChange={(e) => setBodyPartMajorFilter(e.target.value as BodyPartMajor | 'all')}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
+            aria-label="大分類フィルター"
+          >
+            <option value="all">すべての大分類</option>
+            <option value="体幹・脊柱">体幹・脊柱</option>
+            <option value="上肢">上肢</option>
+            <option value="下肢">下肢</option>
           </select>
 
           {/* Difficulty Filter */}
@@ -706,13 +778,16 @@ export function ExerciseMenuManagement() {
                     運動名
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    カテゴリ
+                    運動種別
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                     難易度
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    対象部位
+                    大分類
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    中分類
                   </th>
                   <th scope="col" className="px-6 py-4 text-right text-sm font-semibold text-gray-700">
                     推奨回数
@@ -738,13 +813,16 @@ export function ExerciseMenuManagement() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <CategoryBadge category={exercise.category} />
+                      <ExerciseTypeBadge exerciseType={exercise.exercise_type} />
                     </td>
                     <td className="px-6 py-4">
                       <DifficultyBadge difficulty={exercise.difficulty} />
                     </td>
                     <td className="px-6 py-4 text-gray-900">
-                      {exercise.target_body_part || '-'}
+                      {exercise.body_part_major || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-gray-900">
+                      {exercise.body_part_minor || '-'}
                     </td>
                     <td className="px-6 py-4 text-right text-gray-900">
                       {exercise.recommended_reps ?? '-'}

@@ -8,7 +8,9 @@ module Api
       # GET /api/v1/exercise_masters
       def index
         exercises = Exercise.all
-        exercises = exercises.by_category(params[:category]) if params[:category].present?
+        exercises = exercises.by_exercise_type(params[:exercise_type]) if params[:exercise_type].present?
+        exercises = exercises.by_body_part_major(params[:body_part_major]) if params[:body_part_major].present?
+        exercises = exercises.by_body_part_minor(params[:body_part_minor]) if params[:body_part_minor].present?
         exercises = exercises.by_difficulty(params[:difficulty]) if params[:difficulty].present?
 
         log_audit("read", "success")
@@ -54,8 +56,9 @@ module Api
 
       def exercise_params
         params.permit(
-          :name, :description, :category, :difficulty,
-          :target_body_part, :recommended_reps, :recommended_sets,
+          :name, :description, :exercise_type, :difficulty,
+          :body_part_major, :body_part_minor,
+          :recommended_reps, :recommended_sets,
           :video_url, :thumbnail_url, :duration_seconds
         )
       end
@@ -65,9 +68,10 @@ module Api
           id: exercise.id,
           name: exercise.name,
           description: exercise.description,
-          category: exercise.category,
+          exercise_type: exercise.exercise_type,
           difficulty: exercise.difficulty,
-          target_body_part: exercise.target_body_part,
+          body_part_major: exercise.body_part_major,
+          body_part_minor: exercise.body_part_minor,
           recommended_reps: exercise.recommended_reps,
           recommended_sets: exercise.recommended_sets,
           video_url: exercise.video_url,

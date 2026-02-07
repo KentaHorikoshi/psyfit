@@ -78,9 +78,10 @@ exercises (運動マスタ)
 | id | UUID | NO | プライマリキー |
 | name | VARCHAR(100) | NO | 運動名 |
 | description | TEXT | YES | 説明 |
-| category | VARCHAR(50) | NO | カテゴリ (筋力/バランス/柔軟性) |
+| exercise_type | VARCHAR(50) | NO | 運動種別 (ストレッチ/トレーニング/ほぐす/バランス) |
 | difficulty | VARCHAR(20) | NO | 難易度 (easy/medium/hard) |
-| target_body_part | VARCHAR(100) | YES | 対象部位 |
+| body_part_major | VARCHAR(50) | YES | 大分類 (体幹・脊柱/上肢/下肢) |
+| body_part_minor | VARCHAR(50) | YES | 中分類 (頸部/胸部/腹部/腰椎/肩・上腕/肘・前腕/手関節・手指/股関節・大腿/膝・下腿/足関節・足部/その他) |
 | recommended_reps | INTEGER | YES | 推奨回数 |
 | recommended_sets | INTEGER | YES | 推奨セット数 |
 | video_url | VARCHAR(255) | YES | 動画URL |
@@ -91,7 +92,8 @@ exercises (運動マスタ)
 
 **インデックス:**
 - PRIMARY KEY (id)
-- INDEX (category)
+- INDEX (exercise_type)
+- INDEX (body_part_major)
 
 ### 4. patient_exercises (患者運動メニュー割当)
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_26_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_07_095500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -60,19 +60,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_26_100000) do
   end
 
   create_table "exercises", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "category", limit: 50, null: false
+    t.string "body_part_major", limit: 50
+    t.string "body_part_minor", limit: 50
     t.datetime "created_at", null: false
     t.text "description"
     t.string "difficulty", limit: 20, null: false
     t.integer "duration_seconds"
+    t.string "exercise_type", limit: 50, null: false
     t.string "name", limit: 100, null: false
     t.integer "recommended_reps"
     t.integer "recommended_sets"
-    t.string "target_body_part", limit: 100
     t.string "thumbnail_url", limit: 255
     t.datetime "updated_at", null: false
     t.string "video_url", limit: 255
-    t.index ["category"], name: "index_exercises_on_category"
+    t.index ["body_part_major"], name: "index_exercises_on_body_part_major"
+    t.index ["exercise_type"], name: "index_exercises_on_exercise_type"
   end
 
   create_table "measurements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

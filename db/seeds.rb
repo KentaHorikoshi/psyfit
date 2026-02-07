@@ -79,26 +79,28 @@ puts "Creating exercises..."
 
 exercises = []
 exercise_data = [
-  # 柔軟性トレーニング
-  { name: '肘を曲げる運動', category: '柔軟性', difficulty: 'easy', description: '椅子に座り、右肘を曲げていく動作', video_url: '/videos/0.mp4', thumbnail_url: '/thumbnails/0.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: '上肢回旋（ソラシックツイスト）', category: '柔軟性', difficulty: 'medium', description: '横向きに寝て両手を伸ばした状態から上の手を広げて上半身を捻る。', video_url: '/videos/1.mp4', thumbnail_url: '/thumbnails/1.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: '下肢回旋（両膝倒しツイスト）', category: '柔軟性', difficulty: 'medium', description: '仰向けに寝た状態で両膝を立てて腰を左右に捻る。', video_url: '/videos/2.mp4', thumbnail_url: '/thumbnails/2.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: 'キャットアンドドッグ', category: '柔軟性', difficulty: 'hard', description: '四つ這いで背中を丸めたり伸ばしたりする背骨周りの筋肉のストレッチ', video_url: '/videos/10.mp4', thumbnail_url: '/thumbnails/10.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  # ストレッチ
+  { name: '肘を曲げる運動', exercise_type: 'ストレッチ', difficulty: 'easy', body_part_major: '上肢', body_part_minor: '肘・前腕', description: '椅子に座り、右肘を曲げていく動作', video_url: '/videos/0.mp4', thumbnail_url: '/thumbnails/0.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '上肢回旋（ソラシックツイスト）', exercise_type: 'ストレッチ', difficulty: 'medium', body_part_major: '体幹・脊柱', body_part_minor: '胸部', description: '横向きに寝て両手を伸ばした状態から上の手を広げて上半身を捻る。', video_url: '/videos/1.mp4', thumbnail_url: '/thumbnails/1.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '下肢回旋（両膝倒しツイスト）', exercise_type: 'ストレッチ', difficulty: 'medium', body_part_major: '体幹・脊柱', body_part_minor: '腰椎', description: '仰向けに寝た状態で両膝を立てて腰を左右に捻る。', video_url: '/videos/2.mp4', thumbnail_url: '/thumbnails/2.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: 'キャットアンドドッグ', exercise_type: 'ストレッチ', difficulty: 'hard', body_part_major: '体幹・脊柱', body_part_minor: '腰椎', description: '四つ這いで背中を丸めたり伸ばしたりする背骨周りの筋肉のストレッチ', video_url: '/videos/10.mp4', thumbnail_url: '/thumbnails/10.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '背中丸め（座位片膝抱えストレッチ）', exercise_type: 'ストレッチ', difficulty: 'easy', body_part_major: '体幹・脊柱', body_part_minor: '胸部', description: '座った状態から片膝を両手で抱え、体を丸めて肩甲骨周りを伸ばす。', video_url: '/videos/8.mp4', thumbnail_url: '/thumbnails/8.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
 
-  # 筋力トレーニング
-  { name: 'チェアスクワット', category: '筋力', difficulty: 'easy', description: '椅子に座った状態からスクワットを行う。', video_url: '/videos/3.mp4', thumbnail_url: '/thumbnails/3.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: '膝伸ばし（座位膝伸展運動）', category: '筋力', difficulty: 'easy', description: '椅子に座った状態で片膝を伸ばす。', video_url: '/videos/4.mp4', thumbnail_url: '/thumbnails/4.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: '背中丸め（座位片膝抱えストレッチ）', category: '筋力', difficulty: 'easy', description: '座った状態から片膝を両手で抱え、体を丸めて肩甲骨周りを伸ばす。', video_url: '/videos/8.mp4', thumbnail_url: '/thumbnails/8.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: 'ロールダウン', category: '筋力', difficulty: 'medium', description: '体育座りの姿勢から体を丸めながら後方に倒し、倒れるぎりぎりのところから元の位置まで起こす。', video_url: '/videos/6.mp4', thumbnail_url: '/thumbnails/6.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: '殿筋トレーニング(膝屈曲位うつ伏せ股関節伸展運動)', category: '筋力', difficulty: 'medium', description: 'うつ伏せの状態で片膝を90°曲げ、曲げた方の足を持ち上げるお尻のトレーンング', video_url: '/videos/9.mp4', thumbnail_url: '/thumbnails/9.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: '膝つきプランク', category: '筋力', difficulty: 'hard', description: 'うつ伏せで両膝と両肘をついた状態から体を一直線に上げる。', video_url: '/videos/5.mp4', thumbnail_url: '/thumbnails/5.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
-  { name: 'バックブリッジ', category: '筋力', difficulty: 'hard', description: '仰向けで両膝を曲げ、お尻を挙げて体を一直線にするように上げる。', video_url: '/videos/7.mp4', thumbnail_url: '/thumbnails/7.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 }
+  # トレーニング
+  { name: 'チェアスクワット', exercise_type: 'トレーニング', difficulty: 'easy', body_part_major: '下肢', body_part_minor: '膝・下腿', description: '椅子に座った状態からスクワットを行う。', video_url: '/videos/3.mp4', thumbnail_url: '/thumbnails/3.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '膝伸ばし（座位膝伸展運動）', exercise_type: 'トレーニング', difficulty: 'easy', body_part_major: '下肢', body_part_minor: '膝・下腿', description: '椅子に座った状態で片膝を伸ばす。', video_url: '/videos/4.mp4', thumbnail_url: '/thumbnails/4.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: 'ロールダウン', exercise_type: 'トレーニング', difficulty: 'medium', body_part_major: '体幹・脊柱', body_part_minor: '腹部', description: '体育座りの姿勢から体を丸めながら後方に倒し、倒れるぎりぎりのところから元の位置まで起こす。', video_url: '/videos/6.mp4', thumbnail_url: '/thumbnails/6.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '殿筋トレーニング(膝屈曲位うつ伏せ股関節伸展運動)', exercise_type: 'トレーニング', difficulty: 'medium', body_part_major: '下肢', body_part_minor: '股関節・大腿', description: 'うつ伏せの状態で片膝を90°曲げ、曲げた方の足を持ち上げるお尻のトレーンング', video_url: '/videos/9.mp4', thumbnail_url: '/thumbnails/9.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: '膝つきプランク', exercise_type: 'トレーニング', difficulty: 'hard', body_part_major: '体幹・脊柱', body_part_minor: '腹部', description: 'うつ伏せで両膝と両肘をついた状態から体を一直線に上げる。', video_url: '/videos/5.mp4', thumbnail_url: '/thumbnails/5.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 },
+  { name: 'バックブリッジ', exercise_type: 'トレーニング', difficulty: 'hard', body_part_major: '下肢', body_part_minor: '股関節・大腿', description: '仰向けで両膝を曲げ、お尻を挙げて体を一直線にするように上げる。', video_url: '/videos/7.mp4', thumbnail_url: '/thumbnails/7.jpg', duration_seconds: 180, recommended_reps: 10, recommended_sets: 3 }
 ]
 
 exercise_data.each do |data|
   exercise = Exercise.find_or_create_by!(name: data[:name]) do |e|
-    e.category = data[:category]
+    e.exercise_type = data[:exercise_type]
     e.difficulty = data[:difficulty]
+    e.body_part_major = data[:body_part_major]
+    e.body_part_minor = data[:body_part_minor]
     e.description = data[:description]
     e.video_url = data[:video_url]
     e.thumbnail_url = data[:thumbnail_url]

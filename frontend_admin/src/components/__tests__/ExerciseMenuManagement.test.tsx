@@ -3,13 +3,14 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { ExerciseMenuManagement } from '../ExerciseMenuManagement'
-import type { ExerciseMasterDetail } from '../../lib/api-types'
+import type { ExerciseMasterDetail, ExerciseType, BodyPartMajor, BodyPartMinor } from '../../lib/api-types'
 
 // Mock API
 vi.mock('../../lib/api', () => ({
   api: {
     getExerciseMasterList: vi.fn(),
     createExerciseMaster: vi.fn(),
+    deleteExerciseMaster: vi.fn(),
   },
   ApiError: class ApiError extends Error {
     status: number
@@ -30,9 +31,10 @@ const mockExercises: ExerciseMasterDetail[] = [
     id: 'ex-1',
     name: 'スクワット',
     description: '下半身の筋力トレーニング',
-    category: '筋力',
+    exercise_type: 'トレーニング' as ExerciseType,
     difficulty: 'medium',
-    target_body_part: '下肢',
+    body_part_major: '下肢' as BodyPartMajor,
+    body_part_minor: '膝・下腿' as BodyPartMinor,
     recommended_reps: 10,
     recommended_sets: 3,
     video_url: '/videos/squat.mp4',
@@ -43,9 +45,10 @@ const mockExercises: ExerciseMasterDetail[] = [
     id: 'ex-2',
     name: '片足立ち',
     description: 'バランス能力の向上',
-    category: 'バランス',
+    exercise_type: 'バランス' as ExerciseType,
     difficulty: 'easy',
-    target_body_part: '体幹',
+    body_part_major: '下肢' as BodyPartMajor,
+    body_part_minor: '足関節・足部' as BodyPartMinor,
     recommended_reps: 5,
     recommended_sets: 2,
     video_url: null,
@@ -54,11 +57,12 @@ const mockExercises: ExerciseMasterDetail[] = [
   },
   {
     id: 'ex-3',
-    name: 'ストレッチ',
+    name: 'ハムストリングストレッチ',
     description: null,
-    category: '柔軟性',
+    exercise_type: 'ストレッチ' as ExerciseType,
     difficulty: 'easy',
-    target_body_part: null,
+    body_part_major: null,
+    body_part_minor: null,
     recommended_reps: null,
     recommended_sets: null,
     video_url: null,
@@ -118,9 +122,10 @@ describe('S-10 ExerciseMenuManagement', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('columnheader', { name: '運動名' })).toBeInTheDocument()
-        expect(screen.getByRole('columnheader', { name: 'カテゴリ' })).toBeInTheDocument()
+        expect(screen.getByRole('columnheader', { name: '運動種別' })).toBeInTheDocument()
         expect(screen.getByRole('columnheader', { name: '難易度' })).toBeInTheDocument()
-        expect(screen.getByRole('columnheader', { name: '対象部位' })).toBeInTheDocument()
+        expect(screen.getByRole('columnheader', { name: '大分類' })).toBeInTheDocument()
+        expect(screen.getByRole('columnheader', { name: '中分類' })).toBeInTheDocument()
         expect(screen.getByRole('columnheader', { name: '推奨回数' })).toBeInTheDocument()
         expect(screen.getByRole('columnheader', { name: '推奨セット数' })).toBeInTheDocument()
         expect(screen.getByRole('columnheader', { name: '所要時間' })).toBeInTheDocument()
@@ -133,7 +138,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       await waitFor(() => {
         expect(screen.getByText('スクワット')).toBeInTheDocument()
         expect(screen.getByText('片足立ち')).toBeInTheDocument()
-        expect(screen.getByText('ストレッチ')).toBeInTheDocument()
+        expect(screen.getByText('ハムストリングストレッチ')).toBeInTheDocument()
       })
     })
 
@@ -142,7 +147,7 @@ describe('S-10 ExerciseMenuManagement', () => {
 
       await waitFor(() => {
         expect(screen.getByText('下半身の筋力トレーニング')).toBeInTheDocument()
-        expect(screen.getByText('下肢')).toBeInTheDocument()
+        expect(screen.getByText('膝・下腿')).toBeInTheDocument()
         expect(screen.getByText('2分')).toBeInTheDocument()
       })
     })
@@ -151,7 +156,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       renderExerciseMenuManagement()
 
       await waitFor(() => {
-        const categoryBadges = screen.getAllByText('筋力')
+        const categoryBadges = screen.getAllByText('トレーニング')
         const tableBadge = categoryBadges.find((badge) =>
           badge.classList.contains('bg-red-100')
         )
@@ -187,7 +192,7 @@ describe('S-10 ExerciseMenuManagement', () => {
 
       await waitFor(() => {
         const rows = screen.getAllByRole('row')
-        const stretchRow = rows.find((row) => row.textContent?.includes('ストレッチ'))
+        const stretchRow = rows.find((row) => row.textContent?.includes('ハムストリングストレッチ'))
         expect(stretchRow).toBeDefined()
         expect(within(stretchRow!).getAllByText('-').length).toBeGreaterThan(0)
       })
@@ -195,23 +200,23 @@ describe('S-10 ExerciseMenuManagement', () => {
   })
 
   describe('filtering', () => {
-    it('should filter by category', async () => {
+    it('should filter by exercise type', async () => {
       const user = userEvent.setup()
       renderExerciseMenuManagement()
 
       await waitFor(() => {
         expect(screen.getByText('スクワット')).toBeInTheDocument()
         expect(screen.getByText('片足立ち')).toBeInTheDocument()
-        expect(screen.getByText('ストレッチ')).toBeInTheDocument()
+        expect(screen.getByText('ハムストリングストレッチ')).toBeInTheDocument()
       })
 
-      const categoryFilter = screen.getByLabelText('カテゴリフィルター')
-      await user.selectOptions(categoryFilter, '筋力')
+      const exerciseTypeFilter = screen.getByLabelText('運動種別フィルター')
+      await user.selectOptions(exerciseTypeFilter, 'トレーニング')
 
       await waitFor(() => {
         expect(screen.getByText('スクワット')).toBeInTheDocument()
         expect(screen.queryByText('片足立ち')).not.toBeInTheDocument()
-        expect(screen.queryByText('ストレッチ')).not.toBeInTheDocument()
+        expect(screen.queryByText('ハムストリングストレッチ')).not.toBeInTheDocument()
       })
     })
 
@@ -230,7 +235,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       await waitFor(() => {
         expect(screen.queryByText('スクワット')).not.toBeInTheDocument()
         expect(screen.getByText('片足立ち')).toBeInTheDocument()
-        expect(screen.getByText('ストレッチ')).toBeInTheDocument()
+        expect(screen.getByText('ハムストリングストレッチ')).toBeInTheDocument()
       })
     })
 
@@ -248,7 +253,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       await waitFor(() => {
         expect(screen.getByText('スクワット')).toBeInTheDocument()
         expect(screen.queryByText('片足立ち')).not.toBeInTheDocument()
-        expect(screen.queryByText('ストレッチ')).not.toBeInTheDocument()
+        expect(screen.queryByText('ハムストリングストレッチ')).not.toBeInTheDocument()
       })
     })
 
@@ -269,7 +274,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       })
     })
 
-    it('should search by target body part', async () => {
+    it('should search by body part', async () => {
       const user = userEvent.setup()
       renderExerciseMenuManagement()
 
@@ -278,7 +283,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       })
 
       const searchInput = screen.getByLabelText('検索')
-      await user.type(searchInput, '下肢')
+      await user.type(searchInput, '膝')
 
       await waitFor(() => {
         expect(screen.getByText('スクワット')).toBeInTheDocument()
@@ -294,8 +299,8 @@ describe('S-10 ExerciseMenuManagement', () => {
         expect(screen.getByText('スクワット')).toBeInTheDocument()
       })
 
-      const categoryFilter = screen.getByLabelText('カテゴリフィルター')
-      await user.selectOptions(categoryFilter, 'バランス')
+      const exerciseTypeFilter = screen.getByLabelText('運動種別フィルター')
+      await user.selectOptions(exerciseTypeFilter, 'バランス')
 
       const difficultyFilter = screen.getByLabelText('難易度フィルター')
       await user.selectOptions(difficultyFilter, 'easy')
@@ -303,7 +308,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       await waitFor(() => {
         expect(screen.queryByText('スクワット')).not.toBeInTheDocument()
         expect(screen.getByText('片足立ち')).toBeInTheDocument()
-        expect(screen.queryByText('ストレッチ')).not.toBeInTheDocument()
+        expect(screen.queryByText('ハムストリングストレッチ')).not.toBeInTheDocument()
       })
     })
   })
@@ -370,9 +375,10 @@ describe('S-10 ExerciseMenuManagement', () => {
         const dialog = screen.getByRole('dialog')
         expect(within(dialog).getByLabelText(/^運動名/)).toBeInTheDocument()
         expect(within(dialog).getByLabelText(/説明/)).toBeInTheDocument()
-        expect(within(dialog).getByLabelText(/^カテゴリ/)).toBeInTheDocument()
+        expect(within(dialog).getByLabelText(/^運動種別/)).toBeInTheDocument()
         expect(within(dialog).getByLabelText(/^難易度/)).toBeInTheDocument()
-        expect(within(dialog).getByLabelText(/対象部位/)).toBeInTheDocument()
+        expect(within(dialog).getByLabelText(/大分類/)).toBeInTheDocument()
+        expect(within(dialog).getByLabelText(/中分類/)).toBeInTheDocument()
         expect(within(dialog).getByLabelText(/推奨回数/)).toBeInTheDocument()
         expect(within(dialog).getByLabelText(/推奨セット数/)).toBeInTheDocument()
         expect(within(dialog).getByLabelText(/動画URL/)).toBeInTheDocument()
@@ -425,7 +431,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       })
     })
 
-    it('should show error when category is not selected', async () => {
+    it('should show error when exercise type is not selected', async () => {
       const user = userEvent.setup()
       renderExerciseMenuManagement()
 
@@ -443,7 +449,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       await user.click(screen.getByRole('button', { name: '登録' }))
 
       await waitFor(() => {
-        expect(screen.getByText('カテゴリを選択してください')).toBeInTheDocument()
+        expect(screen.getByText('運動種別を選択してください')).toBeInTheDocument()
       })
     })
 
@@ -460,7 +466,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       const dialog = await screen.findByRole('dialog')
 
       await user.type(within(dialog).getByLabelText(/^運動名/), 'テスト運動')
-      await user.selectOptions(within(dialog).getByLabelText(/^カテゴリ/), '筋力')
+      await user.selectOptions(within(dialog).getByLabelText(/^運動種別/), 'トレーニング')
       await user.click(screen.getByRole('button', { name: '登録' }))
 
       await waitFor(() => {
@@ -475,7 +481,8 @@ describe('S-10 ExerciseMenuManagement', () => {
         data: {
           exercise: {
             id: 'ex-new', name: 'テスト運動', description: null,
-            category: '筋力', difficulty: 'easy', target_body_part: null,
+            exercise_type: 'トレーニング' as ExerciseType, difficulty: 'easy',
+            body_part_major: null, body_part_minor: null,
             recommended_reps: null, recommended_sets: null,
             video_url: null, thumbnail_url: null, duration_seconds: null,
           },
@@ -493,7 +500,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       const dialog = await screen.findByRole('dialog')
 
       await user.type(within(dialog).getByLabelText(/^運動名/), 'テスト運動')
-      await user.selectOptions(within(dialog).getByLabelText(/^カテゴリ/), '筋力')
+      await user.selectOptions(within(dialog).getByLabelText(/^運動種別/), 'トレーニング')
       await user.selectOptions(within(dialog).getByLabelText(/^難易度/), 'easy')
       await user.click(within(dialog).getByRole('button', { name: '登録' }))
 
@@ -513,9 +520,10 @@ describe('S-10 ExerciseMenuManagement', () => {
             id: 'ex-4',
             name: '新規運動',
             description: 'テスト用運動',
-            category: '筋力',
+            exercise_type: 'トレーニング' as ExerciseType,
             difficulty: 'easy',
-            target_body_part: '上肢',
+            body_part_major: '上肢' as BodyPartMajor,
+            body_part_minor: '肘・前腕' as BodyPartMinor,
             recommended_reps: 8,
             recommended_sets: 2,
             video_url: null,
@@ -537,9 +545,10 @@ describe('S-10 ExerciseMenuManagement', () => {
 
       await user.type(within(dialog).getByLabelText(/^運動名/), '新規運動')
       await user.type(within(dialog).getByLabelText(/説明/), 'テスト用運動')
-      await user.selectOptions(within(dialog).getByLabelText(/^カテゴリ/), '筋力')
+      await user.selectOptions(within(dialog).getByLabelText(/^運動種別/), 'トレーニング')
       await user.selectOptions(within(dialog).getByLabelText(/^難易度/), 'easy')
-      await user.type(within(dialog).getByLabelText(/対象部位/), '上肢')
+      await user.selectOptions(within(dialog).getByLabelText(/大分類/), '上肢')
+      await user.selectOptions(within(dialog).getByLabelText(/中分類/), '肘・前腕')
       await user.type(within(dialog).getByLabelText(/推奨回数/), '8')
       await user.type(within(dialog).getByLabelText(/推奨セット数/), '2')
       await user.type(within(dialog).getByLabelText(/所要時間/), '90')
@@ -553,9 +562,10 @@ describe('S-10 ExerciseMenuManagement', () => {
       expect(api.createExerciseMaster).toHaveBeenCalledWith({
         name: '新規運動',
         description: 'テスト用運動',
-        category: '筋力',
+        exercise_type: 'トレーニング',
         difficulty: 'easy',
-        target_body_part: '上肢',
+        body_part_major: '上肢',
+        body_part_minor: '肘・前腕',
         recommended_reps: 8,
         recommended_sets: 2,
         duration_seconds: 90,
@@ -571,9 +581,10 @@ describe('S-10 ExerciseMenuManagement', () => {
             id: 'ex-4',
             name: '新規運動',
             description: null,
-            category: '筋力',
+            exercise_type: 'トレーニング' as ExerciseType,
             difficulty: 'easy',
-            target_body_part: null,
+            body_part_major: null,
+            body_part_minor: null,
             recommended_reps: null,
             recommended_sets: null,
             video_url: null,
@@ -596,7 +607,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       const dialog = await screen.findByRole('dialog')
 
       await user.type(within(dialog).getByLabelText(/^運動名/), '新規運動')
-      await user.selectOptions(within(dialog).getByLabelText(/^カテゴリ/), '筋力')
+      await user.selectOptions(within(dialog).getByLabelText(/^運動種別/), 'トレーニング')
       await user.selectOptions(within(dialog).getByLabelText(/^難易度/), 'easy')
 
       await user.click(within(dialog).getByRole('button', { name: '登録' }))
@@ -629,7 +640,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       const dialog = await screen.findByRole('dialog')
 
       await user.type(within(dialog).getByLabelText(/^運動名/), '新規運動')
-      await user.selectOptions(within(dialog).getByLabelText(/^カテゴリ/), '筋力')
+      await user.selectOptions(within(dialog).getByLabelText(/^運動種別/), 'トレーニング')
       await user.selectOptions(within(dialog).getByLabelText(/^難易度/), 'easy')
 
       await user.click(within(dialog).getByRole('button', { name: '登録' }))
@@ -669,7 +680,7 @@ describe('S-10 ExerciseMenuManagement', () => {
       await waitFor(() => {
         const table = screen.getByRole('table')
         expect(table).toBeInTheDocument()
-        expect(within(table).getAllByRole('columnheader')).toHaveLength(7)
+        expect(within(table).getAllByRole('columnheader')).toHaveLength(9)
       })
     })
 

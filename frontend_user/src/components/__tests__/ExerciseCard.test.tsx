@@ -12,7 +12,7 @@ const mockExercise: Exercise = {
   thumbnail_url: '/thumbnails/knee-extension.jpg',
   sets: 3,
   reps: 10,
-  category: 'lower_body',
+  exercise_type: 'training',
 }
 
 const mockExerciseWithDuration: Exercise = {
@@ -20,7 +20,7 @@ const mockExerciseWithDuration: Exercise = {
   id: '2',
   name: 'ストレッチ',
   duration_seconds: 30,
-  category: 'stretch',
+  exercise_type: 'stretch',
 }
 
 describe('U-11 ExerciseCard', () => {
@@ -170,21 +170,21 @@ describe('U-11 ExerciseCard', () => {
     })
   })
 
-  describe('category display', () => {
-    it('should display category badge', () => {
+  describe('exercise type display', () => {
+    it('should display exercise type badge', () => {
       render(<ExerciseCard exercise={mockExercise} onStart={vi.fn()} />)
 
-      expect(screen.getByText(/下半身/)).toBeInTheDocument()
+      expect(screen.getByText(/トレーニング/)).toBeInTheDocument()
     })
 
-    it('should display correct category for upper body', () => {
-      const upperBodyExercise = { ...mockExercise, category: 'upper_body' as const }
-      render(<ExerciseCard exercise={upperBodyExercise} onStart={vi.fn()} />)
+    it('should display correct exercise type for training', () => {
+      const trainingExercise = { ...mockExercise, exercise_type: 'training' as const }
+      render(<ExerciseCard exercise={trainingExercise} onStart={vi.fn()} />)
 
-      expect(screen.getByText(/上半身/)).toBeInTheDocument()
+      expect(screen.getByText(/トレーニング/)).toBeInTheDocument()
     })
 
-    it('should display correct category for stretch', () => {
+    it('should display correct exercise type for stretch', () => {
       render(<ExerciseCard exercise={mockExerciseWithDuration} onStart={vi.fn()} />)
 
       const badge = screen.getAllByText(/ストレッチ/)[0]

@@ -2,52 +2,68 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
-import type { Exercise } from '../lib/api-types'
-import { ArrowLeft, Play } from 'lucide-react'
+import type { Exercise, ExerciseType, ExerciseRecordWithExercise } from '../lib/api-types'
+import { ArrowLeft, Play, CheckCircle2 } from 'lucide-react'
 
-const CATEGORY_LABELS: Record<Exercise['category'], string> = {
-  upper_body: '上半身',
-  lower_body: '下半身',
-  core: '体幹',
+const EXERCISE_TYPE_LABELS: Record<ExerciseType, string> = {
   stretch: 'ストレッチ',
+  training: 'トレーニング',
+  massage: 'ほぐす',
+  balance: 'バランス',
 }
 
-const CATEGORY_ORDER: Exercise['category'][] = ['lower_body', 'upper_body', 'core', 'stretch']
+const EXERCISE_TYPE_ORDER: ExerciseType[] = ['training', 'stretch', 'massage', 'balance']
 
 interface ExerciseCardItemProps {
   exercise: Exercise
   onClick: () => void
+  isCompleted: boolean
 }
 
-function ExerciseCardItem({ exercise, onClick }: ExerciseCardItemProps) {
+function ExerciseCardItem({ exercise, onClick, isCompleted }: ExerciseCardItemProps) {
   return (
     <li>
       <button
         onClick={onClick}
-        className="w-full flex items-center p-4 bg-white border border-gray-200 rounded-xl hover:border-[#1E40AF] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[72px]"
-        aria-label={`${exercise.name}を開始 ${exercise.sets}セット${exercise.reps}回`}
+        className={`w-full flex items-center p-4 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[72px] border ${
+          isCompleted
+            ? 'bg-green-50 border-green-200'
+            : 'bg-white border-gray-200 hover:border-[#1E40AF]'
+        }`}
+        aria-label={`${exercise.name}${isCompleted ? '（実施済み）' : 'を開始'} ${exercise.sets}セット${exercise.reps}回`}
       >
-        <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mr-4 shrink-0 overflow-hidden">
+        <div className={`w-16 h-16 rounded-lg flex items-center justify-center mr-4 shrink-0 overflow-hidden ${
+          isCompleted && !exercise.thumbnail_url ? 'bg-green-100' : 'bg-gray-100'
+        }`}>
           {exercise.thumbnail_url ? (
             <img
               src={exercise.thumbnail_url}
               alt=""
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${isCompleted ? 'opacity-60' : ''}`}
             />
           ) : (
-            <Play size={24} className="text-[#1E40AF]" />
+            <Play size={24} className={isCompleted ? 'text-green-600' : 'text-[#1E40AF]'} />
           )}
         </div>
         <div className="flex-1 text-left">
-          <p className="text-gray-900 text-lg font-medium">{exercise.name}</p>
+          <p className={`text-lg font-medium ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+            {exercise.name}
+          </p>
           <p className="text-gray-500 text-sm">
             {exercise.sets}セット × {exercise.reps}回
             {exercise.duration_seconds && ` (${exercise.duration_seconds}秒)`}
           </p>
         </div>
-        <div className="w-10 h-10 bg-[#1E40AF] rounded-full flex items-center justify-center shrink-0">
-          <Play size={20} className="text-white ml-0.5" />
-        </div>
+        {isCompleted ? (
+          <div className="flex flex-col items-center shrink-0">
+            <CheckCircle2 size={24} className="text-green-600" />
+            <span className="text-xs text-green-600 font-medium mt-1">実施済み</span>
+          </div>
+        ) : (
+          <div className="w-10 h-10 bg-[#1E40AF] rounded-full flex items-center justify-center shrink-0">
+            <Play size={20} className="text-white ml-0.5" />
+          </div>
+        )}
       </button>
     </li>
   )
@@ -57,6 +73,7 @@ export function ExerciseMenu() {
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [exercises, setExercises] = useState<Exercise[]>([])
+  const [todayRecords, setTodayRecords] = useState<ExerciseRecordWithExercise[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -67,15 +84,24 @@ export function ExerciseMenu() {
   }, [isAuthenticated, authLoading, navigate])
 
   useEffect(() => {
-    async function fetchExercises() {
+    async function fetchExercisesAndRecords() {
       if (!isAuthenticated) return
 
       try {
         setIsLoading(true)
         setError(null)
-        const response = await apiClient.getUserExercises()
-        if (response.data) {
-          setExercises(response.data.exercises ?? [])
+        const today = new Date().toISOString().split('T')[0]
+
+        const [exercisesRes, recordsRes] = await Promise.all([
+          apiClient.getUserExercises(),
+          apiClient.getExerciseRecords({ start_date: today, end_date: today }),
+        ])
+
+        if (exercisesRes.data) {
+          setExercises(exercisesRes.data.exercises ?? [])
+        }
+        if (recordsRes.status === 'success' && recordsRes.data) {
+          setTodayRecords(recordsRes.data.records)
         }
       } catch {
         setError('エラーが発生しました。再度お試しください。')
@@ -84,27 +110,38 @@ export function ExerciseMenu() {
       }
     }
 
-    fetchExercises()
+    fetchExercisesAndRecords()
   }, [isAuthenticated])
 
+  const completedExerciseIds = useMemo(() => {
+    return new Set(todayRecords.map(record => record.exercise_id))
+  }, [todayRecords])
+
+  const remainingCount = useMemo(() => {
+    return exercises.filter(ex => !completedExerciseIds.has(ex.id)).length
+  }, [exercises, completedExerciseIds])
+
   const groupedExercises = useMemo(() => {
-    const groups: Record<Exercise['category'], Exercise[]> = {
-      upper_body: [],
-      lower_body: [],
-      core: [],
+    const groups: Record<ExerciseType, Exercise[]> = {
       stretch: [],
+      training: [],
+      massage: [],
+      balance: [],
     }
 
     exercises.forEach(exercise => {
-      groups[exercise.category].push(exercise)
+      const type = exercise.exercise_type
+      if (groups[type]) {
+        groups[type].push(exercise)
+      }
     })
 
-    return CATEGORY_ORDER
-      .filter(category => groups[category].length > 0)
-      .map(category => ({
-        category,
-        label: CATEGORY_LABELS[category],
-        exercises: groups[category],
+    return EXERCISE_TYPE_ORDER
+      .filter(type => groups[type].length > 0)
+      .map(type => ({
+        type,
+        label: EXERCISE_TYPE_LABELS[type],
+        exercises: groups[type],
       }))
   }, [exercises])
 
@@ -135,7 +172,18 @@ export function ExerciseMenu() {
           >
             <ArrowLeft size={24} className="text-gray-700" />
           </button>
-          <h1 className="text-xl font-bold text-gray-900 ml-2">運動メニュー</h1>
+          <h1 className="text-xl font-bold text-gray-900 ml-2 flex-1">運動メニュー</h1>
+          {!isLoading && exercises.length > 0 && (
+            remainingCount > 0 ? (
+              <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                残り {remainingCount} 件
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                すべて完了
+              </span>
+            )
+          )}
         </div>
       </header>
 
@@ -172,7 +220,7 @@ export function ExerciseMenu() {
         {!isLoading && !error && exercises.length > 0 && (
           <ul role="list" className="space-y-6">
             {groupedExercises.map(group => (
-              <li key={group.category}>
+              <li key={group.type}>
                 <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
                   {group.label}
                 </h2>
@@ -181,6 +229,7 @@ export function ExerciseMenu() {
                     <ExerciseCardItem
                       key={exercise.id}
                       exercise={exercise}
+                      isCompleted={completedExerciseIds.has(exercise.id)}
                       onClick={() => navigate(`/exercise/${exercise.id}`)}
                     />
                   ))}

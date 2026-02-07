@@ -32,6 +32,8 @@ export interface UserLoginRequest {
 }
 
 // Exercise Types
+export type ExerciseType = 'stretch' | 'training' | 'massage' | 'balance'
+
 export interface Exercise {
   id: string
   name: string
@@ -41,7 +43,9 @@ export interface Exercise {
   sets: number
   reps: number
   duration_seconds?: number
-  category: 'upper_body' | 'lower_body' | 'core' | 'stretch'
+  exercise_type: ExerciseType
+  body_part_major?: string | null
+  body_part_minor?: string | null
 }
 
 export interface ExerciseRecord {

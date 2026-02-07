@@ -32,9 +32,9 @@ export function ExerciseMenu() {
         const fetchedExercises = mastersResponse.data?.exercises || []
         setExercises(fetchedExercises)
 
-        // Expand all categories by default
-        const categories = new Set(fetchedExercises.map(e => e.category))
-        setExpandedCategories(categories)
+        // Expand all exercise types by default
+        const types = new Set(fetchedExercises.map(e => e.exercise_type))
+        setExpandedCategories(types)
 
         // Pre-select assigned exercises and initialize their settings
         const assignments = assignedResponse.data?.assignments || []
@@ -92,8 +92,8 @@ export function ExerciseMenu() {
         setExerciseSettings((prevSettings) => ({
           ...prevSettings,
           [exerciseId]: {
-            sets: exercise.default_sets,
-            reps: exercise.default_reps,
+            sets: exercise.recommended_sets,
+            reps: exercise.recommended_reps,
           },
         }))
       }
@@ -139,12 +139,12 @@ export function ExerciseMenu() {
     }
   }
 
-  // Group exercises by category
+  // Group exercises by exercise_type
   const groupedExercises = exercises.reduce((acc, exercise) => {
-    if (!acc[exercise.category]) {
-      acc[exercise.category] = []
+    if (!acc[exercise.exercise_type]) {
+      acc[exercise.exercise_type] = []
     }
-    acc[exercise.category].push(exercise)
+    acc[exercise.exercise_type].push(exercise)
     return acc
   }, {} as Record<string, ExerciseMaster[]>)
 
@@ -212,7 +212,7 @@ export function ExerciseMenu() {
                       type="button"
                       onClick={() => toggleCategory(category)}
                       className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors min-h-[44px]"
-                      aria-label={`カテゴリー: ${category}`}
+                      aria-label={`運動種別: ${category}`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-8 bg-[#3B82F6] rounded"></div>
@@ -245,7 +245,7 @@ export function ExerciseMenu() {
                               <p className="font-medium text-gray-900">{exercise.name}</p>
                               <p className="text-sm text-gray-600 mt-1">{exercise.description}</p>
                               <p className="text-sm text-gray-500 mt-1">
-                                {exercise.default_sets}セット × {exercise.default_reps}回
+                                {exercise.recommended_sets}セット × {exercise.recommended_reps}回
                               </p>
                             </div>
                           </label>

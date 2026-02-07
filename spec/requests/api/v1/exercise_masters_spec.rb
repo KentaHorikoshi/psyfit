@@ -11,8 +11,10 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
     create(:exercise,
       name: 'スクワット',
       description: '膝の筋力を強化する運動',
-      category: '筋力',
+      exercise_type: 'トレーニング',
       difficulty: 'medium',
+      body_part_major: '下肢',
+      body_part_minor: '膝・下腿',
       recommended_reps: 10,
       recommended_sets: 3,
       video_url: '/videos/squat.mp4',
@@ -25,8 +27,10 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
     create(:exercise,
       name: '片足立ち',
       description: 'バランス能力を向上させる運動',
-      category: 'バランス',
+      exercise_type: 'バランス',
       difficulty: 'easy',
+      body_part_major: '下肢',
+      body_part_minor: '足関節・足部',
       recommended_reps: 5,
       recommended_sets: 2,
       duration_seconds: 60
@@ -37,20 +41,24 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
     create(:exercise,
       name: 'ハムストリングストレッチ',
       description: '柔軟性を高める運動',
-      category: '柔軟性',
+      exercise_type: 'ストレッチ',
       difficulty: 'easy',
+      body_part_major: '下肢',
+      body_part_minor: '股関節・大腿',
       recommended_reps: nil,
       recommended_sets: nil,
       duration_seconds: 180
     )
   end
 
-  let!(:hard_strength) do
+  let!(:hard_training) do
     create(:exercise,
       name: 'ランジ',
-      description: '高負荷の筋力トレーニング',
-      category: '筋力',
+      description: '高負荷のトレーニング',
+      exercise_type: 'トレーニング',
       difficulty: 'hard',
+      body_part_major: '下肢',
+      body_part_minor: '股関節・大腿',
       recommended_reps: 8,
       recommended_sets: 4,
       duration_seconds: 240
@@ -77,8 +85,10 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
           'id' => squat.id,
           'name' => 'スクワット',
           'description' => '膝の筋力を強化する運動',
-          'category' => '筋力',
+          'exercise_type' => 'トレーニング',
           'difficulty' => 'medium',
+          'body_part_major' => '下肢',
+          'body_part_minor' => '膝・下腿',
           'recommended_reps' => 10,
           'recommended_sets' => 3,
           'video_url' => '/videos/squat.mp4',
@@ -87,30 +97,50 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
         )
       end
 
-      context 'category filter' do
-        it 'filters by category 筋力' do
-          get '/api/v1/exercise_masters', params: { category: '筋力' }
+      context 'exercise_type filter' do
+        it 'filters by exercise_type トレーニング' do
+          get '/api/v1/exercise_masters', params: { exercise_type: 'トレーニング' }
 
           expect(response).to have_http_status(:ok)
           exercises = json_response['data']['exercises']
           expect(exercises.length).to eq(2)
-          expect(exercises.map { |e| e['category'] }).to all(eq('筋力'))
+          expect(exercises.map { |e| e['exercise_type'] }).to all(eq('トレーニング'))
         end
 
-        it 'filters by category バランス' do
-          get '/api/v1/exercise_masters', params: { category: 'バランス' }
+        it 'filters by exercise_type バランス' do
+          get '/api/v1/exercise_masters', params: { exercise_type: 'バランス' }
 
           exercises = json_response['data']['exercises']
           expect(exercises.length).to eq(1)
           expect(exercises.first['name']).to eq('片足立ち')
         end
 
-        it 'filters by category 柔軟性' do
-          get '/api/v1/exercise_masters', params: { category: '柔軟性' }
+        it 'filters by exercise_type ストレッチ' do
+          get '/api/v1/exercise_masters', params: { exercise_type: 'ストレッチ' }
 
           exercises = json_response['data']['exercises']
           expect(exercises.length).to eq(1)
           expect(exercises.first['name']).to eq('ハムストリングストレッチ')
+        end
+      end
+
+      context 'body_part_major filter' do
+        it 'filters by body_part_major 下肢' do
+          get '/api/v1/exercise_masters', params: { body_part_major: '下肢' }
+
+          exercises = json_response['data']['exercises']
+          expect(exercises.length).to eq(4)
+          expect(exercises.map { |e| e['body_part_major'] }).to all(eq('下肢'))
+        end
+      end
+
+      context 'body_part_minor filter' do
+        it 'filters by body_part_minor 膝・下腿' do
+          get '/api/v1/exercise_masters', params: { body_part_minor: '膝・下腿' }
+
+          exercises = json_response['data']['exercises']
+          expect(exercises.length).to eq(1)
+          expect(exercises.first['name']).to eq('スクワット')
         end
       end
 
@@ -141,8 +171,8 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
       end
 
       context 'combined filters' do
-        it 'filters by category and difficulty' do
-          get '/api/v1/exercise_masters', params: { category: '筋力', difficulty: 'medium' }
+        it 'filters by exercise_type and difficulty' do
+          get '/api/v1/exercise_masters', params: { exercise_type: 'トレーニング', difficulty: 'medium' }
 
           exercises = json_response['data']['exercises']
           expect(exercises.length).to eq(1)
@@ -150,7 +180,7 @@ RSpec.describe 'Api::V1::ExerciseMasters', type: :request do
         end
 
         it 'returns empty when no match for combined filters' do
-          get '/api/v1/exercise_masters', params: { category: 'バランス', difficulty: 'hard' }
+          get '/api/v1/exercise_masters', params: { exercise_type: 'バランス', difficulty: 'hard' }
 
           exercises = json_response['data']['exercises']
           expect(exercises).to be_empty

@@ -41,7 +41,7 @@ const mockExercises: Exercise[] = [
     video_url: '/videos/squat.mp4',
     sets: 3,
     reps: 10,
-    category: 'lower_body',
+    exercise_type: 'training',
   },
   {
     id: '2',
@@ -50,7 +50,7 @@ const mockExercises: Exercise[] = [
     video_url: '/videos/arm-raise.mp4',
     sets: 2,
     reps: 15,
-    category: 'upper_body',
+    exercise_type: 'training',
   },
 ]
 
@@ -126,6 +126,11 @@ describe('U-02 Home', () => {
     it('should navigate to exercise menu on "運動する" click', async () => {
       const user = userEvent.setup()
       renderHome()
+
+      // Wait for exercises to load and button to update
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /運動する/ })).toBeInTheDocument()
+      })
 
       const exerciseButton = screen.getByRole('button', { name: /運動する/ })
       await user.click(exerciseButton)
@@ -348,36 +353,25 @@ describe('U-02 Home', () => {
   })
 
   describe('today exercise menu (タスク2)', () => {
-    it('should display today assigned exercises', async () => {
+    it('should show remaining count in exercise button', async () => {
       renderHome()
 
       await waitFor(() => {
-        expect(screen.getByText('スクワット')).toBeInTheDocument()
-        expect(screen.getByText('腕上げ運動')).toBeInTheDocument()
+        // 2件の運動が未実施なので残り2件と表示される
+        expect(screen.getByText(/残り.*2.*件/)).toBeInTheDocument()
       })
     })
 
-    it('should display sets and reps for each exercise', async () => {
+    it('should show highlighted exercise button when exercises remain', async () => {
       renderHome()
 
       await waitFor(() => {
-        expect(screen.getByText(/3セット.*10回/)).toBeInTheDocument()
-        expect(screen.getByText(/2セット.*15回/)).toBeInTheDocument()
+        const exerciseButton = screen.getByRole('button', { name: /運動する（残り/ })
+        expect(exerciseButton).toBeInTheDocument()
       })
     })
 
-    it('should show incomplete status when exercise not done today', async () => {
-      renderHome()
-
-      await waitFor(() => {
-        // 未実施マークが2つ表示されるはず
-        const incompleteMarkers = screen.getAllByText('未実施')
-        expect(incompleteMarkers).toHaveLength(2)
-      })
-    })
-
-    it('should show completed status when exercise is done today', async () => {
-      // 1つの運動が完了した状態
+    it('should show remaining 1 when one exercise is completed', async () => {
       mockGetExerciseRecords.mockResolvedValue({
         status: 'success',
         data: {
@@ -390,7 +384,7 @@ describe('U-02 Home', () => {
               completed_sets: 3,
               completed_reps: 10,
               exercise_name: 'スクワット',
-              exercise_category: 'lower_body',
+              exercise_category: 'training',
             },
           ],
         },
@@ -399,8 +393,44 @@ describe('U-02 Home', () => {
       renderHome()
 
       await waitFor(() => {
-        expect(screen.getByText('実施済み')).toBeInTheDocument()
-        expect(screen.getByText('未実施')).toBeInTheDocument()
+        expect(screen.getByText(/残り.*1.*件/)).toBeInTheDocument()
+      })
+    })
+
+    it('should show completed state when all exercises are done', async () => {
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            {
+              id: 'record-1',
+              exercise_id: '1',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 3,
+              completed_reps: 10,
+              exercise_name: 'スクワット',
+              exercise_category: 'training',
+            },
+            {
+              id: 'record-2',
+              exercise_id: '2',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 2,
+              completed_reps: 15,
+              exercise_name: '腕上げ運動',
+              exercise_category: 'training',
+            },
+          ],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /すべて完了/ })).toBeInTheDocument()
+        expect(screen.getByText('完了！')).toBeInTheDocument()
       })
     })
 

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
 import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
-import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User, ClipboardEdit, CheckCircle2, Circle } from 'lucide-react'
+import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User, ClipboardEdit, CheckCircle2 } from 'lucide-react'
 
 function getGreeting(): { text: string; Icon: typeof Sun } {
   const hour = new Date().getHours()
@@ -146,82 +146,45 @@ export function Home() {
         </div>
       </section>
 
-      {/* Today's exercise menu */}
-      <section className="px-6 mb-6" aria-label="今日の運動メニュー">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-gray-900">今日の運動</h2>
-          {!exercisesLoading && exercises.length > 0 && (
-            remainingCount > 0 ? (
-              <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
-                残り {remainingCount} 件
-              </span>
-            ) : (
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                完了
-              </span>
-            )
-          )}
-        </div>
-        {exercisesLoading ? (
-          <div className="bg-gray-50 rounded-xl p-4 text-center text-gray-500">
-            読み込み中...
-          </div>
-        ) : exercises.length === 0 ? (
-          <div className="bg-gray-50 rounded-xl p-4 text-center text-gray-500">
-            今日の運動メニューはありません
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {exercises.map(exercise => {
-              const isCompleted = completedExerciseIds.has(exercise.id)
-              return (
-                <div
-                  key={exercise.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${
-                    isCompleted
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-white border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {isCompleted ? (
-                      <CheckCircle2 size={20} className="text-green-600 shrink-0" />
-                    ) : (
-                      <Circle size={20} className="text-gray-300 shrink-0" />
-                    )}
-                    <div>
-                      <p className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
-                        {exercise.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {exercise.sets}セット × {exercise.reps}回
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className={`text-sm font-medium px-2 py-0.5 rounded ${
-                      isCompleted
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {isCompleted ? '実施済み' : '未実施'}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
-
       {/* Main menu */}
       <main className="px-6 mb-6 flex-1">
         <div className="space-y-3">
-          <MenuCard
-            icon={<Dumbbell size={24} className="text-[#1E40AF]" />}
-            label="運動する"
-            onClick={() => navigate('/exercise-menu')}
-          />
+          {/* 運動するボタン: 未実施あり→強調色 / 全実施済み→グレー */}
+          {!exercisesLoading && exercises.length > 0 && remainingCount === 0 ? (
+            <button
+              onClick={() => navigate('/exercise-menu')}
+              className="w-full flex items-center p-4 bg-gray-100 border border-gray-200 rounded-xl hover:border-gray-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[72px]"
+              aria-label="運動する（すべて完了）"
+            >
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4 shrink-0">
+                <CheckCircle2 size={24} className="text-green-600" />
+              </div>
+              <div>
+                <span className="text-gray-500 text-lg font-medium">運動する</span>
+                <p className="text-green-600 text-sm font-medium">完了！</p>
+              </div>
+            </button>
+          ) : !exercisesLoading && exercises.length > 0 && remainingCount > 0 ? (
+            <button
+              onClick={() => navigate('/exercise-menu')}
+              className="w-full flex items-center p-4 bg-[#1E40AF] border border-[#1E40AF] rounded-xl hover:bg-[#1E3A8A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[72px]"
+              aria-label={`運動する（残り${remainingCount}件）`}
+            >
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-4 shrink-0">
+                <Dumbbell size={24} className="text-white" />
+              </div>
+              <div>
+                <span className="text-white text-lg font-medium">運動する</span>
+                <p className="text-blue-200 text-sm font-medium">残り {remainingCount} 件</p>
+              </div>
+            </button>
+          ) : (
+            <MenuCard
+              icon={<Dumbbell size={24} className="text-[#1E40AF]" />}
+              label="運動する"
+              onClick={() => navigate('/exercise-menu')}
+            />
+          )}
           <MenuCard
             icon={<Edit size={24} className="text-[#1E40AF]" />}
             label="記録する"

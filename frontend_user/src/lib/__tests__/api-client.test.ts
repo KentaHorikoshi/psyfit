@@ -197,7 +197,7 @@ describe('ApiClient', () => {
             thumbnail_url: '/thumbnails/squat.jpg',
             sets: 3,
             reps: 10,
-            category: 'lower_body',
+            exercise_type: 'training',
           },
         ]
 
@@ -228,7 +228,7 @@ describe('ApiClient', () => {
           thumbnail_url: '/thumbnails/squat.jpg',
           sets: 3,
           reps: 10,
-          category: 'lower_body',
+          exercise_type: 'training',
         }
 
         server.use(

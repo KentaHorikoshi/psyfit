@@ -571,8 +571,10 @@ Cookie: _psyfit_session=<session_id>
       "id": "uuid",
       "name": "スクワット",
       "description": "下半身の筋力強化",
-      "category": "筋力",
+      "exercise_type": "training",
       "difficulty": "easy",
+      "body_part_major": "下肢",
+      "body_part_minor": "膝・下腿",
       "recommended_reps": 10,
       "recommended_sets": 3,
       "video_url": "/videos/squat.mp4",
@@ -589,8 +591,10 @@ Cookie: _psyfit_session=<session_id>
 | id | UUID | 運動ID |
 | name | String | 運動名 |
 | description | String | 運動の説明 |
-| category | String | カテゴリ（筋力/バランス/柔軟性） |
+| exercise_type | String | 運動種別（stretch/training/massage/balance） |
 | difficulty | String | 難易度（easy/medium/hard） |
+| body_part_major | String | 大分類（体幹・脊柱/上肢/下肢） |
+| body_part_minor | String | 中分類 |
 | recommended_reps | Integer | 推奨回数 |
 | recommended_sets | Integer | 推奨セット数 |
 | video_url | String | 動画URL |
@@ -782,14 +786,16 @@ Cookie: _psyfit_session=<session_id>
 **クエリパラメータ**:
 | パラメータ | 型 | 必須 | 説明 |
 |-----------|-----|------|------|
-| category | string | NO | カテゴリで絞り込み（`筋力`, `バランス`, `柔軟性`） |
+| exercise_type | string | NO | 運動種別で絞り込み（`ストレッチ`, `トレーニング`, `ほぐす`, `バランス`） |
 | difficulty | string | NO | 難易度で絞り込み（`easy`, `medium`, `hard`） |
+| body_part_major | string | NO | 大分類で絞り込み（`体幹・脊柱`, `上肢`, `下肢`） |
+| body_part_minor | string | NO | 中分類で絞り込み |
 
 **監査ログ**: `action: 'read'`, `resource_type: 'Exercise'`
 
 ```json
 // Query Parameters
-?category=筋力&difficulty=easy
+?exercise_type=トレーニング&difficulty=easy&body_part_major=下肢
 
 // Response (200 OK)
 {
@@ -800,8 +806,10 @@ Cookie: _psyfit_session=<session_id>
         "id": "uuid",
         "name": "スクワット",
         "description": "膝の筋力を強化する運動",
-        "category": "筋力",
+        "exercise_type": "トレーニング",
         "difficulty": "medium",
+        "body_part_major": "下肢",
+        "body_part_minor": "膝・下腿",
         "recommended_reps": 10,
         "recommended_sets": 3,
         "video_url": "/videos/squat.mp4",
@@ -835,9 +843,10 @@ Cookie: _psyfit_session=<session_id>
 {
   "name": "レッグプレス",
   "description": "下肢の筋力を強化するマシン運動",
-  "category": "筋力",
+  "exercise_type": "トレーニング",
   "difficulty": "medium",
-  "target_body_part": "下肢",
+  "body_part_major": "下肢",
+  "body_part_minor": "膝・下腿",
   "recommended_reps": 10,
   "recommended_sets": 3,
   "video_url": "/videos/leg_press.mp4",
@@ -850,14 +859,22 @@ Cookie: _psyfit_session=<session_id>
 |-----------|------|------|------|
 | name | string | ○ | 運動名（最大100文字） |
 | description | string | - | 説明 |
-| category | string | ○ | カテゴリ（筋力/バランス/柔軟性） |
+| exercise_type | string | ○ | 運動種別（ストレッチ/トレーニング/ほぐす/バランス） |
 | difficulty | string | ○ | 難易度（easy/medium/hard） |
-| target_body_part | string | - | 対象部位（最大100文字） |
+| body_part_major | string | - | 大分類（体幹・脊柱/上肢/下肢） |
+| body_part_minor | string | - | 中分類（大分類に依存、下記参照） |
 | recommended_reps | integer | - | 推奨回数（正の整数） |
 | recommended_sets | integer | - | 推奨セット数（正の整数） |
 | video_url | string | - | 動画URL（最大255文字） |
 | thumbnail_url | string | - | サムネイルURL（最大255文字） |
 | duration_seconds | integer | - | 所要時間・秒（正の整数） |
+
+**中分類（body_part_minor）の選択肢**:
+| 大分類 | 中分類 |
+|--------|--------|
+| 体幹・脊柱 | 頸部、胸部、腹部、腰椎、その他 |
+| 上肢 | 肩・上腕、肘・前腕、手関節・手指 |
+| 下肢 | 股関節・大腿、膝・下腿、足関節・足部 |
 
 **レスポンス (201 Created)**:
 ```json
@@ -868,9 +885,10 @@ Cookie: _psyfit_session=<session_id>
       "id": "uuid",
       "name": "レッグプレス",
       "description": "下肢の筋力を強化するマシン運動",
-      "category": "筋力",
+      "exercise_type": "トレーニング",
       "difficulty": "medium",
-      "target_body_part": "下肢",
+      "body_part_major": "下肢",
+      "body_part_minor": "膝・下腿",
       "recommended_reps": 10,
       "recommended_sets": 3,
       "video_url": "/videos/leg_press.mp4",
@@ -888,7 +906,7 @@ Cookie: _psyfit_session=<session_id>
   "message": "バリデーションエラー",
   "errors": {
     "name": ["を入力してください"],
-    "category": ["は一覧にありません"]
+    "exercise_type": ["は一覧にありません"]
   }
 }
 ```

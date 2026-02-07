@@ -64,7 +64,7 @@ describe('U-15 BatchRecord', () => {
             video_url: 'https://example.com/video1.mp4',
             sets: 3,
             reps: 10,
-            category: 'lower_body' as const,
+            exercise_type: 'training' as const,
           },
           {
             id: '2',
@@ -73,7 +73,7 @@ describe('U-15 BatchRecord', () => {
             video_url: 'https://example.com/video2.mp4',
             sets: 3,
             reps: 15,
-            category: 'lower_body' as const,
+            exercise_type: 'training' as const,
           },
           {
             id: '3',
@@ -82,7 +82,7 @@ describe('U-15 BatchRecord', () => {
             video_url: 'https://example.com/video3.mp4',
             sets: 3,
             reps: 10,
-            category: 'upper_body' as const,
+            exercise_type: 'training' as const,
           },
         ],
       },

@@ -7,11 +7,12 @@ module Api
       before_action :set_exercise, only: [:show]
       before_action :authorize_exercise_access, only: [:show]
 
-      # Category mapping from Japanese (DB) to English (frontend)
-      CATEGORY_MAP = {
-        '筋力' => 'lower_body',
-        'バランス' => 'core',
-        '柔軟性' => 'stretch'
+      # Exercise type mapping from Japanese (DB) to English (frontend)
+      EXERCISE_TYPE_MAP = {
+        'ストレッチ' => 'stretch',
+        'トレーニング' => 'training',
+        'ほぐす' => 'massage',
+        'バランス' => 'balance'
       }.freeze
 
       # GET /api/v1/exercises/:id
@@ -49,7 +50,9 @@ module Api
           sets: patient_exercise&.target_sets || exercise.recommended_sets || 1,
           reps: patient_exercise&.target_reps || exercise.recommended_reps || 1,
           duration_seconds: exercise.duration_seconds,
-          category: CATEGORY_MAP[exercise.category] || 'lower_body'
+          exercise_type: EXERCISE_TYPE_MAP[exercise.exercise_type] || 'training',
+          body_part_major: exercise.body_part_major,
+          body_part_minor: exercise.body_part_minor
         }
       end
 

@@ -131,9 +131,11 @@ export interface ExerciseMaster {
   description: string
   video_url: string
   thumbnail_url?: string
-  category: '膝' | '腰' | '全身' | '上肢'
-  default_sets: number
-  default_reps: number
+  exercise_type: ExerciseType
+  body_part_major: BodyPartMajor | null
+  body_part_minor: BodyPartMinor | null
+  recommended_sets: number
+  recommended_reps: number
 }
 
 export interface ExerciseMastersResponse {
@@ -219,14 +221,23 @@ export interface CreateStaffResponse {
   staff: StaffMember
 }
 
+// Exercise Category Types
+export type ExerciseType = 'ストレッチ' | 'トレーニング' | 'ほぐす' | 'バランス'
+export type BodyPartMajor = '体幹・脊柱' | '上肢' | '下肢'
+export type BodyPartMinor =
+  | '頸部' | '胸部' | '腹部' | '腰椎' | 'その他'
+  | '肩・上腕' | '肘・前腕' | '手関節・手指'
+  | '股関節・大腿' | '膝・下腿' | '足関節・足部'
+
 // Exercise Master Management Types (S-10)
 export interface ExerciseMasterDetail {
   id: string
   name: string
   description: string | null
-  category: '筋力' | 'バランス' | '柔軟性'
+  exercise_type: ExerciseType
   difficulty: 'easy' | 'medium' | 'hard'
-  target_body_part: string | null
+  body_part_major: BodyPartMajor | null
+  body_part_minor: BodyPartMinor | null
   recommended_reps: number | null
   recommended_sets: number | null
   video_url: string | null
@@ -241,9 +252,10 @@ export interface ExerciseMasterListResponse {
 export interface CreateExerciseMasterRequest {
   name: string
   description?: string
-  category: '筋力' | 'バランス' | '柔軟性'
+  exercise_type: ExerciseType
   difficulty: 'easy' | 'medium' | 'hard'
-  target_body_part?: string
+  body_part_major?: BodyPartMajor
+  body_part_minor?: BodyPartMinor
   recommended_reps?: number
   recommended_sets?: number
   video_url?: string

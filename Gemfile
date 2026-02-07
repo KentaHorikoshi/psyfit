@@ -103,7 +103,7 @@ group :test do
   gem "timecop", "~> 0.9"
 
   # RSpec matchers for validations and associations
-  gem "shoulda-matchers", "~> 6.0"
+  gem "shoulda-matchers", "~> 7.0"
 
   # JUnit XML output for CI
   gem "rspec_junit_formatter", "~> 0.6"

@@ -23,6 +23,7 @@ import type {
   ExerciseMasterListResponse,
   CreateExerciseMasterRequest,
   CreateExerciseMasterResponse,
+  DashboardStatsResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -108,6 +109,11 @@ class ApiClient {
 
   async getCurrentStaff(): Promise<ApiResponse<Staff>> {
     return this.get<Staff>('/auth/me')
+  }
+
+  // Dashboard Stats
+  async getDashboardStats(): Promise<ApiResponse<DashboardStatsResponse>> {
+    return this.get<DashboardStatsResponse>('/dashboard/stats')
   }
 
   // Patient Management

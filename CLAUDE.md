@@ -195,7 +195,8 @@ Commands are located in `.claude/skills/`:
 4. Run tests and ensure 80%+ coverage
 5. Use `/code-review` for final review
 6. Update relevant docs in `.claude/docs/` if implementation changes schema, API, screens, or test scope
-7. Commit with conventional commits format
+7. Generate a git commit message following conventional commits format and output it to the user
+8. Commit after user approval
 
 ## Git Workflow
 

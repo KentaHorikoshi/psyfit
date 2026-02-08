@@ -1,0 +1,130 @@
+import { useEffect, useRef } from 'react'
+import { CheckCircle2, Circle } from 'lucide-react'
+import type { Exercise, ExerciseRecordWithExercise } from '../../lib/api-types'
+import { formatDayHeader } from './calendar-utils'
+
+interface DayDetailPanelProps {
+  date: Date
+  records: ExerciseRecordWithExercise[]
+  exercises: Exercise[]
+}
+
+function formatTime(isoString: string): string {
+  const date = new Date(isoString)
+  return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
+}
+
+export function DayDetailPanel({ date, records, exercises }: DayDetailPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [date])
+
+  // 完了した exercise_id のセット
+  const completedMap = new Map<string, ExerciseRecordWithExercise[]>()
+  for (const record of records) {
+    const existing = completedMap.get(record.exercise_id) || []
+    completedMap.set(record.exercise_id, [...existing, record])
+  }
+
+  const completedCount = completedMap.size
+  const totalCount = exercises.length
+
+  return (
+    <div ref={panelRef} className="bg-white rounded-xl p-4 shadow-sm" data-testid="day-detail-panel">
+      {/* 日付ヘッダー + サマリー */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-gray-900">
+          {formatDayHeader(date)}
+        </h2>
+        {totalCount > 0 && (
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              completedCount >= totalCount
+                ? 'bg-green-100 text-green-700'
+                : completedCount > 0
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-gray-100 text-gray-500'
+            }`}
+          >
+            {completedCount}/{totalCount} 完了
+          </span>
+        )}
+      </div>
+
+      {/* 運動一覧 */}
+      {exercises.length === 0 && records.length === 0 ? (
+        <p className="text-gray-400 text-sm text-center py-4">この日の記録はありません</p>
+      ) : (
+        <div className="space-y-3">
+          {exercises.map((exercise) => {
+            const exerciseRecords = completedMap.get(exercise.id)
+            const isCompleted = !!exerciseRecords && exerciseRecords.length > 0
+
+            return (
+              <div
+                key={exercise.id}
+                className={`flex items-start gap-3 p-3 rounded-lg border ${
+                  isCompleted ? 'border-green-200 bg-green-50' : 'border-gray-200'
+                }`}
+              >
+                <div className="mt-0.5">
+                  {isCompleted ? (
+                    <CheckCircle2 size={20} className="text-green-600" />
+                  ) : (
+                    <Circle size={20} className="text-gray-300" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                    {exercise.name}
+                  </h3>
+                  {isCompleted && exerciseRecords ? (
+                    <p className="text-sm text-green-600 mt-1">
+                      {exerciseRecords[0]!.completed_sets}セット × {exerciseRecords[0]!.completed_reps}回
+                      <span className="ml-2 text-gray-400">
+                        {formatTime(exerciseRecords[0]!.completed_at)}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-400 mt-1">未実施</p>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+
+          {/* 割当外の記録（過去の割当で実施された運動） */}
+          {records
+            .filter((r) => !exercises.some((e) => e.id === r.exercise_id))
+            .reduce<ExerciseRecordWithExercise[]>((unique, record) => {
+              if (!unique.some((u) => u.exercise_id === record.exercise_id)) {
+                unique.push(record)
+              }
+              return unique
+            }, [])
+            .map((record) => (
+              <div
+                key={record.exercise_id}
+                className="flex items-start gap-3 p-3 rounded-lg border border-green-200 bg-green-50"
+              >
+                <div className="mt-0.5">
+                  <CheckCircle2 size={20} className="text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-green-700">{record.exercise_name}</h3>
+                  <p className="text-sm text-green-600 mt-1">
+                    {record.completed_sets}セット × {record.completed_reps}回
+                    <span className="ml-2 text-gray-400">
+                      {formatTime(record.completed_at)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,27 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { apiClient } from '../lib/api-client'
-import { ChevronLeft, Calendar } from 'lucide-react'
-import type { ExerciseRecordWithExercise } from '../lib/api-types'
-
-interface GroupedRecords {
-  [date: string]: ExerciseRecordWithExercise[]
-}
+import { ChevronLeft } from 'lucide-react'
+import { useCalendarData } from './calendar/useCalendarData'
+import { CalendarMonthNav } from './calendar/CalendarMonthNav'
+import { CalendarGrid } from './calendar/CalendarGrid'
+import { DayDetailPanel } from './calendar/DayDetailPanel'
+import { formatDateKey } from './calendar/calendar-utils'
 
 export function ExerciseHistory() {
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
 
-  const [records, setRecords] = useState<ExerciseRecordWithExercise[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Date filters - default to current month
   const today = new Date()
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-  const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0])
-  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0])
+  const [currentYear, setCurrentYear] = useState(today.getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+
+  const { recordsByDate, exercises, assignedCount, isLoading, error, retry } =
+    useCalendarData(currentYear, currentMonth)
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -29,32 +26,36 @@ export function ExerciseHistory() {
     }
   }, [isAuthenticated, authLoading, navigate])
 
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchRecords()
+  const handlePrevMonth = useCallback(() => {
+    setSelectedDate(null)
+    if (currentMonth === 0) {
+      setCurrentYear((y) => y - 1)
+      setCurrentMonth(11)
+    } else {
+      setCurrentMonth((m) => m - 1)
     }
-  }, [isAuthenticated, user, startDate, endDate])
+  }, [currentMonth])
 
-  const fetchRecords = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const response = await apiClient.getExerciseRecords({
-        start_date: startDate,
-        end_date: endDate,
-      })
-      setRecords(response.data?.records || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'データの取得に失敗しました')
-    } finally {
-      setIsLoading(false)
+  const handleNextMonth = useCallback(() => {
+    setSelectedDate(null)
+    if (currentMonth === 11) {
+      setCurrentYear((y) => y + 1)
+      setCurrentMonth(0)
+    } else {
+      setCurrentMonth((m) => m + 1)
     }
-  }
+  }, [currentMonth])
 
-  const handleRetry = () => {
-    fetchRecords()
-  }
+  const handleToday = useCallback(() => {
+    const now = new Date()
+    setCurrentYear(now.getFullYear())
+    setCurrentMonth(now.getMonth())
+    setSelectedDate(now)
+  }, [])
+
+  const handleSelectDate = useCallback((date: Date) => {
+    setSelectedDate(date)
+  }, [])
 
   const handleBack = () => {
     navigate(-1)
@@ -75,27 +76,8 @@ export function ExerciseHistory() {
     return null
   }
 
-  // Group records by date
-  const groupedRecords: GroupedRecords = records.reduce<GroupedRecords>((acc, record) => {
-    const date = new Date(record.completed_at).toISOString().split('T')[0]!
-    if (!acc[date]) {
-      acc[date] = []
-    }
-    acc[date]!.push(record)
-    return acc
-  }, {})
-
-  const sortedDates = Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a))
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
-  }
-
-  const formatTime = (isoString: string) => {
-    const date = new Date(isoString)
-    return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
-  }
+  const selectedKey = selectedDate ? formatDateKey(selectedDate) : null
+  const selectedRecords = selectedKey ? recordsByDate[selectedKey] || [] : []
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{ maxWidth: '390px', margin: '0 auto' }}>
@@ -111,44 +93,19 @@ export function ExerciseHistory() {
           </button>
           <h1 className="text-xl font-bold text-gray-900 ml-2">運動履歴</h1>
         </div>
-
-        {/* Date Filters */}
-        <div className="mt-4 flex gap-3">
-          <div className="flex-1">
-            <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
-              開始日
-            </label>
-            <input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-                focus:outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]
-                min-h-[44px]"
-              aria-label="開始日"
-            />
-          </div>
-          <div className="flex-1">
-            <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
-              終了日
-            </label>
-            <input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-                focus:outline-none focus:border-[#1E40AF] focus:ring-1 focus:ring-[#1E40AF]
-                min-h-[44px]"
-              aria-label="終了日"
-            />
-          </div>
-        </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 px-4 py-4">
+        {/* Month Navigation */}
+        <CalendarMonthNav
+          year={currentYear}
+          month={currentMonth}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
+          onToday={handleToday}
+        />
+
         {/* Loading State */}
         {isLoading && (
           <div role="status" className="text-center py-12">
@@ -162,7 +119,7 @@ export function ExerciseHistory() {
           <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
             <p className="text-red-700 mb-3">{error}</p>
             <button
-              onClick={handleRetry}
+              onClick={retry}
               className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium
                 hover:bg-red-700 transition-colors min-h-[44px]"
               aria-label="再試行"
@@ -172,44 +129,29 @@ export function ExerciseHistory() {
           </div>
         )}
 
-        {/* Empty State */}
-        {!isLoading && !error && records.length === 0 && (
-          <div className="text-center py-12">
-            <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500 text-lg">記録がありません</p>
-            <p className="text-gray-400 text-sm mt-2">運動を実施すると履歴が表示されます</p>
-          </div>
-        )}
+        {/* Calendar Grid */}
+        {!isLoading && !error && (
+          <>
+            <CalendarGrid
+              year={currentYear}
+              month={currentMonth}
+              recordsByDate={recordsByDate}
+              assignedCount={assignedCount}
+              selectedDate={selectedDate}
+              onSelectDate={handleSelectDate}
+            />
 
-        {/* Records List */}
-        {!isLoading && !error && sortedDates.length > 0 && (
-          <div className="space-y-6">
-            {sortedDates.map((date) => (
-              <section key={date} className="bg-white rounded-xl p-4 shadow-sm">
-                <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <Calendar size={20} className="text-[#1E40AF]" />
-                  {formatDate(date)}
-                </h2>
-                <div className="space-y-3">
-                  {groupedRecords[date]?.map((record) => (
-                    <div
-                      key={record.id}
-                      className="border border-gray-200 rounded-lg p-3"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-gray-900">{record.exercise_name}</h3>
-                        <span className="text-sm text-gray-500">{formatTime(record.completed_at)}</span>
-                      </div>
-                      <div className="flex gap-4 text-sm text-gray-600">
-                        <span>{record.completed_sets}セット</span>
-                        <span>{record.completed_reps}回</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+            {/* Day Detail Panel */}
+            {selectedDate && (
+              <div className="mt-4">
+                <DayDetailPanel
+                  date={selectedDate}
+                  records={selectedRecords}
+                  exercises={exercises}
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

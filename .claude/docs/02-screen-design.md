@@ -73,10 +73,22 @@
 - テスト: 14 tests passed
 
 ### U-07: 履歴一覧
-- 日付ごとの運動実施履歴
-- 継続状況の可視化（カレンダー形式等）
-- 実装: `frontend_user/src/components/ExerciseHistory.tsx` ✅
-- テスト: 10 tests passed
+- 月間カレンダーグリッド形式で運動実施状況を色分け表示
+  - 全完了: bg-green-500（白文字）、一部完了: bg-amber-100、未実施: bg-white
+  - 今日: ring-2 ring-[#1E40AF]、選択中: ring-2 ring-[#1E40AF] bg-blue-50
+- 月ナビゲーション（前月/翌月/今日ボタン）
+- 日付タップで詳細パネル表示（完了/未実施の運動一覧、セット数・回数・実施時刻）
+- 凡例表示（全完了/一部実施/未実施）
+- 実装:
+  - `frontend_user/src/components/ExerciseHistory.tsx` ✅（オーケストレーター）
+  - `frontend_user/src/components/calendar/` ✅（カレンダーコンポーネント群）
+    - `calendar-utils.ts` - 日付ユーティリティ・型定義
+    - `useCalendarData.ts` - データ取得フック（records + exercises 並列取得）
+    - `CalendarMonthNav.tsx` - 月ナビゲーション
+    - `CalendarGrid.tsx` - カレンダーグリッド + 凡例
+    - `CalendarDayCell.tsx` - 日付セル（ステータス色分け）
+    - `DayDetailPanel.tsx` - 日付詳細パネル
+- テスト: 45 tests passed (calendar-utils: 21, ExerciseHistory: 24)
 
 ### U-08: 測定値履歴
 - 体重・筋力等の推移グラフ

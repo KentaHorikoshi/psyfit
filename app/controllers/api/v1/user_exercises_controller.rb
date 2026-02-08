@@ -5,11 +5,12 @@ module Api
     class UserExercisesController < BaseController
       before_action :authenticate_user!
 
-      # Category mapping from Japanese (DB) to English (frontend)
-      CATEGORY_MAP = {
-        '筋力' => 'lower_body',
-        'バランス' => 'core',
-        '柔軟性' => 'stretch'
+      # Exercise type mapping from Japanese (DB) to English (frontend)
+      EXERCISE_TYPE_MAP = {
+        'ストレッチ' => 'stretch',
+        'トレーニング' => 'training',
+        'ほぐす' => 'massage',
+        'バランス' => 'balance'
       }.freeze
 
       # GET /api/v1/users/me/exercises
@@ -31,7 +32,7 @@ module Api
             sets: pe.target_sets || ex.recommended_sets || 1,
             reps: pe.target_reps || ex.recommended_reps || 1,
             duration_seconds: ex.duration_seconds,
-            category: CATEGORY_MAP[ex.category] || 'lower_body'
+            exercise_type: EXERCISE_TYPE_MAP[ex.exercise_type] || 'training'
           }
         end
 

@@ -63,7 +63,7 @@ module Api
           id: record.id,
           exercise_id: record.exercise_id,
           exercise_name: record.exercise.name,
-          exercise_category: record.exercise.category,
+          exercise_category: record.exercise.exercise_type,
           completed_at: record.completed_at.iso8601,
           sets_completed: record.completed_sets,
           reps_completed: record.completed_reps

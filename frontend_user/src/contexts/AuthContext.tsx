@@ -64,7 +64,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const response = await apiClient.getCurrentUser()
         if (response.status === 'success' && response.data) {
-          setUser(response.data)
+          // me endpoint returns { user: {...} } for patients or { staff: {...} } for staff
+          // Only set user if it's a patient session (user app should ignore staff sessions)
+          const data = response.data as unknown as { user?: User }
+          if (data.user) {
+            setUser(data.user)
+          } else {
+            setUser(null)
+          }
         }
       } catch {
         // No active session - that's ok

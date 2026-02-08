@@ -506,6 +506,53 @@ describe('U-02 Home', () => {
     })
   })
 
+  describe('next visit date display', () => {
+    it('should display next visit date when set', async () => {
+      mockUseAuth.mockReturnValue({
+        user: {
+          id: '1',
+          name: '田中太郎',
+          email: 'tanaka@example.com',
+          continue_days: 14,
+          next_visit_date: '2026-03-15',
+        },
+        logout: mockLogout,
+        isAuthenticated: true,
+        isLoading: false,
+      })
+
+      renderHome()
+
+      expect(screen.getByText(/次回来院日/)).toBeInTheDocument()
+    })
+
+    it('should not display next visit date when not set', () => {
+      renderHome()
+
+      expect(screen.queryByText(/次回来院日/)).not.toBeInTheDocument()
+    })
+
+    it('should have accessible section for next visit date', () => {
+      mockUseAuth.mockReturnValue({
+        user: {
+          id: '1',
+          name: '田中太郎',
+          email: 'tanaka@example.com',
+          continue_days: 14,
+          next_visit_date: '2026-03-15',
+        },
+        logout: mockLogout,
+        isAuthenticated: true,
+        isLoading: false,
+      })
+
+      renderHome()
+
+      const section = screen.getByRole('region', { name: /次回来院日/ })
+      expect(section).toBeInTheDocument()
+    })
+  })
+
   describe('daily condition button (タスク2)', () => {
     it('should render daily condition button', async () => {
       renderHome()

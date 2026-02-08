@@ -201,6 +201,28 @@ export function PatientDetail() {
                 <dt className="text-sm text-gray-500 mb-1">継続日数</dt>
                 <dd className="text-2xl font-bold text-[#10B981]">{patient.continue_days}日</dd>
               </div>
+
+              {patient.next_visit_date && (
+                <div>
+                  <dt className="text-sm text-gray-500 mb-1">次回来院日</dt>
+                  <dd className="text-base font-medium text-[#1E40AF]">
+                    {new Date(patient.next_visit_date + 'T00:00:00').toLocaleDateString('ja-JP', {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                    })}
+                  </dd>
+                </div>
+              )}
+
+              {patient.previous_visit_date && (
+                <div>
+                  <dt className="text-sm text-gray-500 mb-1">前回来院日</dt>
+                  <dd className="text-base text-gray-700">
+                    {new Date(patient.previous_visit_date + 'T00:00:00').toLocaleDateString('ja-JP', {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                    })}
+                  </dd>
+                </div>
+              )}
             </div>
           </div>
         </div>

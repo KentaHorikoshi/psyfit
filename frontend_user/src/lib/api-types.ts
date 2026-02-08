@@ -12,6 +12,7 @@ export interface User {
   name: string
   email: string
   continue_days: number
+  next_visit_date?: string
   status?: string
   condition?: string
 }

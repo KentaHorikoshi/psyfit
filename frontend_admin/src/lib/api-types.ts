@@ -91,6 +91,8 @@ export interface PatientDetail {
   condition: string
   status: PatientStatus
   continue_days: number
+  next_visit_date?: string
+  previous_visit_date?: string
   assigned_staff: AssignedStaff[]
 }
 
@@ -169,6 +171,7 @@ export interface BatchExerciseAssignmentRequest {
   assignments: CreateExerciseAssignmentRequest[]
   pain_flag: boolean
   reason: string
+  next_visit_date?: string
 }
 
 export interface ExerciseAssignmentsResponse {

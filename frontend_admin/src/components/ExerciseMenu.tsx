@@ -12,6 +12,7 @@ export function ExerciseMenu() {
   const [exerciseSettings, setExerciseSettings] = useState<Record<string, { sets: number; reps: number }>>({})
   const [painFlag, setPainFlag] = useState(false)
   const [reason, setReason] = useState('')
+  const [nextVisitDate, setNextVisitDate] = useState('')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,9 +25,10 @@ export function ExerciseMenu() {
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const [mastersResponse, assignedResponse] = await Promise.all([
+        const [mastersResponse, assignedResponse, patientResponse] = await Promise.all([
           api.getExerciseMasters(),
           api.getPatientExercises(patientId),
+          api.getPatientDetail(patientId),
         ])
 
         const fetchedExercises = mastersResponse.data?.exercises || []
@@ -50,6 +52,11 @@ export function ExerciseMenu() {
           }
         })
         setExerciseSettings(initialSettings)
+
+        // Pre-populate next visit date
+        if (patientResponse.data?.next_visit_date) {
+          setNextVisitDate(patientResponse.data.next_visit_date)
+        }
       } catch {
         setError('運動マスタの取得に失敗しました')
       } finally {
@@ -126,6 +133,7 @@ export function ExerciseMenu() {
         assignments,
         pain_flag: painFlag,
         reason,
+        next_visit_date: nextVisitDate || undefined,
       }
 
       await api.assignExercises(patientId!, data)
@@ -362,6 +370,31 @@ export function ExerciseMenu() {
                     aria-label="理由"
                   />
                 </div>
+              )}
+            </div>
+
+            {/* Next Visit Date */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">次回来院日</h3>
+              <label htmlFor="next-visit-date" className="block text-sm font-medium text-gray-700 mb-2">
+                日付を選択
+              </label>
+              <input
+                id="next-visit-date"
+                type="date"
+                value={nextVisitDate}
+                onChange={(e) => setNextVisitDate(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-base min-h-[44px]"
+                aria-label="次回来院日"
+              />
+              {nextVisitDate && (
+                <button
+                  type="button"
+                  onClick={() => setNextVisitDate('')}
+                  className="mt-2 text-sm text-gray-500 hover:text-gray-700 underline min-h-[44px] min-w-[44px] px-2"
+                >
+                  クリア
+                </button>
               )}
             </div>
 

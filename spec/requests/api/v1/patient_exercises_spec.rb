@@ -87,6 +87,44 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
           expect(audit.staff_id).to eq(manager.id)
         end
 
+        context 'with next_visit_date' do
+          let(:params_with_date) do
+            {
+              assignments: [
+                { exercise_id: exercise.id, sets: 3, reps: 10 }
+              ],
+              pain_flag: false,
+              reason: "",
+              next_visit_date: "2026-03-15"
+            }
+          end
+
+          it 'sets next_visit_date on the patient' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_date, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(patient.reload.next_visit_date).to eq(Date.parse('2026-03-15'))
+          end
+
+          it 'shifts existing next_visit_date to previous_visit_date' do
+            patient.update!(next_visit_date: Date.parse('2026-02-01'))
+
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_date, as: :json
+
+            patient.reload
+            expect(patient.next_visit_date).to eq(Date.parse('2026-03-15'))
+            expect(patient.previous_visit_date).to eq(Date.parse('2026-02-01'))
+          end
+
+          it 'does not update visit date when next_visit_date is not provided' do
+            patient.update!(next_visit_date: Date.parse('2026-02-01'))
+
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
+
+            expect(patient.reload.next_visit_date).to eq(Date.parse('2026-02-01'))
+          end
+        end
+
         context 'with optional parameters' do
           it 'allows target_reps to be nil' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {

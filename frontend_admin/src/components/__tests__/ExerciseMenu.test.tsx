@@ -22,12 +22,14 @@ vi.mock('react-router-dom', async () => {
 const mockGetExerciseMasters = vi.fn()
 const mockGetPatientExercises = vi.fn()
 const mockAssignExercises = vi.fn()
+const mockGetPatientDetail = vi.fn()
 
 vi.mock('../../lib/api', () => ({
   api: {
     getExerciseMasters: () => mockGetExerciseMasters(),
     getPatientExercises: (patientId: string) => mockGetPatientExercises(patientId),
     assignExercises: (patientId: string, data: unknown) => mockAssignExercises(patientId, data),
+    getPatientDetail: (patientId: string) => mockGetPatientDetail(patientId),
   },
 }))
 
@@ -109,6 +111,10 @@ describe('S-06 ExerciseMenu', () => {
       data: {
         assignments: [],
       },
+    })
+    mockGetPatientDetail.mockResolvedValue({
+      status: 'success',
+      data: { next_visit_date: '2026-03-15' },
     })
   })
 
@@ -376,6 +382,44 @@ describe('S-06 ExerciseMenu', () => {
       await user.click(backButton)
 
       expect(mockNavigate).toHaveBeenCalledWith(`/patients/${mockPatientId}`)
+    })
+  })
+
+  describe('next visit date', () => {
+    it('should render date picker for next visit date', async () => {
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/次回来院日/)).toBeInTheDocument()
+      })
+    })
+
+    it('should pre-populate with existing next visit date', async () => {
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        const dateInput = screen.getByLabelText(/次回来院日/) as HTMLInputElement
+        expect(dateInput.value).toBe('2026-03-15')
+      })
+    })
+
+    it('should include next_visit_date in submission', async () => {
+      const user = userEvent.setup()
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getAllByText('膝伸展運動（椅子座位）').length).toBeGreaterThan(0)
+      })
+
+      const saveButton = screen.getByRole('button', { name: /保存/ })
+      await user.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockAssignExercises).toHaveBeenCalledWith(
+          mockPatientId,
+          expect.objectContaining({ next_visit_date: '2026-03-15' })
+        )
+      })
     })
   })
 

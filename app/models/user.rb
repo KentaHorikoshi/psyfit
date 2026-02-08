@@ -106,6 +106,16 @@ class User < ApplicationRecord
     deleted_at.present?
   end
 
+  # Visit Date Methods
+
+  def update_next_visit_date!(new_date)
+    parsed_date = new_date.is_a?(String) ? Date.parse(new_date) : new_date
+    update!(
+      previous_visit_date: next_visit_date,
+      next_visit_date: parsed_date
+    )
+  end
+
   # Continue Days Methods
 
   def update_continue_days!

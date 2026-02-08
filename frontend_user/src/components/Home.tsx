@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
 import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
-import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User, ClipboardEdit, CheckCircle2 } from 'lucide-react'
+import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User, ClipboardEdit, CheckCircle2, Calendar } from 'lucide-react'
 
 function getGreeting(): { text: string; Icon: typeof Sun } {
   const hour = new Date().getHours()
@@ -145,6 +145,25 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Next visit date card */}
+      {user.next_visit_date && (
+        <section className="px-6 mb-6" aria-label="次回来院日">
+          <div className="bg-white border border-blue-200 rounded-xl p-4 flex items-center">
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-3 shrink-0">
+              <Calendar size={20} className="text-[#1E40AF]" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">次回来院日</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {new Date(user.next_visit_date + 'T00:00:00').toLocaleDateString('ja-JP', {
+                  year: 'numeric', month: 'long', day: 'numeric',
+                })}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Main menu */}
       <main className="px-6 mb-6 flex-1">

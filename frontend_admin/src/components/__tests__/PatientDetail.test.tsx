@@ -235,6 +235,44 @@ describe('S-04 PatientDetail', () => {
     })
   })
 
+  describe('visit dates', () => {
+    it('should render next visit date when set', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { ...mockPatientData, next_visit_date: '2026-03-15' },
+      })
+
+      renderPatientDetail()
+
+      await waitFor(() => {
+        expect(screen.getByText(/次回来院日/)).toBeInTheDocument()
+      })
+    })
+
+    it('should render previous visit date when set', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { ...mockPatientData, previous_visit_date: '2026-02-01' },
+      })
+
+      renderPatientDetail()
+
+      await waitFor(() => {
+        expect(screen.getByText(/前回来院日/)).toBeInTheDocument()
+      })
+    })
+
+    it('should not render visit dates when not set', async () => {
+      renderPatientDetail()
+
+      await waitFor(() => {
+        expect(screen.getByText('田中太郎')).toBeInTheDocument()
+      })
+      expect(screen.queryByText(/次回来院日/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/前回来院日/)).not.toBeInTheDocument()
+    })
+  })
+
   describe('authorization', () => {
     it('should handle staff-only access correctly', async () => {
       renderPatientDetail()

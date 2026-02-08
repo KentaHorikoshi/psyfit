@@ -66,6 +66,11 @@ module Api
           end
         end
 
+        # Update next visit date if provided
+        if params[:next_visit_date].present?
+          @patient.update_next_visit_date!(params[:next_visit_date])
+        end
+
         log_audit("create", "success", created_exercises.map(&:exercise_id))
 
         render_success({

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { CheckCircle2, Circle } from 'lucide-react'
 import type { Exercise, ExerciseRecordWithExercise } from '../../lib/api-types'
-import { formatDayHeader } from './calendar-utils'
+import { formatDayHeader, getSnapshotAssignedCount } from './calendar-utils'
 
 interface DayDetailPanelProps {
   date: Date
@@ -29,7 +29,8 @@ export function DayDetailPanel({ date, records, exercises }: DayDetailPanelProps
   }
 
   const completedCount = completedMap.size
-  const totalCount = exercises.length
+  const snapshotCount = records.length > 0 ? getSnapshotAssignedCount(records) : null
+  const totalCount = snapshotCount ?? exercises.length
 
   return (
     <div ref={panelRef} className="bg-white rounded-xl p-4 shadow-sm" data-testid="day-detail-panel">

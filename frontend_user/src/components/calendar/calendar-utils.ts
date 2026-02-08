@@ -91,17 +91,35 @@ export function groupRecordsByDate(
 }
 
 /**
+ * その日のレコードから記録時点の割当数を取得（最大値を使用）
+ * assigned_count が無い場合は null を返す
+ */
+export function getSnapshotAssignedCount(
+  dateRecords: ExerciseRecordWithExercise[]
+): number | null {
+  const counts = dateRecords
+    .map((r) => r.assigned_count)
+    .filter((c): c is number => c != null && c > 0)
+  if (counts.length === 0) return null
+  return Math.max(...counts)
+}
+
+/**
  * 完了ステータス判定
+ * レコードに assigned_count（記録時点のスナップショット）がある場合はそれを優先し、
+ * ない場合は currentAssignedCount（現在の割当数）にフォールバック
  */
 export function getCompletionStatus(
   dateRecords: ExerciseRecordWithExercise[] | undefined,
-  assignedCount: number
+  currentAssignedCount: number
 ): CompletionStatus {
   if (!dateRecords || dateRecords.length === 0) {
     return 'none'
   }
   const uniqueExerciseIds = new Set(dateRecords.map((r) => r.exercise_id))
-  if (uniqueExerciseIds.size >= assignedCount) {
+  const snapshotCount = getSnapshotAssignedCount(dateRecords)
+  const effectiveCount = snapshotCount ?? currentAssignedCount
+  if (uniqueExerciseIds.size >= effectiveCount) {
     return 'full'
   }
   return 'partial'

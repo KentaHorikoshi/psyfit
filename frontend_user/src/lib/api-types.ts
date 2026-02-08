@@ -119,6 +119,7 @@ export interface MeasurementsResponse {
 export interface ExerciseRecordWithExercise extends ExerciseRecord {
   exercise_name: string
   exercise_category: string
+  assigned_count?: number
 }
 
 export interface ExerciseRecordsResponse {

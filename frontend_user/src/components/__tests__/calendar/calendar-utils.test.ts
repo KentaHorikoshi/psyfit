@@ -7,6 +7,7 @@ import {
   formatDateKey,
   groupRecordsByDate,
   getCompletionStatus,
+  getSnapshotAssignedCount,
 } from '../../calendar/calendar-utils'
 import type { ExerciseRecordWithExercise } from '../../../lib/api-types'
 
@@ -145,8 +146,8 @@ describe('calendar-utils', () => {
     })
   })
 
-  describe('getCompletionStatus', () => {
-    const makeRecord = (exerciseId: string): ExerciseRecordWithExercise => ({
+  describe('getSnapshotAssignedCount', () => {
+    const makeRecord = (exerciseId: string, assignedCount?: number): ExerciseRecordWithExercise => ({
       id: Math.random().toString(),
       exercise_id: exerciseId,
       user_id: 'u1',
@@ -155,6 +156,46 @@ describe('calendar-utils', () => {
       completed_reps: 10,
       exercise_name: 'test',
       exercise_category: 'test',
+      assigned_count: assignedCount,
+    })
+
+    it('should return null when no records have assigned_count', () => {
+      const records = [makeRecord('ex1'), makeRecord('ex2')]
+      expect(getSnapshotAssignedCount(records)).toBeNull()
+    })
+
+    it('should return null when assigned_count is 0', () => {
+      const records = [makeRecord('ex1', 0)]
+      expect(getSnapshotAssignedCount(records)).toBeNull()
+    })
+
+    it('should return the assigned_count when all records have same value', () => {
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 3)]
+      expect(getSnapshotAssignedCount(records)).toBe(3)
+    })
+
+    it('should return the max assigned_count when records differ', () => {
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 4)]
+      expect(getSnapshotAssignedCount(records)).toBe(4)
+    })
+
+    it('should ignore records without assigned_count', () => {
+      const records = [makeRecord('ex1', 3), makeRecord('ex2')]
+      expect(getSnapshotAssignedCount(records)).toBe(3)
+    })
+  })
+
+  describe('getCompletionStatus', () => {
+    const makeRecord = (exerciseId: string, assignedCount?: number): ExerciseRecordWithExercise => ({
+      id: Math.random().toString(),
+      exercise_id: exerciseId,
+      user_id: 'u1',
+      completed_at: '2026-01-24T10:00:00Z',
+      completed_sets: 3,
+      completed_reps: 10,
+      exercise_name: 'test',
+      exercise_category: 'test',
+      assigned_count: assignedCount,
     })
 
     it('should return "none" when no records', () => {
@@ -162,17 +203,17 @@ describe('calendar-utils', () => {
       expect(getCompletionStatus([], 3)).toBe('none')
     })
 
-    it('should return "full" when all exercises completed', () => {
+    it('should return "full" when all exercises completed (no snapshot)', () => {
       const records = [makeRecord('ex1'), makeRecord('ex2'), makeRecord('ex3')]
       expect(getCompletionStatus(records, 3)).toBe('full')
     })
 
-    it('should return "full" when more exercises than assigned', () => {
+    it('should return "full" when more exercises than assigned (no snapshot)', () => {
       const records = [makeRecord('ex1'), makeRecord('ex2'), makeRecord('ex3'), makeRecord('ex4')]
       expect(getCompletionStatus(records, 3)).toBe('full')
     })
 
-    it('should return "partial" when some exercises completed', () => {
+    it('should return "partial" when some exercises completed (no snapshot)', () => {
       const records = [makeRecord('ex1')]
       expect(getCompletionStatus(records, 3)).toBe('partial')
     })
@@ -183,9 +224,44 @@ describe('calendar-utils', () => {
       expect(getCompletionStatus(records, 2)).toBe('partial')
     })
 
-    it('should return "full" when assignedCount is 0 and there are records', () => {
+    it('should return "full" when assignedCount is 0 and there are records (no snapshot)', () => {
       const records = [makeRecord('ex1')]
       expect(getCompletionStatus(records, 0)).toBe('full')
+    })
+
+    // assigned_count スナップショット使用のテスト
+    it('should use snapshot assigned_count when available', () => {
+      // 記録時は3つ割当、現在は5つ割当 → 3つ完了で "full"
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 3)]
+      expect(getCompletionStatus(records, 5)).toBe('full')
+    })
+
+    it('should use snapshot assigned_count (partial case)', () => {
+      // 記録時は3つ割当、2つしか完了していない → "partial"
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 3)]
+      expect(getCompletionStatus(records, 5)).toBe('partial')
+    })
+
+    it('should use max snapshot when records have different assigned_count', () => {
+      // 朝: assigned_count=3, 午後: assigned_count=4（新メニュー追加）
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 4)]
+      // 3 unique exercises, max snapshot = 4 → 3 < 4 → partial
+      expect(getCompletionStatus(records, 5)).toBe('partial')
+    })
+
+    it('should fallback to currentAssignedCount when no snapshot', () => {
+      // assigned_count なし → currentAssignedCount=2 を使用
+      const records = [makeRecord('ex1'), makeRecord('ex2')]
+      expect(getCompletionStatus(records, 2)).toBe('full')
+    })
+
+    it('should preserve past all-clear when new menus added', () => {
+      // メインの不具合修正テスト:
+      // 過去: 3メニュー割当で3つ全完了（assigned_count=3）
+      // 現在: 5メニュー割当に増加
+      // → 過去の日は "full" のまま
+      const pastRecords = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 3)]
+      expect(getCompletionStatus(pastRecords, 5)).toBe('full')
     })
   })
 })

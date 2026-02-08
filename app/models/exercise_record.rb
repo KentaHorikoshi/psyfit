@@ -27,6 +27,7 @@ class ExerciseRecord < ApplicationRecord
   scope :between_dates, ->(start_date, end_date) { where(completed_at: start_date..end_date) }
 
   # Callbacks
+  before_create :snapshot_assigned_count
   after_create :update_continue_days
 
   # Methods
@@ -39,6 +40,10 @@ class ExerciseRecord < ApplicationRecord
   end
 
   private
+
+  def snapshot_assigned_count
+    self.assigned_count ||= PatientExercise.where(user_id: user_id, is_active: true).count
+  end
 
   def update_continue_days
     # This will be implemented in a service object for proper continue_days calculation

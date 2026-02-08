@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import apiClient from '../lib/api-client'
-import { Exercise } from '../lib/api-types'
-import { CheckSquare, Square, Dumbbell, ArrowLeft } from 'lucide-react'
+import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
+import { CheckSquare, Square, Dumbbell, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 export function BatchRecord() {
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [exercises, setExercises] = useState<Exercise[]>([])
+  const [todayRecords, setTodayRecords] = useState<ExerciseRecordWithExercise[]>([])
   const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -25,11 +26,20 @@ export function BatchRecord() {
   useEffect(() => {
     if (!user) return
 
-    const fetchExercises = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-        const response = await apiClient.getUserExercises()
-        setExercises(response.data?.exercises || [])
+        const today = new Date().toISOString().split('T')[0]
+
+        const [exercisesRes, recordsRes] = await Promise.all([
+          apiClient.getUserExercises(),
+          apiClient.getExerciseRecords({ start_date: today, end_date: today }),
+        ])
+
+        setExercises(exercisesRes.data?.exercises || [])
+        if (recordsRes.status === 'success' && recordsRes.data) {
+          setTodayRecords(recordsRes.data.records)
+        }
       } catch {
         setError('運動メニューの取得に失敗しました')
       } finally {
@@ -37,7 +47,7 @@ export function BatchRecord() {
       }
     }
 
-    fetchExercises()
+    fetchData()
   }, [user])
 
   const toggleExercise = (exerciseId: string) => {
@@ -53,12 +63,26 @@ export function BatchRecord() {
   }
 
   const toggleSelectAll = () => {
-    if (selectedExercises.size === exercises.length) {
+    if (selectedExercises.size === uncompletedExercises.length) {
       setSelectedExercises(new Set())
     } else {
-      setSelectedExercises(new Set(exercises.map(ex => ex.id)))
+      setSelectedExercises(new Set(uncompletedExercises.map(ex => ex.id)))
     }
   }
+
+  const completedExerciseIds = useMemo(() => {
+    return new Set(todayRecords.map(record => record.exercise_id))
+  }, [todayRecords])
+
+  const uncompletedExercises = useMemo(() => {
+    return exercises.filter(ex => !completedExerciseIds.has(ex.id))
+  }, [exercises, completedExerciseIds])
+
+  const completedExercises = useMemo(() => {
+    return exercises.filter(ex => completedExerciseIds.has(ex.id))
+  }, [exercises, completedExerciseIds])
+
+  const remainingCount = uncompletedExercises.length
 
   const handleSubmit = async () => {
     if (selectedExercises.size === 0) return
@@ -107,7 +131,7 @@ export function BatchRecord() {
     return null
   }
 
-  const isAllSelected = exercises.length > 0 && selectedExercises.size === exercises.length
+  const isAllSelected = uncompletedExercises.length > 0 && selectedExercises.size === uncompletedExercises.length
 
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: '390px', margin: '0 auto' }}>
@@ -120,25 +144,40 @@ export function BatchRecord() {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">まとめて記録</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-bold text-gray-900">まとめて記録</h1>
+          {!isLoading && exercises.length > 0 && (
+            remainingCount > 0 ? (
+              <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                残り {remainingCount} 件
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                すべて完了
+              </span>
+            )
+          )}
+        </div>
         <p className="text-gray-600 text-sm">実施した運動を選択して記録します</p>
       </header>
 
       {/* Main content */}
       <main className="flex-1 px-6 py-6">
         {/* Selection count */}
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
-            {selectedExercises.size}件選択中
-          </p>
-          <button
-            onClick={toggleSelectAll}
-            className="text-sm text-[#1E40AF] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] rounded px-2 py-1"
-            aria-label="すべて選択"
-          >
-            {isAllSelected ? 'すべて解除' : 'すべて選択'}
-          </button>
-        </div>
+        {uncompletedExercises.length > 0 && (
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              {selectedExercises.size}件選択中
+            </p>
+            <button
+              onClick={toggleSelectAll}
+              className="text-sm text-[#1E40AF] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] rounded px-2 py-1"
+              aria-label="すべて選択"
+            >
+              {isAllSelected ? 'すべて解除' : 'すべて選択'}
+            </button>
+          </div>
+        )}
 
         {/* Exercise list */}
         {exercises.length === 0 ? (
@@ -148,7 +187,8 @@ export function BatchRecord() {
           </div>
         ) : (
           <div className="space-y-3">
-            {exercises.map(exercise => {
+            {/* Uncompleted exercises */}
+            {uncompletedExercises.map(exercise => {
               const isSelected = selectedExercises.has(exercise.id)
               return (
                 <label
@@ -186,6 +226,36 @@ export function BatchRecord() {
                 </label>
               )
             })}
+
+            {/* Completed exercises */}
+            {completedExercises.length > 0 && (
+              <>
+                <div className="pt-2 pb-1">
+                  <p className="text-sm font-medium text-green-700">実施済み</p>
+                </div>
+                {completedExercises.map(exercise => (
+                  <div
+                    key={exercise.id}
+                    className="block p-4 border-2 border-green-200 bg-green-50 rounded-xl min-h-[72px]"
+                  >
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 mr-3">
+                        <div className="w-6 h-6 flex items-center justify-center">
+                          <CheckCircle2 size={24} className="text-green-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-green-700 mb-1">{exercise.name}</h3>
+                        <p className="text-sm text-green-600">
+                          {exercise.sets}セット × {exercise.reps}回
+                        </p>
+                      </div>
+                      <span className="text-xs text-green-600 font-medium shrink-0">実施済み</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
 
@@ -201,11 +271,11 @@ export function BatchRecord() {
       <footer className="px-6 py-4 border-t border-gray-200 bg-white">
         <button
           onClick={handleSubmit}
-          disabled={selectedExercises.size === 0 || isSubmitting}
+          disabled={selectedExercises.size === 0 || isSubmitting || remainingCount === 0}
           className="w-full bg-[#1E40AF] text-white px-6 py-4 rounded-xl font-medium hover:bg-[#1E3A8A] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[52px]"
           aria-label="記録する"
         >
-          {isSubmitting ? '記録中...' : '記録する'}
+          {remainingCount === 0 ? 'すべて実施済みです' : isSubmitting ? '記録中...' : '記録する'}
         </button>
       </footer>
     </div>

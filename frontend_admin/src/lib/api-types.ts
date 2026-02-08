@@ -72,6 +72,12 @@ export interface DashboardStats {
   total_patients_count: number
 }
 
+// Dashboard Stats API Response
+export interface DashboardStatsResponse {
+  today_appointments_count: number
+  weekly_exercises_count: number
+}
+
 // Patient Detail Types
 export interface AssignedStaff {
   id: string

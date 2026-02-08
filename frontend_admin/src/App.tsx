@@ -89,15 +89,21 @@ function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await api.getPatients({ per_page: '10' })
-        if (response.status === 'success' && response.data) {
-          const patientsData = response.data.patients || []
+        const [patientsResponse, statsResponse] = await Promise.all([
+          api.getPatients({ per_page: '10' }),
+          api.getDashboardStats().catch(() => null),
+        ])
+
+        if (patientsResponse.status === 'success' && patientsResponse.data) {
+          const patientsData = patientsResponse.data.patients || []
           setPatients(patientsData)
           setStats({
             my_patients_count: patientsData.length,
-            today_appointments_count: 0,
-            weekly_exercises_count: 0,
-            total_patients_count: response.data.meta.total,
+            today_appointments_count:
+              statsResponse?.data?.today_appointments_count ?? 0,
+            weekly_exercises_count:
+              statsResponse?.data?.weekly_exercises_count ?? 0,
+            total_patients_count: patientsResponse.data.meta.total,
           })
         }
       } catch {

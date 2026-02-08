@@ -57,6 +57,9 @@ Rails.application.routes.draw do
         end
       end
 
+      # Dashboard stats (staff)
+      get "dashboard/stats", to: "dashboard#stats"
+
       # Exercise masters (staff)
       resources :exercise_masters, only: [ :index, :create, :destroy ]
 

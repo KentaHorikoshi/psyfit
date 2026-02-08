@@ -20,17 +20,21 @@ interface MenuCardProps {
   icon: React.ReactNode
   label: string
   onClick: () => void
+  badge?: boolean
 }
 
-function MenuCard({ icon, label, onClick }: MenuCardProps) {
+function MenuCard({ icon, label, onClick, badge }: MenuCardProps) {
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center p-4 bg-white border border-gray-200 rounded-xl hover:border-[#1E40AF] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[72px]"
-      aria-label={label}
+      aria-label={badge ? `${label}（未入力）` : label}
     >
-      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mr-4 shrink-0">
+      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mr-4 shrink-0 relative">
         {icon}
+        {badge && (
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" aria-hidden="true" />
+        )}
       </div>
       <span className="text-gray-900 text-lg font-medium">{label}</span>
     </button>
@@ -44,6 +48,7 @@ export function Home() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [todayRecords, setTodayRecords] = useState<ExerciseRecordWithExercise[]>([])
   const [exercisesLoading, setExercisesLoading] = useState(true)
+  const [hasConditionToday, setHasConditionToday] = useState(true)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -61,9 +66,10 @@ export function Home() {
         setExercisesLoading(true)
         const today = new Date().toISOString().split('T')[0]
 
-        const [exercisesRes, recordsRes] = await Promise.all([
+        const [exercisesRes, recordsRes, conditionsRes] = await Promise.all([
           apiClient.getUserExercises(),
           apiClient.getExerciseRecords({ start_date: today, end_date: today }),
+          apiClient.getMyDailyConditions({ start_date: today, end_date: today }),
         ])
 
         if (exercisesRes.status === 'success' && exercisesRes.data) {
@@ -71,6 +77,9 @@ export function Home() {
         }
         if (recordsRes.status === 'success' && recordsRes.data) {
           setTodayRecords(recordsRes.data.records)
+        }
+        if (conditionsRes.status === 'success' && conditionsRes.data) {
+          setHasConditionToday(conditionsRes.data.conditions.length > 0)
         }
       } catch {
         // Silently handle errors for exercise list
@@ -218,6 +227,7 @@ export function Home() {
             icon={<ClipboardEdit size={24} className="text-[#1E40AF]" />}
             label="体調を入力"
             onClick={() => navigate('/condition-input')}
+            badge={!hasConditionToday}
           />
         </div>
 

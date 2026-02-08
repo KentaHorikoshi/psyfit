@@ -26,10 +26,12 @@ vi.mock('react-router-dom', async () => {
 // Mock API client
 const mockGetUserExercises = vi.fn()
 const mockGetExerciseRecords = vi.fn()
+const mockGetMyDailyConditions = vi.fn()
 vi.mock('../../lib/api-client', () => ({
   apiClient: {
     getUserExercises: () => mockGetUserExercises(),
     getExerciseRecords: (params?: { start_date?: string; end_date?: string }) => mockGetExerciseRecords(params),
+    getMyDailyConditions: (params?: { start_date?: string; end_date?: string }) => mockGetMyDailyConditions(params),
   },
 }))
 
@@ -84,6 +86,10 @@ describe('U-02 Home', () => {
     mockGetExerciseRecords.mockResolvedValue({
       status: 'success',
       data: { records: [] },
+    })
+    mockGetMyDailyConditions.mockResolvedValue({
+      status: 'success',
+      data: { conditions: [] },
     })
   })
 
@@ -574,6 +580,87 @@ describe('U-02 Home', () => {
       await user.click(conditionButton)
 
       expect(mockNavigate).toHaveBeenCalledWith('/condition-input')
+    })
+
+    it('should show badge when no condition recorded today', async () => {
+      mockGetMyDailyConditions.mockResolvedValue({
+        status: 'success',
+        data: { conditions: [] },
+      })
+
+      const { container } = renderHome()
+
+      await waitFor(() => {
+        // Badge should be a red dot with animate-pulse
+        const badge = container.querySelector('.bg-red-500.rounded-full.animate-pulse')
+        expect(badge).toBeInTheDocument()
+      })
+    })
+
+    it('should show aria-label with 未入力 when badge is shown', async () => {
+      mockGetMyDailyConditions.mockResolvedValue({
+        status: 'success',
+        data: { conditions: [] },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /体調を入力（未入力）/ })).toBeInTheDocument()
+      })
+    })
+
+    it('should not show badge when condition already recorded today', async () => {
+      mockGetMyDailyConditions.mockResolvedValue({
+        status: 'success',
+        data: {
+          conditions: [{
+            id: 'cond-1',
+            user_id: '1',
+            recorded_date: new Date().toISOString().split('T')[0],
+            pain_level: 3,
+            body_condition: 7,
+            created_at: new Date().toISOString(),
+          }],
+        },
+      })
+
+      const { container } = renderHome()
+
+      await waitFor(() => {
+        // Ensure exercises have loaded (proxy for all API calls done)
+        expect(screen.getByRole('button', { name: /運動する/ })).toBeInTheDocument()
+      })
+
+      // Badge should not be present
+      const badge = container.querySelector('.bg-red-500.rounded-full.animate-pulse')
+      expect(badge).not.toBeInTheDocument()
+    })
+
+    it('should show normal aria-label when condition recorded', async () => {
+      mockGetMyDailyConditions.mockResolvedValue({
+        status: 'success',
+        data: {
+          conditions: [{
+            id: 'cond-1',
+            user_id: '1',
+            recorded_date: new Date().toISOString().split('T')[0],
+            pain_level: 3,
+            body_condition: 7,
+            created_at: new Date().toISOString(),
+          }],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /運動する/ })).toBeInTheDocument()
+      })
+
+      // Should have normal aria-label (not 未入力)
+      expect(screen.getByRole('button', { name: '体調を入力' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /未入力/ })).not.toBeInTheDocument()
     })
   })
 })

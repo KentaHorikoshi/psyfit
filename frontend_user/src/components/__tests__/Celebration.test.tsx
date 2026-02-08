@@ -17,12 +17,62 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+// Mock apiClient
+const mockGetExerciseRecords = vi.fn()
+const mockGetMyDailyConditions = vi.fn()
+
+vi.mock('../../lib/api-client', () => ({
+  apiClient: {
+    getExerciseRecords: (...args: unknown[]) => mockGetExerciseRecords(...args),
+    getMyDailyConditions: (...args: unknown[]) => mockGetMyDailyConditions(...args),
+  },
+}))
+
 function renderCelebration() {
   return render(
     <BrowserRouter>
       <Celebration />
     </BrowserRouter>
   )
+}
+
+/** Helper to set up API mocks for navigation target determination */
+function setupApiMocks({
+  exerciseRecordCount = 1,
+  conditionCount = 0,
+}: {
+  exerciseRecordCount?: number
+  conditionCount?: number
+} = {}) {
+  mockGetExerciseRecords.mockResolvedValue({
+    status: 'success',
+    data: {
+      records: Array.from({ length: exerciseRecordCount }, (_, i) => ({
+        id: `rec-${i}`,
+        exercise_id: `ex-${i}`,
+        user_id: 'user-1',
+        completed_at: new Date().toISOString(),
+        completed_sets: 3,
+        completed_reps: 10,
+        exercise_name: '運動',
+        exercise_category: 'training',
+      })),
+    },
+  })
+
+  mockGetMyDailyConditions.mockResolvedValue({
+    status: 'success',
+    data: {
+      conditions: Array.from({ length: conditionCount }, (_, i) => ({
+        id: `cond-${i}`,
+        user_id: 'user-1',
+        recorded_date: new Date().toISOString().split('T')[0],
+        pain_level: 3,
+        body_condition: 7,
+        created_at: new Date().toISOString(),
+      })),
+    },
+  })
 }
 
 describe('U-13 Celebration', () => {
@@ -36,6 +86,8 @@ describe('U-13 Celebration', () => {
         repsCompleted: 10,
       }
     })
+    // Default: first exercise, no condition → condition-input
+    setupApiMocks({ exerciseRecordCount: 1, conditionCount: 0 })
   })
 
   afterEach(() => {
@@ -105,11 +157,13 @@ describe('U-13 Celebration', () => {
     })
   })
 
-  describe('auto navigation', () => {
-    it('should navigate to condition input after 3 seconds', async () => {
+  describe('conditional navigation', () => {
+    it('should navigate to condition-input when first exercise and no condition', async () => {
+      setupApiMocks({ exerciseRecordCount: 1, conditionCount: 0 })
       renderCelebration()
 
-      expect(mockNavigate).not.toHaveBeenCalled()
+      // Wait for API calls to resolve
+      await vi.advanceTimersByTimeAsync(0)
 
       // Fast-forward 3 seconds
       await vi.advanceTimersByTimeAsync(3000)
@@ -117,29 +171,129 @@ describe('U-13 Celebration', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/condition-input', { replace: true })
     })
 
-    it('should not navigate before 3 seconds', () => {
+    it('should navigate to home when second exercise of the day', async () => {
+      setupApiMocks({ exerciseRecordCount: 2, conditionCount: 0 })
       renderCelebration()
 
-      // Fast-forward 2 seconds
-      vi.advanceTimersByTime(2000)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(3000)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
+    })
+
+    it('should navigate to home when condition already recorded', async () => {
+      setupApiMocks({ exerciseRecordCount: 1, conditionCount: 1 })
+      renderCelebration()
+
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(3000)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
+    })
+
+    it('should navigate to home on API error', async () => {
+      mockGetExerciseRecords.mockRejectedValue(new Error('Network error'))
+      mockGetMyDailyConditions.mockRejectedValue(new Error('Network error'))
+      renderCelebration()
+
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(3000)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
+    })
+
+    it('should not navigate before 3 seconds after target is determined', async () => {
+      renderCelebration()
+
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(2000)
 
       expect(mockNavigate).not.toHaveBeenCalled()
     })
 
-    it('should clean up timer on unmount', () => {
-      const { unmount } = renderCelebration()
+    it('should not navigate before target is determined', async () => {
+      // Make API calls hang
+      mockGetExerciseRecords.mockReturnValue(new Promise(() => {}))
+      mockGetMyDailyConditions.mockReturnValue(new Promise(() => {}))
+      renderCelebration()
 
-      unmount()
-
-      // Fast-forward 3 seconds after unmount
-      vi.advanceTimersByTime(3000)
+      await vi.advanceTimersByTimeAsync(5000)
 
       expect(mockNavigate).not.toHaveBeenCalled()
+    })
+
+    it('should clean up timer on unmount', async () => {
+      renderCelebration()
+
+      await vi.advanceTimersByTimeAsync(0)
+
+      const { unmount } = renderCelebration()
+      unmount()
+
+      await vi.advanceTimersByTimeAsync(5000)
+
+      // First render may have navigated, but second (unmounted) should not double-navigate
+      expect(mockNavigate).toHaveBeenCalledTimes(1)
+    })
+
+    it('should call API with today date filter', async () => {
+      const today = new Date().toISOString().split('T')[0]
+      renderCelebration()
+
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(mockGetExerciseRecords).toHaveBeenCalledWith({
+        start_date: today,
+        end_date: today,
+      })
+      expect(mockGetMyDailyConditions).toHaveBeenCalledWith({
+        start_date: today,
+        end_date: today,
+      })
     })
   })
 
   describe('tap to continue', () => {
-    it('should navigate to condition input when tapped', async () => {
+    it('should navigate to condition-input when tapped (first exercise, no condition)', async () => {
+      vi.useRealTimers()
+      const user = userEvent.setup()
+      renderCelebration()
+
+      // Wait for API to resolve
+      await vi.waitFor(() => {
+        expect(mockGetExerciseRecords).toHaveBeenCalled()
+      })
+      // Allow state update
+      await new Promise(r => setTimeout(r, 50))
+
+      const continueButton = screen.getByRole('button', { name: /続ける/ })
+      await user.click(continueButton)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/condition-input', { replace: true })
+      vi.useFakeTimers()
+    })
+
+    it('should navigate to home when tapped (second exercise)', async () => {
+      setupApiMocks({ exerciseRecordCount: 3, conditionCount: 0 })
+      vi.useRealTimers()
+      const user = userEvent.setup()
+      renderCelebration()
+
+      await vi.waitFor(() => {
+        expect(mockGetExerciseRecords).toHaveBeenCalled()
+      })
+      await new Promise(r => setTimeout(r, 50))
+
+      const continueButton = screen.getByRole('button', { name: /続ける/ })
+      await user.click(continueButton)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
+      vi.useFakeTimers()
+    })
+
+    it('should fallback to home when tapped before API resolves', async () => {
+      mockGetExerciseRecords.mockReturnValue(new Promise(() => {}))
+      mockGetMyDailyConditions.mockReturnValue(new Promise(() => {}))
       vi.useRealTimers()
       const user = userEvent.setup()
       renderCelebration()
@@ -147,7 +301,7 @@ describe('U-13 Celebration', () => {
       const continueButton = screen.getByRole('button', { name: /続ける/ })
       await user.click(continueButton)
 
-      expect(mockNavigate).toHaveBeenCalledWith('/condition-input', { replace: true })
+      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
       vi.useFakeTimers()
     })
 
@@ -161,6 +315,11 @@ describe('U-13 Celebration', () => {
       vi.useRealTimers()
       const user = userEvent.setup()
       renderCelebration()
+
+      await vi.waitFor(() => {
+        expect(mockGetExerciseRecords).toHaveBeenCalled()
+      })
+      await new Promise(r => setTimeout(r, 50))
 
       const continueButton = screen.getByRole('button', { name: /続ける/ })
       await user.click(continueButton)
@@ -214,6 +373,11 @@ describe('U-13 Celebration', () => {
       vi.useRealTimers()
       const user = userEvent.setup()
       renderCelebration()
+
+      await vi.waitFor(() => {
+        expect(mockGetExerciseRecords).toHaveBeenCalled()
+      })
+      await new Promise(r => setTimeout(r, 50))
 
       const continueButton = screen.getByRole('button', { name: /続ける/ })
 

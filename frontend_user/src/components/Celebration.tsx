@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Trophy, Star, Sparkles } from 'lucide-react'
+import { apiClient } from '../lib/api-client'
 
 interface CelebrationState {
   exerciseName?: string
@@ -26,30 +27,63 @@ export function Celebration() {
   const navigate = useNavigate()
   const location = useLocation()
   const hasNavigatedRef = useRef(false)
+  const [navigationTarget, setNavigationTarget] = useState<string | null>(null)
 
   const state = (location.state as CelebrationState) || {}
   const { exerciseName = '運動', setsCompleted = 0, repsCompleted = 0 } = state
 
-  // Auto-navigate after 3 seconds to condition input screen
+  // Determine navigation target: condition input (first exercise + no condition) or home
   useEffect(() => {
-    if (hasNavigatedRef.current) return
+    async function determineTarget() {
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        const [recordsRes, conditionsRes] = await Promise.all([
+          apiClient.getExerciseRecords({ start_date: today, end_date: today }),
+          apiClient.getMyDailyConditions({ start_date: today, end_date: today }),
+        ])
+
+        const recordCount = recordsRes.status === 'success' && recordsRes.data
+          ? recordsRes.data.records.length
+          : 0
+        const conditionCount = conditionsRes.status === 'success' && conditionsRes.data
+          ? conditionsRes.data.conditions.length
+          : 0
+
+        // First exercise of the day AND no condition recorded yet
+        if (recordCount <= 1 && conditionCount === 0) {
+          setNavigationTarget('/condition-input')
+        } else {
+          setNavigationTarget('/home')
+        }
+      } catch {
+        // Fallback to home on error
+        setNavigationTarget('/home')
+      }
+    }
+
+    determineTarget()
+  }, [])
+
+  // Auto-navigate after 3 seconds once target is determined
+  useEffect(() => {
+    if (hasNavigatedRef.current || !navigationTarget) return
 
     const timer = setTimeout(() => {
       if (!hasNavigatedRef.current) {
         hasNavigatedRef.current = true
-        navigate('/condition-input', { replace: true })
+        navigate(navigationTarget, { replace: true })
       }
     }, 3000)
 
     return () => {
       clearTimeout(timer)
     }
-  }, [navigate])
+  }, [navigate, navigationTarget])
 
   const handleContinue = () => {
     if (hasNavigatedRef.current) return
     hasNavigatedRef.current = true
-    navigate('/condition-input', { replace: true })
+    navigate(navigationTarget || '/home', { replace: true })
   }
 
   // Generate confetti pieces

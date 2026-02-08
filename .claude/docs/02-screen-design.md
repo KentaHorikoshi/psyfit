@@ -51,10 +51,11 @@
 - テスト: 18 tests passed
 
 ### U-02: トップ（ホーム）
-- 3つのメインメニュー:
-  - 運動する
+- 4つのメインメニュー:
+  - 運動する（未実施あり→強調色、全完了→グレー）
   - 記録する
   - 履歴を見る
+  - 体調を入力（当日体調未記録時に赤バッジ表示）
 - 継続日数カード表示
 - 実装: `frontend_user/src/components/Home.tsx` ✅
 - テスト: 15 tests passed
@@ -122,9 +123,11 @@
 - クラッカーアニメーション
 - 達成感の演出
 - 3秒後に自動遷移、または「続ける」ボタンで即時遷移
-- **画面遷移**: ExercisePlayer → /celebration → /condition → /home
+- **画面遷移（条件分岐）**:
+  - 当日初回運動 かつ 体調未記録 → /celebration → /condition-input → /home
+  - 当日2回目以降 または 体調記録済み → /celebration → /home
 - 実装: `frontend_user/src/components/Celebration.tsx` ✅
-- テスト: 24 tests passed
+- テスト: 31 tests passed
 
 ### U-14: 体調入力
 - 痛みレベル（0-10スライダー）
@@ -132,6 +135,7 @@
 - 主観的評価の記録
 - スキップボタンで入力をスキップ可能
 - 保存またはスキップ後にホーム画面へ遷移
+- **トリガー**: U-13（当日初回運動 かつ 体調未記録時のみ自動遷移）または U-02 の「体調を入力」ボタン
 - 実装: `frontend_user/src/components/ConditionInput.tsx` ✅
 - テスト: 13 tests passed
 

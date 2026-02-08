@@ -323,7 +323,9 @@ Cookie: _psyfit_session=<session_id>
       "id": "uuid",
       "name": "田中 健一",
       "email": "tanaka@example.com",
-      "continue_days": 14
+      "continue_days": 14,
+      "next_visit_date": "2026-03-15",
+      "previous_visit_date": "2026-02-01"
     }
   }
 }
@@ -377,7 +379,9 @@ Cookie: _psyfit_session=<session_id>
       "id": "uuid",
       "name": "田中太郎",
       "email": "patient@example.com",
-      "continue_days": 14
+      "continue_days": 14,
+      "next_visit_date": "2026-03-15",
+      "previous_visit_date": "2026-02-01"
     }
   }
 }

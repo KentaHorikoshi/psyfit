@@ -12,6 +12,8 @@ interface CalendarGridProps {
   assignedCount: number
   selectedDate: Date | null
   onSelectDate: (date: Date) => void
+  nextVisitDate?: string
+  previousVisitDate?: string
 }
 
 export function CalendarGrid({
@@ -21,6 +23,8 @@ export function CalendarGrid({
   assignedCount,
   selectedDate,
   onSelectDate,
+  nextVisitDate,
+  previousVisitDate,
 }: CalendarGridProps) {
   const days: CalendarDay[] = getCalendarDays(year, month)
   const selectedKey = selectedDate ? formatDateKey(selectedDate) : null
@@ -59,6 +63,8 @@ export function CalendarGrid({
                 day={day}
                 status={status}
                 isSelected={isSelected}
+                isNextVisit={nextVisitDate === key}
+                isPreviousVisit={previousVisitDate === key}
                 onClick={onSelectDate}
               />
             )
@@ -67,7 +73,7 @@ export function CalendarGrid({
       </div>
 
       {/* 凡例 */}
-      <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-3 text-xs text-gray-500">
         <div className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded bg-green-500" />
           <span>全完了</span>
@@ -80,6 +86,18 @@ export function CalendarGrid({
           <span className="inline-block w-3 h-3 rounded bg-white border border-gray-300" />
           <span>未実施</span>
         </div>
+        {(nextVisitDate || previousVisitDate) && (
+          <>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#1E40AF]" />
+              <span>次回来院</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+              <span>前回来院</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

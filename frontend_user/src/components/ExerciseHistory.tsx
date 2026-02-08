@@ -139,6 +139,8 @@ export function ExerciseHistory() {
               assignedCount={assignedCount}
               selectedDate={selectedDate}
               onSelectDate={handleSelectDate}
+              nextVisitDate={user.next_visit_date}
+              previousVisitDate={user.previous_visit_date}
             />
 
             {/* Day Detail Panel */}
@@ -148,6 +150,8 @@ export function ExerciseHistory() {
                   date={selectedDate}
                   records={selectedRecords}
                   exercises={exercises}
+                  isNextVisit={selectedKey === user.next_visit_date}
+                  isPreviousVisit={selectedKey === user.previous_visit_date}
                 />
               </div>
             )}

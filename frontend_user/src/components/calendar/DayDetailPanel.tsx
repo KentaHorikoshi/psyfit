@@ -7,6 +7,8 @@ interface DayDetailPanelProps {
   date: Date
   records: ExerciseRecordWithExercise[]
   exercises: Exercise[]
+  isNextVisit?: boolean
+  isPreviousVisit?: boolean
 }
 
 function formatTime(isoString: string): string {
@@ -14,7 +16,7 @@ function formatTime(isoString: string): string {
   return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
-export function DayDetailPanel({ date, records, exercises }: DayDetailPanelProps) {
+export function DayDetailPanel({ date, records, exercises, isNextVisit, isPreviousVisit }: DayDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -34,6 +36,20 @@ export function DayDetailPanel({ date, records, exercises }: DayDetailPanelProps
 
   return (
     <div ref={panelRef} className="bg-white rounded-xl p-4 shadow-sm" data-testid="day-detail-panel">
+      {/* 来院日バナー */}
+      {isNextVisit && (
+        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-blue-50 border border-blue-200">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#1E40AF] shrink-0" aria-hidden="true" />
+          <span className="text-sm font-medium text-[#1E40AF]">次回来院日</span>
+        </div>
+      )}
+      {isPreviousVisit && (
+        <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-green-50 border border-green-200">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] shrink-0" aria-hidden="true" />
+          <span className="text-sm font-medium text-[#10B981]">前回来院日</span>
+        </div>
+      )}
+
       {/* 日付ヘッダー + サマリー */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-gray-900">

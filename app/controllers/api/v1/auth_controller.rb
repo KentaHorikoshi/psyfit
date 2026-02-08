@@ -191,7 +191,8 @@ module Api
           name: user.name,
           email: user.email,
           continue_days: user.respond_to?(:continue_days) ? user.continue_days : 0,
-          next_visit_date: user.next_visit_date&.iso8601
+          next_visit_date: user.next_visit_date&.iso8601,
+          previous_visit_date: user.previous_visit_date&.iso8601
         }
       end
 

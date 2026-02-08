@@ -4,6 +4,8 @@ interface CalendarDayCellProps {
   day: CalendarDay
   status: CompletionStatus
   isSelected: boolean
+  isNextVisit?: boolean
+  isPreviousVisit?: boolean
   onClick: (date: Date) => void
 }
 
@@ -39,6 +41,8 @@ export function CalendarDayCell({
   day,
   status,
   isSelected,
+  isNextVisit,
+  isPreviousVisit,
   onClick,
 }: CalendarDayCellProps) {
   const { date, isCurrentMonth, isToday } = day
@@ -64,8 +68,11 @@ export function CalendarDayCell({
       : ''
 
   const statusLabel = isCurrentMonth ? getStatusLabel(status) : ''
+  const visitLabel = isNextVisit ? '次回来院日' : isPreviousVisit ? '前回来院日' : ''
   const dateLabel = `${date.getMonth() + 1}月${dayNumber}日`
-  const ariaLabel = statusLabel ? `${dateLabel} ${statusLabel}` : dateLabel
+  const ariaLabel = [dateLabel, statusLabel, visitLabel].filter(Boolean).join(' ')
+
+  const showDot = isCurrentMonth && (isNextVisit || isPreviousVisit)
 
   return (
     <button
@@ -73,7 +80,7 @@ export function CalendarDayCell({
       onClick={() => onClick(date)}
       disabled={!isCurrentMonth}
       className={`
-        aspect-square w-full flex items-center justify-center
+        aspect-square w-full flex flex-col items-center justify-center
         rounded-lg text-base transition-colors
         ${statusClasses}
         ${ringClass}
@@ -84,7 +91,17 @@ export function CalendarDayCell({
       aria-label={ariaLabel}
       aria-current={isToday ? 'date' : undefined}
     >
-      {dayNumber}
+      <span>{dayNumber}</span>
+      {showDot ? (
+        <span
+          className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+            isNextVisit ? 'bg-[#1E40AF]' : 'bg-[#10B981]'
+          }`}
+          aria-hidden="true"
+        />
+      ) : (
+        <span className="w-1.5 h-1.5 mt-0.5" aria-hidden="true" />
+      )}
     </button>
   )
 }

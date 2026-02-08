@@ -181,43 +181,20 @@ RSpec.describe 'Api::V1::Patients', type: :request do
 
       context 'as regular staff' do
         before do
-          # Assign patient_acute and patient_recovery to staff_member
-          create(:patient_staff_assignment, user: patient_acute, staff: staff_member)
-          create(:patient_staff_assignment, user: patient_recovery, staff: staff_member)
-          # patient_maintenance is assigned to other_staff
-          create(:patient_staff_assignment, user: patient_maintenance, staff: other_staff)
-
           staff_login(staff_member)
         end
 
-        it 'returns only assigned patients' do
+        it 'returns all patients' do
           get '/api/v1/patients'
 
           expect(response).to have_http_status(:ok)
-          expect(json_response['data']['patients'].length).to eq(2)
-
-          patient_ids = json_response['data']['patients'].map { |p| p['id'] }
-          expect(patient_ids).to include(patient_acute.id, patient_recovery.id)
-          expect(patient_ids).not_to include(patient_maintenance.id)
+          expect(json_response['data']['patients'].length).to eq(3)
         end
 
-        it 'returns correct pagination for assigned patients only' do
+        it 'returns correct pagination for all patients' do
           get '/api/v1/patients'
 
-          expect(json_response['data']['meta']['total']).to eq(2)
-        end
-
-        it 'applies search filter to assigned patients only' do
-          get '/api/v1/patients', params: { search: '田中' }
-
-          expect(json_response['data']['patients'].length).to eq(1)
-          expect(json_response['data']['patients'].first['id']).to eq(patient_acute.id)
-        end
-
-        it 'applies status filter to assigned patients only' do
-          get '/api/v1/patients', params: { status: '急性期' }
-
-          expect(json_response['data']['patients'].length).to eq(1)
+          expect(json_response['data']['meta']['total']).to eq(3)
         end
       end
     end
@@ -349,22 +326,21 @@ RSpec.describe 'Api::V1::Patients', type: :request do
 
       context 'as regular staff' do
         before do
-          create(:patient_staff_assignment, user: patient_acute, staff: staff_member)
           staff_login(staff_member)
         end
 
-        it 'can view assigned patient' do
+        it 'can view any patient' do
           get "/api/v1/patients/#{patient_acute.id}"
 
           expect(response).to have_http_status(:ok)
           expect(json_response['data']['id']).to eq(patient_acute.id)
         end
 
-        it 'returns forbidden for non-assigned patient' do
+        it 'can view non-assigned patient' do
           get "/api/v1/patients/#{patient_maintenance.id}"
 
-          expect(response).to have_http_status(:forbidden)
-          expect(json_response['message']).to include('アクセス権限')
+          expect(response).to have_http_status(:ok)
+          expect(json_response['data']['id']).to eq(patient_maintenance.id)
         end
       end
     end
@@ -513,11 +489,13 @@ RSpec.describe 'Api::V1::Patients', type: :request do
     context 'when authenticated as regular staff' do
       before { staff_login(staff_member) }
 
-      it 'returns 403 Forbidden' do
-        post '/api/v1/patients', params: valid_params
+      it 'creates a patient successfully' do
+        expect {
+          post '/api/v1/patients', params: valid_params
+        }.to change(User, :count).by(1)
 
-        expect(response).to have_http_status(:forbidden)
-        expect(json_response['message']).to include('マネージャー権限')
+        expect(response).to have_http_status(:created)
+        expect(json_response['status']).to eq('success')
       end
     end
 
@@ -704,22 +682,21 @@ RSpec.describe 'Api::V1::Patients', type: :request do
 
     context 'when authenticated as regular staff' do
       before do
-        create(:patient_staff_assignment, user: patient_acute, staff: staff_member)
         staff_login(staff_member)
       end
 
-      it 'updates assigned patient successfully' do
+      it 'updates any patient successfully' do
         patch "/api/v1/patients/#{patient_acute.id}", params: { status: '回復期' }
 
         expect(response).to have_http_status(:ok)
         expect(json_response['data']['status']).to eq('回復期')
       end
 
-      it 'returns 403 for non-assigned patient' do
+      it 'can update non-assigned patient' do
         patch "/api/v1/patients/#{patient_maintenance.id}", params: { status: '回復期' }
 
-        expect(response).to have_http_status(:forbidden)
-        expect(json_response['message']).to include('アクセス権限')
+        expect(response).to have_http_status(:ok)
+        expect(json_response['data']['status']).to eq('回復期')
       end
     end
 

@@ -84,33 +84,23 @@ RSpec.describe 'Api::V1::Dashboard', type: :request do
 
     context 'as regular staff' do
       before do
-        create(:patient_staff_assignment, user: patient1, staff: staff_member)
-        create(:patient_staff_assignment, user: patient2, staff: other_staff)
         staff_login(staff_member)
       end
 
-      it 'counts only assigned patients for today_appointments_count' do
+      it 'counts all patients for today_appointments_count' do
         get '/api/v1/dashboard/stats'
 
         expect(response).to have_http_status(:ok)
-        expect(json_response['data']['today_appointments_count']).to eq(1)
+        expect(json_response['data']['today_appointments_count']).to eq(2)
       end
 
-      it 'counts only assigned patients exercise records for weekly_exercises_count' do
+      it 'counts all patients exercise records for weekly_exercises_count' do
         create(:exercise_record, user: patient1, exercise: exercise, completed_at: 1.day.ago)
         create(:exercise_record, user: patient2, exercise: exercise, completed_at: 1.day.ago)
 
         get '/api/v1/dashboard/stats'
 
-        expect(json_response['data']['weekly_exercises_count']).to eq(1)
-      end
-
-      it 'returns 0 when assigned patients have no appointments today' do
-        patient1.update!(next_visit_date: Date.tomorrow)
-
-        get '/api/v1/dashboard/stats'
-
-        expect(json_response['data']['today_appointments_count']).to eq(0)
+        expect(json_response['data']['weekly_exercises_count']).to eq(2)
       end
     end
   end

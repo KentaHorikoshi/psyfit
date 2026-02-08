@@ -202,8 +202,8 @@ CREATE INDEX idx_video_access_tokens_valid ON video_access_tokens(expires_at, us
 |------|---------|-------|
 | ダッシュボード閲覧 | ✓ | ✓ |
 | 担当患者情報閲覧 | ✓ | ✓ |
-| 全患者情報閲覧 | ✓ | ✗ |
-| **患者登録** | ✓ | ✗ |
+| 全患者情報閲覧 | ✓ | ✓ |
+| 患者登録 | ✓ | ✓ |
 | 測定値入力 | ✓ | ✓（担当患者のみ） |
 | 運動メニュー設定 | ✓ | ✓（担当患者のみ） |
 | レポート出力 | ✓ | ✓（担当患者のみ） |
@@ -213,9 +213,9 @@ CREATE INDEX idx_video_access_tokens_valid ON video_access_tokens(expires_at, us
 ### 患者登録セキュリティフロー
 
 ```
-1. マネージャーがS-03画面で「新規患者登録」ボタンをクリック
+1. 職員がS-03画面で「新規患者登録」ボタンをクリック
    - 認証: 職員セッション必須
-   - 認可: role = 'manager' のみ
+   - 認可: 全職員（Manager / Staff）
    ↓
 2. フロントエンドでバリデーション
    - 必須項目チェック
@@ -226,7 +226,7 @@ CREATE INDEX idx_video_access_tokens_valid ON video_access_tokens(expires_at, us
    ↓
 4. バックエンド処理
    - セッション認証確認
-   - マネージャー権限確認（403 Forbidden for non-managers）
+   - 職員認証確認
    - 入力検証（SQLインジェクション対策）
    - user_code一意性チェック
    - email一意性チェック（blind index使用）

@@ -9,7 +9,6 @@ interface PatientListProps {
   onFilterStatus: (status: PatientStatus | 'all') => void
   onPageChange: (page: number) => void
   onPatientClick: (path: string) => void
-  isManager?: boolean
   onCreatePatient?: () => void
 }
 
@@ -36,7 +35,6 @@ export function PatientList({
   onFilterStatus,
   onPageChange,
   onPatientClick,
-  isManager = false,
   onCreatePatient,
 }: PatientListProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,7 +79,7 @@ export function PatientList({
           <h1 className="text-4xl font-bold text-gray-900 mb-2">患者一覧</h1>
           <p className="text-gray-600">全{data.meta.total}件の患者を管理できます</p>
         </div>
-        {isManager && onCreatePatient && (
+        {onCreatePatient && (
           <button
             onClick={onCreatePatient}
             className="flex items-center gap-2 px-4 py-3 bg-[#1E40AF] text-white font-medium rounded-lg hover:bg-[#1E3A8A] transition-colors min-h-[44px]"

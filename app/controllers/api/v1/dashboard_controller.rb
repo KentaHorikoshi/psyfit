@@ -29,11 +29,7 @@ module Api
       private
 
       def assigned_patient_ids
-        if current_staff.manager?
-          User.active.pluck(:id)
-        else
-          User.active.assigned_to(current_staff.id).pluck(:id)
-        end
+        User.active.pluck(:id)
       end
 
       def log_audit(action, status)

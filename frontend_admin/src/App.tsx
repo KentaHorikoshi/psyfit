@@ -162,8 +162,6 @@ function PatientListPage() {
   const [page, setPage] = useState(1)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
-  const isManager = staff?.role === 'manager'
-
   const fetchPatients = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -210,7 +208,6 @@ function PatientListPage() {
         onFilterStatus={handleFilterStatus}
         onPageChange={setPage}
         onPatientClick={(path) => navigate(path)}
-        isManager={isManager}
         onCreatePatient={() => setIsCreateDialogOpen(true)}
       />
       <PatientCreateDialog

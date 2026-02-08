@@ -3,8 +3,7 @@
 module Api
   module V1
     class PatientsController < BaseController
-      before_action :authenticate_staff!, except: [ :create ]
-      before_action :require_manager!, only: [ :create ]
+      before_action :authenticate_staff!
       before_action :set_patient, only: [ :show, :update ]
       before_action :authorize_patient_access!, only: [ :show, :update ]
 
@@ -94,18 +93,11 @@ module Api
       end
 
       def authorize_patient_access!
-        return if current_staff.manager?
-        return if patient_assigned_to_current_staff?(@patient)
-
-        render_forbidden("この患者へのアクセス権限がありません")
+        # 全職員が全患者にアクセス可能
       end
 
       def fetch_patients
-        if current_staff.manager?
-          User.active
-        else
-          User.active.assigned_to(current_staff.id)
-        end
+        User.active
       end
 
       def apply_filters(scope)

@@ -53,8 +53,12 @@ function StatusBadge({ status }: { status: PatientStatus }) {
 }
 
 export function Dashboard({ staff, patients, stats, onNavigate }: DashboardProps) {
+  const handlePatientClick = (patientId: string) => {
+    onNavigate(`/patients/${patientId}`)
+  }
+
   const handleMeasurementClick = (patientId: string) => {
-    onNavigate(`/patients/${patientId}/measurements`)
+    onNavigate(`/patients/${patientId}/measurements/new`)
   }
 
   const handleExerciseMenuClick = (patientId: string) => {
@@ -116,7 +120,11 @@ export function Dashboard({ staff, patients, stats, onNavigate }: DashboardProps
               {patients.map((patient) => (
                 <div
                   key={patient.id}
-                  className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-[#3B82F6] hover:shadow-md transition-all"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handlePatientClick(patient.id)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePatientClick(patient.id)}
+                  className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer"
                 >
                   {/* Avatar */}
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">

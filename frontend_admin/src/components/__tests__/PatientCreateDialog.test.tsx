@@ -112,7 +112,6 @@ describe('PatientCreateDialog', () => {
     it('should render all required input fields', () => {
       renderPatientCreateDialog()
 
-      expect(screen.getByLabelText(/患者コード/)).toBeInTheDocument()
       expect(screen.getByLabelText(/^氏名/)).toBeInTheDocument()
       expect(screen.getByLabelText(/メールアドレス/)).toBeInTheDocument()
       expect(screen.getByLabelText(/生年月日/)).toBeInTheDocument()
@@ -132,14 +131,12 @@ describe('PatientCreateDialog', () => {
     it('should have required indicators on required fields', () => {
       renderPatientCreateDialog()
 
-      const userCodeLabel = screen.getByText(/患者コード/)
       const nameLabel = screen.getByText(/^氏名/)
       const emailLabel = screen.getByText(/メールアドレス/)
       const birthDateLabel = screen.getByText(/生年月日/)
       const passwordLabel = screen.getByText(/パスワード/)
 
       // Required fields should have asterisk
-      expect(userCodeLabel.closest('label')?.textContent).toContain('*')
       expect(nameLabel.closest('label')?.textContent).toContain('*')
       expect(emailLabel.closest('label')?.textContent).toContain('*')
       expect(birthDateLabel.closest('label')?.textContent).toContain('*')
@@ -156,7 +153,7 @@ describe('PatientCreateDialog', () => {
       await user.click(submitButton)
 
       await waitFor(() => {
-        expect(screen.getByText(/患者コードを入力してください/)).toBeInTheDocument()
+        expect(screen.getByText(/氏名を入力してください/)).toBeInTheDocument()
       })
     })
 
@@ -164,7 +161,6 @@ describe('PatientCreateDialog', () => {
       const user = userEvent.setup()
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.click(screen.getByRole('button', { name: '登録' }))
 
       await waitFor(() => {
@@ -176,9 +172,8 @@ describe('PatientCreateDialog', () => {
       const user = userEvent.setup()
       renderPatientCreateDialog()
 
-      // Fill only user_code, name, birth_date, password but NOT email
+      // Fill only name, birth_date, password but NOT email
       // This tests that empty email validation works first
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト太郎')
       await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
       await user.type(screen.getByLabelText(/パスワード/), 'Password1!')
@@ -195,7 +190,6 @@ describe('PatientCreateDialog', () => {
       const user = userEvent.setup()
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト太郎')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
       await user.type(screen.getByLabelText(/パスワード/), 'Password1!')
@@ -259,7 +253,6 @@ describe('PatientCreateDialog', () => {
       const user = userEvent.setup()
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト太郎')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
       await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
@@ -290,7 +283,6 @@ describe('PatientCreateDialog', () => {
 
       const { onSuccess } = renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
       await user.type(screen.getByLabelText(/フリガナ/), 'テスト タロウ')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
@@ -308,7 +300,6 @@ describe('PatientCreateDialog', () => {
       expect(screen.getByText('Password1!')).toBeInTheDocument()
 
       expect(api.createPatient).toHaveBeenCalledWith({
-        user_code: 'USR001',
         name: 'テスト 太郎',
         name_kana: 'テスト タロウ',
         email: 'test@example.com',
@@ -339,7 +330,6 @@ describe('PatientCreateDialog', () => {
 
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
       await user.type(screen.getByLabelText(/フリガナ/), 'テスト タロウ')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
@@ -354,7 +344,6 @@ describe('PatientCreateDialog', () => {
 
       await waitFor(() => {
         expect(api.createPatient).toHaveBeenCalledWith({
-          user_code: 'USR001',
           name: 'テスト 太郎',
           name_kana: 'テスト タロウ',
           email: 'test@example.com',
@@ -376,7 +365,6 @@ describe('PatientCreateDialog', () => {
 
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
       await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
@@ -386,29 +374,6 @@ describe('PatientCreateDialog', () => {
 
       await waitFor(() => {
         expect(screen.getByText('登録に失敗しました')).toBeInTheDocument()
-      })
-    })
-
-    it('should show duplicate user_code error', async () => {
-      const user = userEvent.setup()
-      const error = new Error('バリデーションエラー')
-      ;(error as Error & { errors?: Record<string, string[]> }).errors = {
-        user_code: ['has already been taken'],
-      }
-      vi.mocked(api.createPatient).mockRejectedValue(error)
-
-      renderPatientCreateDialog()
-
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
-      await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
-      await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
-      await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
-      await user.type(screen.getByLabelText(/パスワード/), 'Password1!')
-
-      await user.click(screen.getByRole('button', { name: '登録' }))
-
-      await waitFor(() => {
-        expect(screen.getByText(/この患者コードは既に使用されています/)).toBeInTheDocument()
       })
     })
 
@@ -422,7 +387,6 @@ describe('PatientCreateDialog', () => {
 
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
       await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
@@ -439,9 +403,6 @@ describe('PatientCreateDialog', () => {
   describe('accessibility', () => {
     it('should have accessible form labels', () => {
       renderPatientCreateDialog()
-
-      const userCodeInput = screen.getByLabelText(/患者コード/)
-      expect(userCodeInput).toHaveAccessibleName()
 
       const nameInput = screen.getByLabelText(/^氏名/)
       expect(nameInput).toHaveAccessibleName()
@@ -523,7 +484,6 @@ describe('PatientCreateDialog', () => {
 
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
       await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
@@ -554,7 +514,6 @@ describe('PatientCreateDialog', () => {
 
       renderPatientCreateDialog()
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
       await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
       await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
@@ -576,8 +535,8 @@ describe('PatientCreateDialog', () => {
 
       const { rerender } = renderPatientCreateDialog({ onOpenChange })
 
-      await user.type(screen.getByLabelText(/患者コード/), 'USR001')
-      expect((screen.getByLabelText(/患者コード/) as HTMLInputElement).value).toBe('USR001')
+      await user.type(screen.getByLabelText(/^氏名/), 'テスト太郎')
+      expect((screen.getByLabelText(/^氏名/) as HTMLInputElement).value).toBe('テスト太郎')
 
       // Close dialog
       await user.click(screen.getByRole('button', { name: 'キャンセル' }))
@@ -608,7 +567,7 @@ describe('PatientCreateDialog', () => {
       )
 
       await waitFor(() => {
-        expect((screen.getByLabelText(/患者コード/) as HTMLInputElement).value).toBe('')
+        expect((screen.getByLabelText(/^氏名/) as HTMLInputElement).value).toBe('')
       })
     })
   })

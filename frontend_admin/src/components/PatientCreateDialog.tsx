@@ -10,7 +10,6 @@ interface PatientCreateDialogProps {
 }
 
 interface FormData {
-  user_code: string
   name: string
   name_kana: string
   email: string
@@ -23,7 +22,6 @@ interface FormData {
 }
 
 interface FormErrors {
-  user_code?: string
   name?: string
   email?: string
   birth_date?: string
@@ -32,7 +30,6 @@ interface FormErrors {
 }
 
 const initialFormData: FormData = {
-  user_code: '',
   name: '',
   name_kana: '',
   email: '',
@@ -79,10 +76,6 @@ export function PatientCreateDialog({
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
-    if (!formData.user_code.trim()) {
-      newErrors.user_code = '患者コードを入力してください'
-    }
-
     if (!formData.name.trim()) {
       newErrors.name = '氏名を入力してください'
     }
@@ -119,7 +112,6 @@ export function PatientCreateDialog({
 
     try {
       const requestData: CreatePatientRequest = {
-        user_code: formData.user_code,
         name: formData.name,
         name_kana: formData.name_kana,
         email: formData.email,
@@ -140,9 +132,7 @@ export function PatientCreateDialog({
     } catch (error) {
       const err = error as Error & { errors?: Record<string, string[]> }
 
-      if (err.errors?.user_code) {
-        setErrors({ user_code: 'この患者コードは既に使用されています' })
-      } else if (err.errors?.email_bidx) {
+      if (err.errors?.email_bidx) {
         setErrors({ email: 'このメールアドレスは既に使用されています' })
       } else {
         setErrors({ general: err.message || '登録に失敗しました' })
@@ -231,27 +221,6 @@ export function PatientCreateDialog({
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* User Code */}
-              <div>
-                <label htmlFor="user_code" className="block text-sm font-medium text-gray-700 mb-1">
-                  患者コード <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="user_code"
-                  name="user_code"
-                  value={formData.user_code}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent text-base min-h-[44px] ${
-                    errors.user_code ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="USR001"
-                />
-                {errors.user_code && (
-                  <p className="mt-1 text-sm text-red-500">{errors.user_code}</p>
-                )}
-              </div>
-
               {/* Name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">

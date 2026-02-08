@@ -367,7 +367,6 @@ RSpec.describe 'Api::V1::Patients', type: :request do
   describe 'POST /api/v1/patients' do
     let(:valid_params) do
       {
-        user_code: 'USR006',
         name: '新規 太郎',
         name_kana: 'シンキ タロウ',
         email: 'shinki@example.com',
@@ -383,7 +382,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
     context 'when authenticated as manager' do
       before { staff_login(manager) }
 
-      it 'creates a patient successfully' do
+      it 'creates a patient successfully with auto-generated user_code' do
         expect {
           post '/api/v1/patients', params: valid_params
         }.to change(User, :count).by(1)
@@ -392,22 +391,12 @@ RSpec.describe 'Api::V1::Patients', type: :request do
         expect(json_response['status']).to eq('success')
         expect(json_response['data']).to include(
           'id',
-          'user_code' => 'USR006',
           'name' => '新規 太郎',
           'email' => 'shinki@example.com',
           'status' => '回復期',
           'message' => '患者を登録しました。初期パスワードは別途お知らせください。'
         )
-      end
-
-      it 'returns 422 when user_code is duplicated' do
-        create(:user, user_code: 'USR006')
-
-        post '/api/v1/patients', params: valid_params
-
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(json_response['status']).to eq('error')
-        expect(json_response['errors']).to have_key('user_code')
+        expect(json_response['data']['user_code']).to match(/\AUSR\d{3,}\z/)
       end
 
       it 'returns 422 when email is duplicated' do
@@ -421,7 +410,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
       end
 
       it 'returns 422 when required fields are missing' do
-        post '/api/v1/patients', params: { user_code: 'USR006' }
+        post '/api/v1/patients', params: { name: '太郎' }
 
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['status']).to eq('error')

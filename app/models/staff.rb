@@ -31,6 +31,9 @@ class Staff < ApplicationRecord
   has_many :patient_staff_assignments, dependent: :destroy
   has_many :assigned_patients, through: :patient_staff_assignments, source: :user
 
+  # Auto-generate staff_id on create
+  before_validation :generate_staff_id, on: :create
+
   # Validations
   validates :staff_id, presence: true, uniqueness: true
   validates :name, presence: true
@@ -111,6 +114,17 @@ class Staff < ApplicationRecord
   end
 
   private
+
+  def generate_staff_id
+    return if staff_id.present?
+
+    prefix = manager? ? "MGR" : "STF"
+    max_num = Staff.where("staff_id LIKE ?", "#{prefix}%")
+                   .pluck(:staff_id)
+                   .map { |sid| sid.delete_prefix(prefix).to_i }
+                   .max || 0
+    self.staff_id = "#{prefix}#{(max_num + 1).to_s.rjust(3, '0')}"
+  end
 
   def password_complexity
     return if password.blank?

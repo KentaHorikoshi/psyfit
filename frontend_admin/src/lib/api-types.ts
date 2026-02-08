@@ -221,7 +221,6 @@ export interface StaffListResponse {
 }
 
 export interface CreateStaffRequest {
-  staff_id: string
   name: string
   name_kana: string
   email: string
@@ -293,7 +292,6 @@ export interface ChangePasswordResponse {
 
 // Patient Create Types (S-03)
 export interface CreatePatientRequest {
-  user_code: string
   name: string
   name_kana?: string
   email: string

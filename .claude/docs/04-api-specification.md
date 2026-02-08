@@ -1099,9 +1099,8 @@ Cookie: _psyfit_session=<session_id>
 - 一般職員は403 Forbiddenが返される
 
 ```json
-// Request
+// Request（user_codeはサーバーで自動採番: USR + 連番3桁以上）
 {
-  "user_code": "USR006",
   "name": "新規 太郎",
   "name_kana": "シンキ タロウ",
   "email": "shinki@example.com",
@@ -1118,7 +1117,7 @@ Cookie: _psyfit_session=<session_id>
   "status": "success",
   "data": {
     "id": "uuid",
-    "user_code": "USR006",
+    "user_code": "USR006",  // 自動採番
     "name": "新規 太郎",
     "email": "shinki@example.com",
     "status": "回復期",
@@ -1130,7 +1129,6 @@ Cookie: _psyfit_session=<session_id>
 **リクエストフィールド**:
 | フィールド | 型 | 必須 | 説明 |
 |-----------|-----|:----:|------|
-| user_code | string | YES | 患者コード（一意） |
 | name | string | YES | 患者氏名 |
 | name_kana | string | NO | 患者氏名カナ |
 | email | string | YES | メールアドレス（一意） |
@@ -1144,7 +1142,7 @@ Cookie: _psyfit_session=<session_id>
 **バリデーション**:
 | フィールド | ルール |
 |-----------|--------|
-| user_code | 必須、一意、英数字 |
+| user_code | 自動採番（USR + 連番3桁以上）、一意 |
 | name | 必須、100文字以内 |
 | email | 必須、一意、メール形式（blind index使用） |
 | birth_date | 必須、過去の日付 |
@@ -1536,9 +1534,8 @@ Cookie: _psyfit_session=<session_id>
 **認証**: 職員セッション必須（マネージャーのみ）
 
 ```json
-// Request
+// Request（staff_idはサーバーで自動採番: MGR/STF + 連番3桁以上）
 {
-  "staff_id": "sato",
   "name": "佐藤花子",
   "name_kana": "サトウハナコ",  // オプション
   "email": "sato@example.com",
@@ -1552,7 +1549,7 @@ Cookie: _psyfit_session=<session_id>
   "status": "success",
   "data": {
     "id": "uuid",
-    "staff_id": "sato",
+    "staff_id": "STF004",  // 自動採番
     "name": "佐藤花子",
     "role": "staff",
     "department": "リハビリテーション科"
@@ -1563,7 +1560,7 @@ Cookie: _psyfit_session=<session_id>
 **バリデーション**:
 | フィールド | ルール |
 |-----------|--------|
-| staff_id | 必須、一意 |
+| staff_id | 自動採番（MGR/STF + 連番3桁以上）、一意 |
 | name | 必須 |
 | email | オプション、一意（blind index使用） |
 | password | 必須、8文字以上、2種類以上の文字タイプ（大文字/小文字/数字/特殊文字） |

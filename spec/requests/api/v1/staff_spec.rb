@@ -104,7 +104,6 @@ RSpec.describe 'Api::V1::Staff', type: :request do
   describe 'POST /api/v1/staff' do
     let(:valid_params) do
       {
-        staff_id: 'new_staff',
         name: '佐藤花子',
         email: 'sato@example.com',
         password: 'SecurePass123!',
@@ -116,7 +115,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
     context 'when authenticated as manager' do
       before { sign_in_as_staff(manager) }
 
-      it 'creates a new staff member' do
+      it 'creates a new staff member with auto-generated staff_id' do
         expect {
           post '/api/v1/staff', params: valid_params
         }.to change(Staff, :count).by(1)
@@ -124,9 +123,17 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         expect(response).to have_http_status(:created)
         json = json_response
         expect(json['status']).to eq('success')
-        expect(json['data']['staff_id']).to eq('new_staff')
+        expect(json['data']['staff_id']).to match(/\ASTF\d{3,}\z/)
         expect(json['data']['name']).to eq('佐藤花子')
         expect(json['data']['role']).to eq('staff')
+      end
+
+      it 'generates MGR prefix for manager role' do
+        post '/api/v1/staff', params: valid_params.merge(role: 'manager')
+
+        expect(response).to have_http_status(:created)
+        json = json_response
+        expect(json['data']['staff_id']).to match(/\AMGR\d{3,}\z/)
       end
 
       it 'does not expose password in response' do
@@ -142,7 +149,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         post '/api/v1/staff', params: valid_params
 
         expect(response).to have_http_status(:created)
-        created_staff = Staff.find_by(staff_id: 'new_staff')
+        created_staff = Staff.find(json_response['data']['id'])
 
         # Check that encrypted fields work
         expect(created_staff.name).to eq('佐藤花子')
@@ -200,16 +207,6 @@ RSpec.describe 'Api::V1::Staff', type: :request do
       end
 
       context 'with uniqueness validation' do
-        it 'rejects duplicate staff_id' do
-          create(:staff, staff_id: 'duplicate_id', password: 'Password123', password_confirmation: 'Password123')
-
-          post '/api/v1/staff', params: valid_params.merge(staff_id: 'duplicate_id')
-
-          expect(response).to have_http_status(:unprocessable_entity)
-          json = json_response
-          expect(json['errors']['staff_id']).to be_present
-        end
-
         it 'rejects duplicate email' do
           create(:staff, email: 'duplicate@example.com', password: 'Password123', password_confirmation: 'Password123')
 
@@ -222,14 +219,6 @@ RSpec.describe 'Api::V1::Staff', type: :request do
       end
 
       context 'with required field validation' do
-        it 'rejects missing staff_id' do
-          post '/api/v1/staff', params: valid_params.except(:staff_id)
-
-          expect(response).to have_http_status(:unprocessable_entity)
-          json = json_response
-          expect(json['errors']['staff_id']).to be_present
-        end
-
         it 'rejects missing name' do
           post '/api/v1/staff', params: valid_params.except(:name)
 
@@ -260,7 +249,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
           post '/api/v1/staff', params: valid_params.merge(name_kana: 'サトウハナコ')
 
           expect(response).to have_http_status(:created)
-          created_staff = Staff.find_by(staff_id: 'new_staff')
+          created_staff = Staff.find(json_response['data']['id'])
           expect(created_staff.name_kana).to eq('サトウハナコ')
         end
 
@@ -274,7 +263,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
           post '/api/v1/staff', params: valid_params.except(:role)
 
           expect(response).to have_http_status(:created)
-          created_staff = Staff.find_by(staff_id: 'new_staff')
+          created_staff = Staff.find(json_response['data']['id'])
           expect(created_staff.role).to eq('staff')
         end
       end

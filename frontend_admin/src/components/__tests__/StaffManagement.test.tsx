@@ -233,7 +233,6 @@ describe('S-08 StaffManagement', () => {
       await user.click(screen.getByRole('button', { name: /新規職員登録/ }))
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/職員ID/)).toBeInTheDocument()
         expect(screen.getByLabelText(/^氏名/)).toBeInTheDocument()
         expect(screen.getByLabelText(/フリガナ/)).toBeInTheDocument()
         expect(screen.getByLabelText(/メールアドレス/)).toBeInTheDocument()
@@ -339,7 +338,7 @@ describe('S-08 StaffManagement', () => {
       await user.click(screen.getByRole('button', { name: '登録' }))
 
       await waitFor(() => {
-        expect(screen.getByText('職員IDを入力してください')).toBeInTheDocument()
+        expect(screen.getByText('氏名を入力してください')).toBeInTheDocument()
       })
     })
 
@@ -359,7 +358,6 @@ describe('S-08 StaffManagement', () => {
       })
 
       // Fill required fields except email
-      await user.type(screen.getByLabelText(/職員ID/), 'ST004')
       await user.type(screen.getByLabelText(/^氏名/), '新規 職員')
       await user.type(screen.getByLabelText(/フリガナ/), 'シンキ ショクイン')
       // Skip email input
@@ -423,7 +421,6 @@ describe('S-08 StaffManagement', () => {
 
       await user.click(screen.getByRole('button', { name: /新規職員登録/ }))
 
-      await user.type(screen.getByLabelText(/職員ID/), 'ST004')
       await user.type(screen.getByLabelText(/^氏名/), '新規 職員')
       await user.type(screen.getByLabelText(/フリガナ/), 'シンキ ショクイン')
       await user.type(screen.getByLabelText(/メールアドレス/), 'new@example.com')
@@ -438,7 +435,6 @@ describe('S-08 StaffManagement', () => {
       })
 
       expect(api.createStaff).toHaveBeenCalledWith({
-        staff_id: 'ST004',
         name: '新規 職員',
         name_kana: 'シンキ ショクイン',
         email: 'new@example.com',
@@ -460,7 +456,6 @@ describe('S-08 StaffManagement', () => {
 
       await user.click(screen.getByRole('button', { name: /新規職員登録/ }))
 
-      await user.type(screen.getByLabelText(/職員ID/), 'ST004')
       await user.type(screen.getByLabelText(/^氏名/), '新規 職員')
       await user.type(screen.getByLabelText(/フリガナ/), 'シンキ ショクイン')
       await user.type(screen.getByLabelText(/メールアドレス/), 'new@example.com')
@@ -537,8 +532,8 @@ describe('S-08 StaffManagement', () => {
       await user.click(screen.getByRole('button', { name: /新規職員登録/ }))
 
       await waitFor(() => {
-        const staffIdInput = screen.getByLabelText(/職員ID/)
-        expect(staffIdInput).toHaveAccessibleName()
+        const nameInput = screen.getByLabelText(/^氏名/)
+        expect(nameInput).toHaveAccessibleName()
       })
     })
   })

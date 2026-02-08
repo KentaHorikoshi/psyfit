@@ -53,19 +53,29 @@ module Api
       def create
         staff = Staff.new(staff_params)
 
-        if staff.save
-          log_audit("create", "success", resource_id: staff.id)
+        retries = 0
+        begin
+          if staff.save
+            log_audit("create", "success", resource_id: staff.id)
 
-          render json: {
-            status: "success",
-            data: serialize_staff(staff)
-          }, status: :created
-        else
-          render_error(
-            "バリデーションエラー",
-            errors: staff.errors.to_hash,
-            status: :unprocessable_entity
-          )
+            render json: {
+              status: "success",
+              data: serialize_staff(staff)
+            }, status: :created
+          else
+            render_error(
+              "バリデーションエラー",
+              errors: staff.errors.to_hash,
+              status: :unprocessable_entity
+            )
+          end
+        rescue ActiveRecord::RecordNotUnique => e
+          if e.message.include?("staff_id") && retries < 3
+            retries += 1
+            staff.staff_id = nil
+            retry
+          end
+          raise
         end
       end
 
@@ -74,7 +84,7 @@ module Api
       ALLOWED_ROLES = %w[manager staff].freeze
 
       def staff_params
-        permitted = params.permit(:staff_id, :name, :name_kana, :email, :password, :department)
+        permitted = params.permit(:name, :name_kana, :email, :password, :department)
         permitted[:role] = sanitized_role if params[:role].present?
         permitted
       end

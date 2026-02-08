@@ -34,6 +34,9 @@ class User < ApplicationRecord
   has_many :patient_staff_assignments, dependent: :destroy
   has_many :assigned_staff, through: :patient_staff_assignments, source: :staff
 
+  # Auto-generate user_code on create
+  before_validation :generate_user_code, on: :create
+
   # Validations
   validates :user_code, presence: true, uniqueness: true
   validates :email_bidx, presence: true, uniqueness: { message: "has already been taken" }
@@ -158,6 +161,16 @@ class User < ApplicationRecord
   end
 
   private
+
+  def generate_user_code
+    return if user_code.present?
+
+    max_num = User.where("user_code LIKE 'USR%'")
+                  .pluck(:user_code)
+                  .map { |code| code.delete_prefix("USR").to_i }
+                  .max || 0
+    self.user_code = "USR#{(max_num + 1).to_s.rjust(3, '0')}"
+  end
 
   def birth_date_must_be_in_past
     return if birth_date.blank?

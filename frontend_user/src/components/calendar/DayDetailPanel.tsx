@@ -34,6 +34,18 @@ export function DayDetailPanel({ date, records, exercises, isNextVisit, isPrevio
   const snapshotCount = records.length > 0 ? getSnapshotAssignedCount(records) : null
   const totalCount = snapshotCount ?? exercises.length
 
+  // スナップショット割当数が現在の種目数より少ない場合、
+  // 当時割り当てられていなかった種目を非表示にする
+  const exercisesToShow = (() => {
+    if (snapshotCount == null || snapshotCount >= exercises.length) {
+      return exercises
+    }
+    const completed = exercises.filter((ex) => completedMap.has(ex.id))
+    const uncompleted = exercises.filter((ex) => !completedMap.has(ex.id))
+    const remainingSlots = Math.max(0, snapshotCount - completed.length)
+    return [...completed, ...uncompleted.slice(0, remainingSlots)]
+  })()
+
   return (
     <div ref={panelRef} className="bg-white rounded-xl p-4 shadow-sm" data-testid="day-detail-panel">
       {/* 来院日バナー */}
@@ -71,11 +83,11 @@ export function DayDetailPanel({ date, records, exercises, isNextVisit, isPrevio
       </div>
 
       {/* 運動一覧 */}
-      {exercises.length === 0 && records.length === 0 ? (
+      {exercisesToShow.length === 0 && records.length === 0 ? (
         <p className="text-gray-400 text-sm text-center py-4">この日の記録はありません</p>
       ) : (
         <div className="space-y-3">
-          {exercises.map((exercise) => {
+          {exercisesToShow.map((exercise) => {
             const exerciseRecords = completedMap.get(exercise.id)
             const isCompleted = !!exerciseRecords && exerciseRecords.length > 0
 
@@ -114,7 +126,7 @@ export function DayDetailPanel({ date, records, exercises, isNextVisit, isPrevio
 
           {/* 割当外の記録（過去の割当で実施された運動） */}
           {records
-            .filter((r) => !exercises.some((e) => e.id === r.exercise_id))
+            .filter((r) => !exercisesToShow.some((e) => e.id === r.exercise_id))
             .reduce<ExerciseRecordWithExercise[]>((unique, record) => {
               if (!unique.some((u) => u.exercise_id === record.exercise_id)) {
                 unique.push(record)

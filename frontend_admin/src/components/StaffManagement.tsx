@@ -5,7 +5,6 @@ import { api } from '../lib/api'
 import type { StaffMember, CreateStaffRequest } from '../lib/api-types'
 
 interface FormErrors {
-  staff_id?: string
   name?: string
   name_kana?: string
   email?: string
@@ -88,10 +87,6 @@ function CreateStaffDialog({ isOpen, onClose, onSuccess }: CreateStaffDialogProp
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
-
-    if (!formData.staff_id?.trim()) {
-      newErrors.staff_id = '職員IDを入力してください'
-    }
 
     if (!formData.name?.trim()) {
       newErrors.name = '氏名を入力してください'
@@ -191,27 +186,6 @@ function CreateStaffDialog({ isOpen, onClose, onSuccess }: CreateStaffDialogProp
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Staff ID */}
-          <div>
-            <label htmlFor="staff_id" className="block text-sm font-medium text-gray-700 mb-1">
-              職員ID <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="staff_id"
-              type="text"
-              value={formData.staff_id || ''}
-              onChange={(e) => handleChange('staff_id', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-              aria-invalid={!!errors.staff_id}
-              aria-describedby={errors.staff_id ? 'staff_id-error' : undefined}
-            />
-            {errors.staff_id && (
-              <p id="staff_id-error" role="alert" className="mt-1 text-sm text-red-600">
-                {errors.staff_id}
-              </p>
-            )}
-          </div>
-
           {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">

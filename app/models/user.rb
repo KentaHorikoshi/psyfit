@@ -118,22 +118,23 @@ class User < ApplicationRecord
 
   # Continue Days Methods
 
-  def update_continue_days!
-    today = Time.current.beginning_of_day
+  def update_continue_days!(exercise_time: Time.current)
+    exercise_day = exercise_time.beginning_of_day
 
-    # Check if last exercise was today
-    return if last_exercise_at.present? && last_exercise_at >= today
+    # Skip if already recorded on this exercise day or later
+    return if last_exercise_at.present? && last_exercise_at >= exercise_day
 
     # Calculate new continue_days
     new_days = if last_exercise_at.nil?
                  1 # First exercise ever
-    elsif last_exercise_at >= 2.days.ago.beginning_of_day
+    elsif last_exercise_at >= (exercise_day - 2.days).beginning_of_day
                  continue_days + 1 # Consecutive exercise
     else
                  1 # Gap > 1 day, reset streak
     end
 
-    update!(continue_days: new_days, last_exercise_at: Time.current)
+    new_last = [ exercise_time, last_exercise_at ].compact.max
+    update!(continue_days: new_days, last_exercise_at: new_last)
   end
 
   def exercised_today?

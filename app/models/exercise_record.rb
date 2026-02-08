@@ -13,6 +13,7 @@ class ExerciseRecord < ApplicationRecord
   validates :completed_reps, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :completed_sets, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :duration_seconds, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validate :completed_at_within_allowed_range
 
   # Default values
   attribute :completed_at, :datetime, default: -> { Time.current }
@@ -40,6 +41,20 @@ class ExerciseRecord < ApplicationRecord
   end
 
   private
+
+  def completed_at_within_allowed_range
+    return if completed_at.blank?
+
+    today = Time.current.beginning_of_day
+    yesterday = 1.day.ago.beginning_of_day
+    tomorrow = today + 1.day
+
+    if completed_at < yesterday
+      errors.add(:completed_at, "は昨日より前の日付を指定できません")
+    elsif completed_at >= tomorrow
+      errors.add(:completed_at, "は未来の日付を指定できません")
+    end
+  end
 
   def snapshot_assigned_count
     self.assigned_count ||= PatientExercise.where(user_id: user_id, is_active: true).count

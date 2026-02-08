@@ -18,7 +18,7 @@ module Api
         record.exercise = exercise
 
         if record.save
-          current_user.update_continue_days!
+          current_user.update_continue_days!(exercise_time: record.completed_at)
           log_create_action(record)
           render_success(record_response(record), status: :created)
         else

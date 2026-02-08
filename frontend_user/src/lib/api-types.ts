@@ -66,6 +66,7 @@ export interface CreateExerciseRecordRequest {
   completed_reps: number
   pain_level?: number
   notes?: string
+  completed_at?: string
 }
 
 export interface ExercisesResponse {

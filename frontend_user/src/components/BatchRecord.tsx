@@ -5,15 +5,26 @@ import apiClient from '../lib/api-client'
 import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
 import { CheckSquare, Square, Dumbbell, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
+type SelectedDate = 'today' | 'yesterday'
+
 export function BatchRecord() {
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [exercises, setExercises] = useState<Exercise[]>([])
-  const [todayRecords, setTodayRecords] = useState<ExerciseRecordWithExercise[]>([])
+  const [dateRecords, setDateRecords] = useState<ExerciseRecordWithExercise[]>([])
   const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set())
+  const [selectedDate, setSelectedDate] = useState<SelectedDate>('today')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const targetDate = useMemo(() => {
+    const d = new Date()
+    if (selectedDate === 'yesterday') {
+      d.setDate(d.getDate() - 1)
+    }
+    return d.toISOString().split('T')[0]
+  }, [selectedDate])
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -22,23 +33,23 @@ export function BatchRecord() {
     }
   }, [isAuthenticated, authLoading, navigate])
 
-  // Fetch exercises
+  // Fetch exercises and records for the selected date
   useEffect(() => {
     if (!user) return
 
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const today = new Date().toISOString().split('T')[0]
+        setSelectedExercises(new Set())
 
         const [exercisesRes, recordsRes] = await Promise.all([
           apiClient.getUserExercises(),
-          apiClient.getExerciseRecords({ start_date: today, end_date: today }),
+          apiClient.getExerciseRecords({ start_date: targetDate, end_date: targetDate }),
         ])
 
         setExercises(exercisesRes.data?.exercises || [])
         if (recordsRes.status === 'success' && recordsRes.data) {
-          setTodayRecords(recordsRes.data.records)
+          setDateRecords(recordsRes.data.records)
         }
       } catch {
         setError('運動メニューの取得に失敗しました')
@@ -48,7 +59,7 @@ export function BatchRecord() {
     }
 
     fetchData()
-  }, [user])
+  }, [user, targetDate])
 
   const toggleExercise = (exerciseId: string) => {
     setSelectedExercises(prev => {
@@ -71,8 +82,8 @@ export function BatchRecord() {
   }
 
   const completedExerciseIds = useMemo(() => {
-    return new Set(todayRecords.map(record => record.exercise_id))
-  }, [todayRecords])
+    return new Set(dateRecords.map(record => record.exercise_id))
+  }, [dateRecords])
 
   const uncompletedExercises = useMemo(() => {
     return exercises.filter(ex => !completedExerciseIds.has(ex.id))
@@ -91,6 +102,10 @@ export function BatchRecord() {
       setIsSubmitting(true)
       setError(null)
 
+      const completedAt = selectedDate === 'yesterday'
+        ? new Date(targetDate + 'T12:00:00+09:00').toISOString()
+        : undefined
+
       // Create records for all selected exercises
       const promises = Array.from(selectedExercises).map(exerciseId => {
         const exercise = exercises.find(ex => ex.id === exerciseId)
@@ -100,6 +115,7 @@ export function BatchRecord() {
           exercise_id: exerciseId,
           completed_sets: exercise.sets,
           completed_reps: exercise.reps,
+          ...(completedAt ? { completed_at: completedAt } : {}),
         })
       })
 
@@ -112,6 +128,11 @@ export function BatchRecord() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleDateChange = (date: SelectedDate) => {
+    setSelectedDate(date)
+    setError(null)
   }
 
   // Show loading state
@@ -132,6 +153,14 @@ export function BatchRecord() {
   }
 
   const isAllSelected = uncompletedExercises.length > 0 && selectedExercises.size === uncompletedExercises.length
+
+  const submitLabel = remainingCount === 0
+    ? 'すべて実施済みです'
+    : isSubmitting
+    ? '記録中...'
+    : selectedDate === 'yesterday'
+    ? '昨日の記録をする'
+    : '記録する'
 
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ maxWidth: '390px', margin: '0 auto' }}>
@@ -158,11 +187,45 @@ export function BatchRecord() {
             )
           )}
         </div>
-        <p className="text-gray-600 text-sm">実施した運動を選択して記録します</p>
+        <p className="text-gray-600 text-sm">
+          {selectedDate === 'yesterday'
+            ? '昨日の運動を選択して記録します'
+            : '実施した運動を選択して記録します'}
+        </p>
       </header>
 
       {/* Main content */}
       <main className="flex-1 px-6 py-6">
+        {/* Date toggle */}
+        <div className="mb-4" role="radiogroup" aria-label="記録する日付">
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            <button
+              role="radio"
+              aria-checked={selectedDate === 'today'}
+              onClick={() => handleDateChange('today')}
+              className={`flex-1 py-3 px-4 rounded-lg text-center font-medium transition-colors min-h-[44px] ${
+                selectedDate === 'today'
+                  ? 'bg-white text-[#1E40AF] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              今日
+            </button>
+            <button
+              role="radio"
+              aria-checked={selectedDate === 'yesterday'}
+              onClick={() => handleDateChange('yesterday')}
+              className={`flex-1 py-3 px-4 rounded-lg text-center font-medium transition-colors min-h-[44px] ${
+                selectedDate === 'yesterday'
+                  ? 'bg-white text-[#1E40AF] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              昨日
+            </button>
+          </div>
+        </div>
+
         {/* Selection count */}
         {uncompletedExercises.length > 0 && (
           <div className="mb-4 flex items-center justify-between">
@@ -275,7 +338,7 @@ export function BatchRecord() {
           className="w-full bg-[#1E40AF] text-white px-6 py-4 rounded-xl font-medium hover:bg-[#1E3A8A] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[52px]"
           aria-label="記録する"
         >
-          {remainingCount === 0 ? 'すべて実施済みです' : isSubmitting ? '記録中...' : '記録する'}
+          {submitLabel}
         </button>
       </footer>
     </div>

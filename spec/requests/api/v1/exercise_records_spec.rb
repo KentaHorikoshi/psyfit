@@ -78,14 +78,15 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
           expect(record.user_id).to eq(user.id)
         end
 
-        context 'with custom completed_at' do
-          let(:custom_time) { '2026-01-21T10:30:00+09:00' }
-          let(:params_with_time) { valid_params.merge(completed_at: custom_time) }
+        context 'with custom completed_at (yesterday)' do
+          let(:yesterday_time) { 1.day.ago.in_time_zone('Tokyo').change(hour: 10, min: 30).iso8601 }
+          let(:params_with_time) { valid_params.merge(completed_at: yesterday_time) }
 
           it 'uses the provided completed_at time' do
             post '/api/v1/exercise_records', params: params_with_time
 
-            expect(json_response['data']['completed_at']).to include('2026-01-21')
+            expected_date = 1.day.ago.in_time_zone('Tokyo').strftime('%Y-%m-%d')
+            expect(json_response['data']['completed_at']).to include(expected_date)
           end
         end
 
@@ -148,6 +149,69 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
 
             expect(response).to have_http_status(:unprocessable_entity)
           end
+        end
+      end
+
+      context 'completed_at date validation' do
+        it 'accepts today date' do
+          post '/api/v1/exercise_records', params: {
+            exercise_id: exercise.id,
+            completed_reps: 10,
+            completed_sets: 3,
+            completed_at: Time.current.iso8601
+          }
+
+          expect(response).to have_http_status(:created)
+        end
+
+        it 'accepts yesterday date' do
+          yesterday = 1.day.ago.in_time_zone('Tokyo').change(hour: 12).iso8601
+          post '/api/v1/exercise_records', params: {
+            exercise_id: exercise.id,
+            completed_reps: 10,
+            completed_sets: 3,
+            completed_at: yesterday
+          }
+
+          expect(response).to have_http_status(:created)
+        end
+
+        it 'accepts yesterday at beginning of day' do
+          yesterday_start = 1.day.ago.in_time_zone('Tokyo').beginning_of_day.iso8601
+          post '/api/v1/exercise_records', params: {
+            exercise_id: exercise.id,
+            completed_reps: 10,
+            completed_sets: 3,
+            completed_at: yesterday_start
+          }
+
+          expect(response).to have_http_status(:created)
+        end
+
+        it 'rejects 2 days ago' do
+          two_days_ago = 2.days.ago.in_time_zone('Tokyo').change(hour: 12).iso8601
+          post '/api/v1/exercise_records', params: {
+            exercise_id: exercise.id,
+            completed_reps: 10,
+            completed_sets: 3,
+            completed_at: two_days_ago
+          }
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json_response['errors']).to have_key('completed_at')
+        end
+
+        it 'rejects future date' do
+          future = 1.day.from_now.in_time_zone('Tokyo').change(hour: 12).iso8601
+          post '/api/v1/exercise_records', params: {
+            exercise_id: exercise.id,
+            completed_reps: 10,
+            completed_sets: 3,
+            completed_at: future
+          }
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json_response['errors']).to have_key('completed_at')
         end
       end
 
@@ -347,17 +411,20 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
 
       context 'with date filtering' do
         let!(:old_record) do
-          create(:exercise_record,
-            user: user,
-            exercise: exercise1,
-            completed_at: 2.months.ago
-          )
+          # Create record with past date by travelling back in time to bypass validation
+          Timecop.travel(2.months.ago) do
+            create(:exercise_record,
+              user: user,
+              exercise: exercise1,
+              completed_at: Time.current
+            )
+          end
         end
         let!(:recent_record) do
           create(:exercise_record,
             user: user,
             exercise: exercise2,
-            completed_at: 1.week.ago
+            completed_at: 1.day.ago
           )
         end
 
@@ -381,7 +448,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
 
         it 'filters by date range' do
           get '/api/v1/users/me/exercise_records', params: {
-            start_date: 2.weeks.ago.to_date.to_s,
+            start_date: 2.days.ago.to_date.to_s,
             end_date: Date.current.to_s
           }
 

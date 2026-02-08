@@ -24,11 +24,13 @@ vi.mock('../../contexts/AuthContext', () => ({
 // Mock API
 const mockGetUserExercises = vi.fn()
 const mockCreateExerciseRecord = vi.fn()
+const mockGetExerciseRecords = vi.fn()
 
 vi.mock('../../lib/api-client', () => ({
   default: {
     getUserExercises: () => mockGetUserExercises(),
     createExerciseRecord: (data: CreateExerciseRecordRequest) => mockCreateExerciseRecord(data),
+    getExerciseRecords: (params: { start_date?: string; end_date?: string }) => mockGetExerciseRecords(params),
   },
 }))
 
@@ -87,6 +89,10 @@ describe('U-15 BatchRecord', () => {
         ],
       },
     })
+    mockGetExerciseRecords.mockResolvedValue({
+      status: 'success',
+      data: { records: [] },
+    })
     mockCreateExerciseRecord.mockResolvedValue({
       status: 'success',
       data: {
@@ -134,6 +140,140 @@ describe('U-15 BatchRecord', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /記録する/ })).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('date toggle', () => {
+    it('should render today/yesterday toggle buttons', async () => {
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByRole('radio', { name: /今日/ })).toBeInTheDocument()
+        expect(screen.getByRole('radio', { name: /昨日/ })).toBeInTheDocument()
+      })
+    })
+
+    it('should default to today', async () => {
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByRole('radio', { name: /今日/ })).toHaveAttribute('aria-checked', 'true')
+        expect(screen.getByRole('radio', { name: /昨日/ })).toHaveAttribute('aria-checked', 'false')
+      })
+    })
+
+    it('should switch to yesterday when clicked', async () => {
+      const user = userEvent.setup()
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByRole('radio', { name: /昨日/ })).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('radio', { name: /昨日/ }))
+
+      expect(screen.getByRole('radio', { name: /昨日/ })).toHaveAttribute('aria-checked', 'true')
+      expect(screen.getByRole('radio', { name: /今日/ })).toHaveAttribute('aria-checked', 'false')
+    })
+
+    it('should show yesterday subtitle when yesterday is selected', async () => {
+      const user = userEvent.setup()
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByText(/実施した運動を選択して記録します/)).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('radio', { name: /昨日/ }))
+
+      await waitFor(() => {
+        expect(screen.getByText(/昨日の運動を選択して記録します/)).toBeInTheDocument()
+      })
+    })
+
+    it('should refetch records when date changes', async () => {
+      const user = userEvent.setup()
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(mockGetExerciseRecords).toHaveBeenCalledTimes(1)
+      })
+
+      await user.click(screen.getByRole('radio', { name: /昨日/ }))
+
+      await waitFor(() => {
+        expect(mockGetExerciseRecords).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    it('should pass completed_at when recording for yesterday', async () => {
+      const user = userEvent.setup()
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/膝伸展運動/)).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('radio', { name: /昨日/ }))
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/膝伸展運動/)).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByLabelText(/膝伸展運動/))
+      await user.click(screen.getByRole('button', { name: /記録する/ }))
+
+      await waitFor(() => {
+        expect(mockCreateExerciseRecord).toHaveBeenCalledWith(
+          expect.objectContaining({ completed_at: expect.any(String) })
+        )
+      })
+    })
+
+    it('should NOT pass completed_at when recording for today', async () => {
+      const user = userEvent.setup()
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/膝伸展運動/)).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByLabelText(/膝伸展運動/))
+      await user.click(screen.getByRole('button', { name: /記録する/ }))
+
+      await waitFor(() => {
+        expect(mockCreateExerciseRecord).toHaveBeenCalledWith(
+          expect.not.objectContaining({ completed_at: expect.anything() })
+        )
+      })
+    })
+
+    it('should show yesterday submit label when yesterday is selected', async () => {
+      const user = userEvent.setup()
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/膝伸展運動/)).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('radio', { name: /昨日/ }))
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/膝伸展運動/)).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByLabelText(/膝伸展運動/))
+
+      expect(screen.getByText(/昨日の記録をする/)).toBeInTheDocument()
+    })
+
+    it('should have accessible radiogroup', async () => {
+      renderBatchRecord()
+
+      await waitFor(() => {
+        const radiogroup = screen.getByRole('radiogroup', { name: /記録する日付/ })
+        expect(radiogroup).toBeInTheDocument()
       })
     })
   })

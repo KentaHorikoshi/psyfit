@@ -81,7 +81,7 @@ exercises (運動マスタ)
 | exercise_type | VARCHAR(50) | NO | 運動種別 (ストレッチ/トレーニング/ほぐす/バランス) |
 | difficulty | VARCHAR(20) | NO | 難易度 (easy/medium/hard) |
 | body_part_major | VARCHAR(50) | YES | 大分類 (体幹・脊柱/上肢/下肢) |
-| body_part_minor | VARCHAR(50) | YES | 中分類 (頸部/胸部/腹部/腰椎/肩・上腕/肘・前腕/手関節・手指/股関節・大腿/膝・下腿/足関節・足部/その他) |
+| body_part_minor | VARCHAR(50) | YES | 中分類 (頸部/胸部/腹部/腰椎/胸部・腹部/腹部・胸部/腰椎・骨盤/肩・上腕/肘・前腕/手関節・手指/股関節・大腿/膝・下腿/足関節・足部/その他) |
 | recommended_reps | INTEGER | YES | 推奨回数 |
 | recommended_sets | INTEGER | YES | 推奨セット数 |
 | video_url | VARCHAR(255) | YES | 動画URL |

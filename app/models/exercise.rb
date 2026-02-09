@@ -16,7 +16,7 @@ class Exercise < ApplicationRecord
 
   # Body part minor constants (中分類) grouped by major
   BODY_PART_MINORS = {
-    '体幹・脊柱' => %w[頸部 胸部 腹部 腰椎 その他],
+    '体幹・脊柱' => %w[頸部 胸部 腹部 腰椎 胸部・腹部 腹部・胸部 腰椎・骨盤 その他],
     '上肢' => %w[肩・上腕 肘・前腕 手関節・手指],
     '下肢' => %w[股関節・大腿 膝・下腿 足関節・足部]
   }.freeze

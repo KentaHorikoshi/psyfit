@@ -237,7 +237,7 @@ export interface CreateStaffResponse {
 export type ExerciseType = 'ストレッチ' | 'トレーニング' | 'ほぐす' | 'バランス'
 export type BodyPartMajor = '体幹・脊柱' | '上肢' | '下肢'
 export type BodyPartMinor =
-  | '頸部' | '胸部' | '腹部' | '腰椎' | 'その他'
+  | '頸部' | '胸部' | '腹部' | '腰椎' | '胸部・腹部' | '腹部・胸部' | '腰椎・骨盤' | 'その他'
   | '肩・上腕' | '肘・前腕' | '手関節・手指'
   | '股関節・大腿' | '膝・下腿' | '足関節・足部'
 

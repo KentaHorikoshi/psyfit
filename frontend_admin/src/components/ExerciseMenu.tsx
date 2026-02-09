@@ -13,10 +13,12 @@ export function ExerciseMenu() {
   const [painFlag, setPainFlag] = useState(false)
   const [reason, setReason] = useState('')
   const [nextVisitDate, setNextVisitDate] = useState('')
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [expandedMajors, setExpandedMajors] = useState<Set<string>>(new Set())
+  const [expandedMinors, setExpandedMinors] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Fetch exercise masters and patient exercises on mount
   useEffect(() => {
@@ -34,14 +36,24 @@ export function ExerciseMenu() {
         const fetchedExercises = mastersResponse.data?.exercises || []
         setExercises(fetchedExercises)
 
-        // Expand all exercise types by default
-        const types = new Set(fetchedExercises.map(e => e.exercise_type))
-        setExpandedCategories(types)
+        // Expand all major categories by default
+        const majors = new Set(fetchedExercises.map(e => e.body_part_major || 'その他'))
+        setExpandedMajors(majors)
 
         // Pre-select assigned exercises and initialize their settings
         const assignments = assignedResponse.data?.assignments || []
         const assignedIds = new Set(assignments.map(a => a.exercise_id))
         setSelectedExercises(assignedIds)
+
+        // Expand minor categories that have assigned exercises
+        const assignedMinors = new Set<string>()
+        fetchedExercises.forEach(ex => {
+          if (assignedIds.has(ex.id)) {
+            const minorKey = `${ex.body_part_major || 'その他'}::${ex.body_part_minor || 'その他'}`
+            assignedMinors.add(minorKey)
+          }
+        })
+        setExpandedMinors(assignedMinors)
 
         // Initialize exercise settings from assigned exercises
         const initialSettings: Record<string, { sets: number; reps: number }> = {}
@@ -58,7 +70,7 @@ export function ExerciseMenu() {
           setNextVisitDate(patientResponse.data.next_visit_date)
         }
       } catch {
-        setError('運動マスタの取得に失敗しました')
+        setFetchError('運動マスタの取得に失敗しました')
       } finally {
         setIsLoading(false)
       }
@@ -67,13 +79,25 @@ export function ExerciseMenu() {
     fetchData()
   }, [patientId])
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategories((prev) => {
+  const toggleMajor = (major: string) => {
+    setExpandedMajors((prev) => {
       const newSet = new Set(prev)
-      if (newSet.has(category)) {
-        newSet.delete(category)
+      if (newSet.has(major)) {
+        newSet.delete(major)
       } else {
-        newSet.add(category)
+        newSet.add(major)
+      }
+      return newSet
+    })
+  }
+
+  const toggleMinor = (minorKey: string) => {
+    setExpandedMinors((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(minorKey)) {
+        newSet.delete(minorKey)
+      } else {
+        newSet.add(minorKey)
       }
       return newSet
     })
@@ -112,13 +136,13 @@ export function ExerciseMenu() {
     e.preventDefault()
 
     if (selectedExercises.size === 0) {
-      setError('運動を1つ以上選択してください')
+      setSubmitError('運動を1つ以上選択してください')
       return
     }
 
     try {
       setIsSubmitting(true)
-      setError(null)
+      setSubmitError(null)
 
       const assignments = Array.from(selectedExercises).map(exerciseId => {
         const settings = exerciseSettings[exerciseId]
@@ -141,20 +165,25 @@ export function ExerciseMenu() {
       // Success - navigate back
       navigate(`/patients/${patientId}`)
     } catch {
-      setError('運動メニューの保存に失敗しました')
+      setSubmitError('運動メニューの保存に失敗しました')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // Group exercises by exercise_type
+  // Group exercises by body_part_major → body_part_minor
   const groupedExercises = exercises.reduce((acc, exercise) => {
-    if (!acc[exercise.exercise_type]) {
-      acc[exercise.exercise_type] = []
+    const major = exercise.body_part_major || 'その他'
+    const minor = exercise.body_part_minor || 'その他'
+    if (!acc[major]) {
+      acc[major] = {}
     }
-    acc[exercise.exercise_type].push(exercise)
+    if (!acc[major][minor]) {
+      acc[major][minor] = []
+    }
+    acc[major][minor].push(exercise)
     return acc
-  }, {} as Record<string, ExerciseMaster[]>)
+  }, {} as Record<string, Record<string, ExerciseMaster[]>>)
 
   // Loading state
   if (isLoading) {
@@ -168,12 +197,12 @@ export function ExerciseMenu() {
     )
   }
 
-  // Error state
-  if (error) {
+  // Fetch error state
+  if (fetchError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600">{fetchError}</p>
         </div>
       </div>
     )
@@ -214,54 +243,93 @@ export function ExerciseMenu() {
               <h2 className="font-semibold text-gray-900 mb-4">運動項目を選択</h2>
 
               <div className="space-y-6">
-                {Object.entries(groupedExercises).map(([category, categoryExercises]) => (
-                  <div key={category} className="border border-gray-200 rounded-lg overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleCategory(category)}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors min-h-[44px]"
-                      aria-label={`運動種別: ${category}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-8 bg-[#3B82F6] rounded"></div>
-                        <h3 className="text-xl font-bold text-gray-900">{category}</h3>
-                        <span className="text-sm text-gray-500">
-                          ({categoryExercises.filter(e => selectedExercises.has(e.id)).length}/{categoryExercises.length})
-                        </span>
-                      </div>
-                      {expandedCategories.has(category) ? (
-                        <ChevronDown className="w-6 h-6 text-gray-600" />
-                      ) : (
-                        <ChevronRight className="w-6 h-6 text-gray-600" />
+                {Object.entries(groupedExercises).map(([major, minorGroups]) => {
+                  const allMajorExercises = Object.values(minorGroups).flat()
+                  const selectedCount = allMajorExercises.filter(e => selectedExercises.has(e.id)).length
+
+                  return (
+                    <div key={major} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => toggleMajor(major)}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors min-h-[44px]"
+                        aria-label={`大分類: ${major}`}
+                        aria-expanded={expandedMajors.has(major)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-8 bg-[#3B82F6] rounded"></div>
+                          <h3 className="text-xl font-bold text-gray-900">{major}</h3>
+                          <span className="text-sm text-gray-500">
+                            ({selectedCount}/{allMajorExercises.length})
+                          </span>
+                        </div>
+                        {expandedMajors.has(major) ? (
+                          <ChevronDown className="w-6 h-6 text-gray-600" />
+                        ) : (
+                          <ChevronRight className="w-6 h-6 text-gray-600" />
+                        )}
+                      </button>
+                      {expandedMajors.has(major) && (
+                        <div className="p-4 bg-white space-y-3">
+                          {Object.entries(minorGroups).map(([minor, minorExercises]) => {
+                            const minorKey = `${major}::${minor}`
+                            const minorSelectedCount = minorExercises.filter(e => selectedExercises.has(e.id)).length
+
+                            return (
+                              <div key={minor} className="border border-gray-100 rounded-lg overflow-hidden">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleMinor(minorKey)}
+                                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/50 hover:bg-gray-100/50 transition-colors min-h-[44px]"
+                                  aria-label={`中分類: ${minor}`}
+                                  aria-expanded={expandedMinors.has(minorKey)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-1 h-6 bg-[#10B981] rounded"></div>
+                                    <h4 className="text-base font-semibold text-gray-800">{minor}</h4>
+                                    <span className="text-sm text-gray-500">
+                                      ({minorSelectedCount}/{minorExercises.length})
+                                    </span>
+                                  </div>
+                                  {expandedMinors.has(minorKey) ? (
+                                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                                  ) : (
+                                    <ChevronRight className="w-5 h-5 text-gray-500" />
+                                  )}
+                                </button>
+                                {expandedMinors.has(minorKey) && (
+                                  <div className="space-y-2 p-3 bg-white">
+                                    {minorExercises.map((exercise) => (
+                                      <label
+                                        key={exercise.id}
+                                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100 min-h-[44px]"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedExercises.has(exercise.id)}
+                                          onChange={() => toggleExercise(exercise.id)}
+                                          className="mt-1 w-5 h-5 text-[#3B82F6] border-gray-300 rounded focus:ring-[#3B82F6] cursor-pointer"
+                                          aria-label={exercise.name}
+                                        />
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-900">{exercise.name}</p>
+                                          <p className="text-sm text-gray-600 mt-1">{exercise.description}</p>
+                                          <p className="text-sm text-gray-500 mt-1">
+                                            {exercise.recommended_sets}セット × {exercise.recommended_reps}回
+                                          </p>
+                                        </div>
+                                      </label>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
                       )}
-                    </button>
-                    {expandedCategories.has(category) && (
-                      <div className="space-y-2 p-4 bg-white">
-                        {categoryExercises.map((exercise) => (
-                          <label
-                            key={exercise.id}
-                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100 min-h-[44px]"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedExercises.has(exercise.id)}
-                              onChange={() => toggleExercise(exercise.id)}
-                              className="mt-1 w-5 h-5 text-[#3B82F6] border-gray-300 rounded focus:ring-[#3B82F6] cursor-pointer"
-                              aria-label={exercise.name}
-                            />
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{exercise.name}</p>
-                              <p className="text-sm text-gray-600 mt-1">{exercise.description}</p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {exercise.recommended_sets}セット × {exercise.recommended_reps}回
-                              </p>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -300,7 +368,8 @@ export function ExerciseMenu() {
                               max="10"
                               value={settings.sets}
                               onChange={(e) => {
-                                const value = parseInt(e.target.value) || 1
+                                const raw = parseInt(e.target.value)
+                                const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(10, raw))
                                 setExerciseSettings(prev => ({
                                   ...prev,
                                   [exerciseId]: { ...prev[exerciseId], sets: value }
@@ -321,7 +390,8 @@ export function ExerciseMenu() {
                               max="50"
                               value={settings.reps}
                               onChange={(e) => {
-                                const value = parseInt(e.target.value) || 1
+                                const raw = parseInt(e.target.value)
+                                const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(50, raw))
                                 setExerciseSettings(prev => ({
                                   ...prev,
                                   [exerciseId]: { ...prev[exerciseId], reps: value }
@@ -411,10 +481,10 @@ export function ExerciseMenu() {
           </div>
         </div>
 
-        {/* Error message */}
-        {error && (
+        {/* Submit error message */}
+        {submitError && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl" role="alert">
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="text-sm text-red-700">{submitError}</p>
           </div>
         )}
       </form>

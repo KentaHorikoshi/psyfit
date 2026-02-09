@@ -128,25 +128,31 @@ describe('S-06 ExerciseMenu', () => {
     })
 
     it('should load and display exercise masters', async () => {
+      const user = userEvent.setup()
       renderExerciseMenu()
 
+      // Assigned exercise (e1) should be visible because its minor category is auto-expanded
       await waitFor(() => {
         expect(screen.getAllByText('膝伸展運動（椅子座位）').length).toBeGreaterThan(0)
-        expect(screen.getAllByText('スクワット（浅め）').length).toBeGreaterThan(0)
-        expect(screen.getAllByText('腰椎ストレッチ').length).toBeGreaterThan(0)
       })
+
+      // Expand non-assigned minor category to see its exercises
+      const lumbarMinor = screen.getByRole('button', { name: /中分類: 腰椎/ })
+      await user.click(lumbarMinor)
+
+      expect(screen.getAllByText('腰椎ストレッチ').length).toBeGreaterThan(0)
 
       expect(mockGetExerciseMasters).toHaveBeenCalled()
     })
 
-    it('should display exercise categories', async () => {
+    it('should display major and minor categories', async () => {
       renderExerciseMenu()
 
       await waitFor(() => {
-        const kneeCategories = screen.getAllByText(/膝/)
-        const waistCategories = screen.getAllByText(/腰/)
-        expect(kneeCategories.length).toBeGreaterThan(0)
-        expect(waistCategories.length).toBeGreaterThan(0)
+        expect(screen.getByRole('button', { name: /大分類: 下肢/ })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /大分類: 体幹・脊柱/ })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /中分類: 膝・下腿/ })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /中分類: 腰椎/ })).toBeInTheDocument()
       })
     })
 

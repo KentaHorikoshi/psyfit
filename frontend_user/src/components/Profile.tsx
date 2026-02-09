@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { User, LogOut, Lock, Home as HomeIcon, ChevronRight } from 'lucide-react'
+import { User, LogOut, Lock, BookOpen, Home as HomeIcon, ChevronRight } from 'lucide-react'
 
 interface MenuItemProps {
   icon: React.ReactNode
@@ -86,6 +86,11 @@ export function Profile() {
           icon={<Lock size={20} className="text-[#1E40AF]" />}
           label="パスワード変更"
           onClick={() => navigate('/password-reset')}
+        />
+        <MenuItem
+          icon={<BookOpen size={20} className="text-[#1E40AF]" />}
+          label="使い方"
+          onClick={() => navigate('/guide')}
         />
         <MenuItem
           icon={<LogOut size={20} className="text-red-500" />}

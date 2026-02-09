@@ -13,6 +13,7 @@ import { Measurements } from './components/Measurements'
 import { ConditionInput } from './components/ConditionInput'
 import { BatchRecord } from './components/BatchRecord'
 import { Profile } from './components/Profile'
+import { UserGuide } from './components/UserGuide'
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/condition-input" element={<ConditionInput />} />
             <Route path="/record" element={<BatchRecord />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/guide" element={<UserGuide />} />
             <Route path="/connection-test" element={<ConnectionTest />} />
             <Route path="/welcome" element={<Welcome />} />
           </Routes>

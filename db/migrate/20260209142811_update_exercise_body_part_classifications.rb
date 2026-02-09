@@ -1,91 +1,91 @@
 class UpdateExerciseBodyPartClassifications < ActiveRecord::Migration[8.0]
   def up
-    # 運動分類の見直しに伴い、既存データの body_part_minor / body_part_major / exercise_type を更新
+    # 運動分類の見直しに伴い、既存データの body_part_major / body_part_minor / exercise_type を更新
+    # 名前のみで検索し、全分類フィールドを明示的にセット
 
-    # 体幹・脊柱 の中分類変更
     execute <<~SQL
-      UPDATE exercises SET body_part_minor = '胸部・腹部'
-      WHERE name = '上肢回旋（ソラシックツイスト）' AND body_part_minor = '胸部';
+      UPDATE exercises SET body_part_major = '上肢', body_part_minor = '肘・前腕'
+      WHERE name = '肘を曲げる運動';
     SQL
 
     execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腰椎・骨盤'
-      WHERE name = '下肢回旋（両膝倒しツイスト）' AND body_part_minor = '腰椎';
+      UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '胸部・腹部'
+      WHERE name = '上肢回旋（ソラシックツイスト）';
     SQL
 
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腹部・胸部'
-      WHERE name = 'キャットアンドドッグ' AND body_part_minor = '腰椎';
-    SQL
-
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腹部・胸部'
-      WHERE name = '膝つきプランク' AND body_part_minor = '腹部';
-    SQL
-
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腹部・胸部'
-      WHERE name = 'ロールダウン' AND body_part_minor = '腹部';
-    SQL
-
-    # 背中丸め: 中分類変更 + exercise_type をストレッチからトレーニングに変更
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腹部・胸部', exercise_type = 'トレーニング'
-      WHERE name = '背中丸め（座位片膝抱えストレッチ）' AND body_part_minor = '胸部';
-    SQL
-
-    # チェアスクワット: 中分類変更（大分類は下肢のまま）
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '股関節・大腿'
-      WHERE name = 'チェアスクワット' AND body_part_minor = '膝・下腿';
-    SQL
-
-    # バックブリッジ: 大分類・中分類の両方を変更
     execute <<~SQL
       UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '腰椎・骨盤'
-      WHERE name = 'バックブリッジ' AND body_part_major = '下肢' AND body_part_minor = '股関節・大腿';
-    SQL
-  end
-
-  def down
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '胸部'
-      WHERE name = '上肢回旋（ソラシックツイスト）' AND body_part_minor = '胸部・腹部';
+      WHERE name = '下肢回旋（両膝倒しツイスト）';
     SQL
 
     execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腰椎'
-      WHERE name = '下肢回旋（両膝倒しツイスト）' AND body_part_minor = '腰椎・骨盤';
+      UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '腹部・胸部'
+      WHERE name = 'キャットアンドドッグ';
     SQL
 
     execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腰椎'
-      WHERE name = 'キャットアンドドッグ' AND body_part_minor = '腹部・胸部';
+      UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '腹部・胸部'
+      WHERE name = '背中丸め（座位片膝抱えストレッチ）';
     SQL
 
     execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腹部'
-      WHERE name = '膝つきプランク' AND body_part_minor = '腹部・胸部';
-    SQL
-
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '腹部'
-      WHERE name = 'ロールダウン' AND body_part_minor = '腹部・胸部';
-    SQL
-
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '胸部', exercise_type = 'ストレッチ'
-      WHERE name = '背中丸め（座位片膝抱えストレッチ）' AND body_part_minor = '腹部・胸部';
-    SQL
-
-    execute <<~SQL
-      UPDATE exercises SET body_part_minor = '膝・下腿'
-      WHERE name = 'チェアスクワット' AND body_part_minor = '股関節・大腿';
+      UPDATE exercises SET exercise_type = 'トレーニング'
+      WHERE name = '背中丸め（座位片膝抱えストレッチ）';
     SQL
 
     execute <<~SQL
       UPDATE exercises SET body_part_major = '下肢', body_part_minor = '股関節・大腿'
-      WHERE name = 'バックブリッジ' AND body_part_major = '体幹・脊柱' AND body_part_minor = '腰椎・骨盤';
+      WHERE name = 'チェアスクワット';
+    SQL
+
+    execute <<~SQL
+      UPDATE exercises SET body_part_major = '下肢', body_part_minor = '膝・下腿'
+      WHERE name = '膝伸ばし（座位膝伸展運動）';
+    SQL
+
+    execute <<~SQL
+      UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '腹部・胸部'
+      WHERE name = '膝つきプランク';
+    SQL
+
+    execute <<~SQL
+      UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '腹部・胸部'
+      WHERE name = 'ロールダウン';
+    SQL
+
+    execute <<~SQL
+      UPDATE exercises SET body_part_major = '下肢', body_part_minor = '股関節・大腿'
+      WHERE name = '殿筋トレーニング(膝屈曲位うつ伏せ股関節伸展運動)';
+    SQL
+
+    execute <<~SQL
+      UPDATE exercises SET body_part_major = '体幹・脊柱', body_part_minor = '腰椎・骨盤'
+      WHERE name = 'バックブリッジ';
+    SQL
+  end
+
+  def down
+    # 全運動の body_part_major / body_part_minor をnullに戻す
+    execute <<~SQL
+      UPDATE exercises SET body_part_major = NULL, body_part_minor = NULL
+      WHERE name IN (
+        '肘を曲げる運動',
+        '上肢回旋（ソラシックツイスト）',
+        '下肢回旋（両膝倒しツイスト）',
+        'キャットアンドドッグ',
+        '背中丸め（座位片膝抱えストレッチ）',
+        'チェアスクワット',
+        '膝伸ばし（座位膝伸展運動）',
+        '膝つきプランク',
+        'ロールダウン',
+        '殿筋トレーニング(膝屈曲位うつ伏せ股関節伸展運動)',
+        'バックブリッジ'
+      );
+    SQL
+
+    execute <<~SQL
+      UPDATE exercises SET exercise_type = 'ストレッチ'
+      WHERE name = '背中丸め（座位片膝抱えストレッチ）';
     SQL
   end
 end

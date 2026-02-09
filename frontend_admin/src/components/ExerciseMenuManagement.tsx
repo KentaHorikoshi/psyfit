@@ -588,7 +588,7 @@ export function ExerciseMenuManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [exerciseTypeFilter, setExerciseTypeFilter] = useState<ExerciseType | 'all'>('all')
   const [bodyPartMajorFilter, setBodyPartMajorFilter] = useState<BodyPartMajor | 'all'>('all')
-  const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'all'>('all')
+  const [bodyPartMinorFilter, setBodyPartMinorFilter] = useState<BodyPartMinor | 'all'>('all')
   const [deleteTarget, setDeleteTarget] = useState<ExerciseMasterDetail | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -649,7 +649,7 @@ export function ExerciseMenuManagement() {
       if (bodyPartMajorFilter !== 'all' && exercise.body_part_major !== bodyPartMajorFilter) {
         return false
       }
-      if (difficultyFilter !== 'all' && exercise.difficulty !== difficultyFilter) {
+      if (bodyPartMinorFilter !== 'all' && exercise.body_part_minor !== bodyPartMinorFilter) {
         return false
       }
       if (searchQuery.trim()) {
@@ -663,7 +663,7 @@ export function ExerciseMenuManagement() {
       }
       return true
     })
-  }, [exercises, exerciseTypeFilter, bodyPartMajorFilter, difficultyFilter, searchQuery])
+  }, [exercises, exerciseTypeFilter, bodyPartMajorFilter, bodyPartMinorFilter, searchQuery])
 
   const formatDuration = (seconds: number | null): string => {
     if (seconds === null) return '-'
@@ -724,7 +724,10 @@ export function ExerciseMenuManagement() {
           {/* Body Part Major Filter */}
           <select
             value={bodyPartMajorFilter}
-            onChange={(e) => setBodyPartMajorFilter(e.target.value as BodyPartMajor | 'all')}
+            onChange={(e) => {
+              setBodyPartMajorFilter(e.target.value as BodyPartMajor | 'all')
+              setBodyPartMinorFilter('all')
+            }}
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
             aria-label="大分類フィルター"
           >
@@ -734,17 +737,22 @@ export function ExerciseMenuManagement() {
             <option value="下肢">下肢</option>
           </select>
 
-          {/* Difficulty Filter */}
+          {/* Body Part Minor Filter */}
           <select
-            value={difficultyFilter}
-            onChange={(e) => setDifficultyFilter(e.target.value as Difficulty | 'all')}
+            value={bodyPartMinorFilter}
+            onChange={(e) => setBodyPartMinorFilter(e.target.value as BodyPartMinor | 'all')}
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-            aria-label="難易度フィルター"
+            aria-label="中分類フィルター"
           >
-            <option value="all">すべての難易度</option>
-            <option value="easy">易しい</option>
-            <option value="medium">普通</option>
-            <option value="hard">難しい</option>
+            <option value="all">すべての中分類</option>
+            {(bodyPartMajorFilter !== 'all'
+              ? BODY_PART_MINORS_MAP[bodyPartMajorFilter]
+              : Object.values(BODY_PART_MINORS_MAP).flat()
+            ).map((minor) => (
+              <option key={minor} value={minor}>
+                {minor}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -8,7 +8,7 @@ class UserMailer < ApplicationMailer
     @recipient = recipient
     @reset_token = reset_token
     @reset_url = build_reset_url(recipient, reset_token)
-    @expiration_hours = 24
+    @expiration_hours = 1
 
     mail(
       to: recipient.email,

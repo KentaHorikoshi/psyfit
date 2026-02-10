@@ -36,26 +36,9 @@ module Api
 
         retries = 0
         begin
-          if patient.save
-            log_audit("create", "success", resource_id: patient.id)
-
-            render json: {
-              status: "success",
-              data: {
-                id: patient.id,
-                user_code: patient.user_code,
-                name: patient.name,
-                email: patient.email,
-                status: patient.status,
-                message: "患者を登録しました。初期パスワードは別途お知らせください。"
-              }
-            }, status: :created
-          else
-            render_error(
-              "バリデーションエラー",
-              errors: patient.errors.to_hash,
-              status: :unprocessable_entity
-            )
+          ActiveRecord::Base.transaction do
+            patient.save!
+            assign_staff_to_patient(patient)
           end
         rescue ActiveRecord::RecordNotUnique => e
           if e.message.include?("user_code") && retries < 3
@@ -64,7 +47,33 @@ module Api
             retry
           end
           raise
+        rescue ActiveRecord::RecordInvalid => e
+          return render_error(
+            "バリデーションエラー",
+            errors: patient.errors.any? ? patient.errors.to_hash : { assigned_staff_ids: [ e.message ] },
+            status: :unprocessable_entity
+          )
+        rescue ActiveRecord::RecordNotFound
+          return render_error(
+            "指定された職員が見つかりません",
+            errors: { assigned_staff_ids: [ "指定された職員が見つかりません" ] },
+            status: :unprocessable_entity
+          )
         end
+
+        log_audit("create", "success", resource_id: patient.id)
+
+        render json: {
+          status: "success",
+          data: {
+            id: patient.id,
+            user_code: patient.user_code,
+            name: patient.name,
+            email: patient.email,
+            status: patient.status,
+            message: "患者を登録しました。初期パスワードは別途お知らせください。"
+          }
+        }, status: :created
       end
 
       # PATCH /api/v1/patients/:id
@@ -96,6 +105,24 @@ module Api
           :name, :name_kana, :email, :birth_date,
           :password, :gender, :phone, :status, :condition
         )
+      end
+
+      def assign_staff_to_patient(patient)
+        staff_ids = params[:assigned_staff_ids]&.map(&:to_s)&.uniq
+        return if staff_ids.blank?
+
+        staff_members = Staff.active.where(id: staff_ids)
+        if staff_members.count != staff_ids.length
+          raise ActiveRecord::RecordNotFound, "指定された職員が見つかりません"
+        end
+
+        staff_ids.each_with_index do |staff_id, index|
+          patient.patient_staff_assignments.create!(
+            staff_id: staff_id,
+            is_primary: index == 0,
+            assigned_at: Time.current
+          )
+        end
       end
 
       def set_patient

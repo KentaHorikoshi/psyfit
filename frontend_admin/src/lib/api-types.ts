@@ -330,6 +330,7 @@ export interface CreatePatientRequest {
   phone?: string
   status?: PatientStatus
   condition?: string
+  assigned_staff_ids?: string[]
 }
 
 export interface CreatePatientResponse {

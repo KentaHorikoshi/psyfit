@@ -11,6 +11,7 @@ import { api } from '../../lib/api'
 vi.mock('../../lib/api', () => ({
   api: {
     createPatient: vi.fn(),
+    getStaffOptions: vi.fn(),
   },
 }))
 
@@ -78,9 +79,19 @@ function renderPatientCreateDialog(options: RenderOptions = {}) {
   }
 }
 
+const mockStaffOptions = [
+  { id: 'staff-1', name: '山田 花子' },
+  { id: 'staff-2', name: '鈴木 一郎' },
+  { id: 'staff-3', name: '佐藤 太郎' },
+]
+
 describe('PatientCreateDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(api.getStaffOptions).mockResolvedValue({
+      status: 'success',
+      data: { staff_options: mockStaffOptions },
+    })
   })
 
   describe('dialog visibility', () => {
@@ -309,6 +320,7 @@ describe('PatientCreateDialog', () => {
         phone: '',
         status: '維持期',
         condition: '',
+        assigned_staff_ids: [],
       })
 
       expect(onSuccess).toHaveBeenCalled()
@@ -353,6 +365,7 @@ describe('PatientCreateDialog', () => {
           phone: '090-1234-5678',
           status: '回復期',
           condition: '変形性膝関節症',
+          assigned_staff_ids: [],
         })
       })
     })
@@ -524,6 +537,116 @@ describe('PatientCreateDialog', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /登録中/ })).toBeDisabled()
+      })
+    })
+  })
+
+  describe('assigned staff selection', () => {
+    it('should fetch and display staff options as checkboxes', async () => {
+      renderPatientCreateDialog()
+
+      await waitFor(() => {
+        expect(api.getStaffOptions).toHaveBeenCalled()
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText('担当職員')).toBeInTheDocument()
+        expect(screen.getByLabelText('山田 花子')).toBeInTheDocument()
+        expect(screen.getByLabelText('鈴木 一郎')).toBeInTheDocument()
+        expect(screen.getByLabelText('佐藤 太郎')).toBeInTheDocument()
+      })
+    })
+
+    it('should allow selecting multiple staff members', async () => {
+      const user = userEvent.setup()
+      renderPatientCreateDialog()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('山田 花子')).toBeInTheDocument()
+      })
+
+      const checkbox1 = screen.getByLabelText('山田 花子')
+      const checkbox2 = screen.getByLabelText('鈴木 一郎')
+
+      await user.click(checkbox1)
+      await user.click(checkbox2)
+
+      expect(checkbox1).toBeChecked()
+      expect(checkbox2).toBeChecked()
+    })
+
+    it('should include assigned_staff_ids in API request when staff selected', async () => {
+      const user = userEvent.setup()
+      vi.mocked(api.createPatient).mockResolvedValue({
+        status: 'success',
+        data: {
+          id: 'new-patient-id',
+          user_code: 'USR001',
+          name: 'テスト 太郎',
+          email: 'test@example.com',
+          status: '維持期',
+          message: '患者を登録しました。',
+        },
+      })
+
+      renderPatientCreateDialog()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('山田 花子')).toBeInTheDocument()
+      })
+
+      await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
+      await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
+      await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
+      await user.type(screen.getByLabelText(/パスワード/), 'Password1!')
+
+      await user.click(screen.getByLabelText('山田 花子'))
+      await user.click(screen.getByLabelText('佐藤 太郎'))
+
+      await user.click(screen.getByRole('button', { name: '登録' }))
+
+      await waitFor(() => {
+        expect(api.createPatient).toHaveBeenCalledWith(
+          expect.objectContaining({
+            assigned_staff_ids: ['staff-1', 'staff-3'],
+          })
+        )
+      })
+    })
+
+    it('should submit without assigned_staff_ids when no staff selected', async () => {
+      const user = userEvent.setup()
+      vi.mocked(api.createPatient).mockResolvedValue({
+        status: 'success',
+        data: {
+          id: 'new-patient-id',
+          user_code: 'USR001',
+          name: 'テスト 太郎',
+          email: 'test@example.com',
+          status: '維持期',
+          message: '患者を登録しました。',
+        },
+      })
+
+      renderPatientCreateDialog()
+
+      await waitFor(() => {
+        expect(screen.getByText('担当職員')).toBeInTheDocument()
+      })
+
+      await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
+      await user.type(screen.getByLabelText(/メールアドレス/), 'test@example.com')
+      await user.type(screen.getByLabelText(/生年月日/), '1980-01-01')
+      await user.type(screen.getByLabelText(/パスワード/), 'Password1!')
+
+      await user.click(screen.getByRole('button', { name: '登録' }))
+
+      await waitFor(() => {
+        expect(api.createPatient).toHaveBeenCalledWith(
+          expect.objectContaining({
+            assigned_staff_ids: [],
+          })
+        )
       })
     })
   })

@@ -473,6 +473,46 @@ RSpec.describe 'Api::V1::Patients', type: :request do
         info = JSON.parse(audit.additional_info)
         expect(info['resource_type']).to eq('Patient')
       end
+
+      context 'with assigned_staff_ids' do
+        it 'creates patient with staff assignments' do
+          expect {
+            post '/api/v1/patients', params: valid_params.merge(
+              assigned_staff_ids: [ staff_member.id, other_staff.id ]
+            )
+          }.to change(User, :count).by(1)
+            .and change(PatientStaffAssignment, :count).by(2)
+
+          expect(response).to have_http_status(:created)
+
+          patient = User.find(json_response['data']['id'])
+          assignments = patient.patient_staff_assignments.order(:created_at)
+          expect(assignments.length).to eq(2)
+          expect(assignments.first.staff_id).to eq(staff_member.id)
+          expect(assignments.first.is_primary).to be true
+          expect(assignments.second.staff_id).to eq(other_staff.id)
+          expect(assignments.second.is_primary).to be false
+        end
+
+        it 'creates patient without assignments when assigned_staff_ids is empty' do
+          expect {
+            post '/api/v1/patients', params: valid_params.merge(assigned_staff_ids: [])
+          }.to change(User, :count).by(1)
+            .and change(PatientStaffAssignment, :count).by(0)
+
+          expect(response).to have_http_status(:created)
+        end
+
+        it 'returns 422 and rolls back when assigned_staff_ids contains invalid staff id' do
+          expect {
+            post '/api/v1/patients', params: valid_params.merge(
+              assigned_staff_ids: [ '00000000-0000-0000-0000-000000000000' ]
+            )
+          }.not_to change(User, :count)
+
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
     end
 
     context 'when authenticated as regular staff' do

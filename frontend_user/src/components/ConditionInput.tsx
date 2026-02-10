@@ -4,6 +4,14 @@ import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
 import { ChevronLeft } from 'lucide-react'
 
+function getLocalDateString(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function ConditionInput() {
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
@@ -12,6 +20,8 @@ export function ConditionInput() {
   const [bodyCondition, setBodyCondition] = useState(5)
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingCondition, setIsLoadingCondition] = useState(true)
+  const [existingConditionId, setExistingConditionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -20,7 +30,35 @@ export function ConditionInput() {
     }
   }, [isAuthenticated, authLoading, navigate])
 
-  if (authLoading) {
+  useEffect(() => {
+    if (!user) return
+
+    const fetchTodayCondition = async () => {
+      try {
+        const today = getLocalDateString()
+        const res = await apiClient.getMyDailyConditions({
+          start_date: today,
+          end_date: today,
+        })
+        const conditions = res.data?.conditions ?? []
+        const existing = conditions[0]
+        if (existing) {
+          setPainLevel(existing.pain_level)
+          setBodyCondition(existing.body_condition)
+          setNotes(existing.notes || '')
+          setExistingConditionId(existing.id)
+        }
+      } catch {
+        // Silently fail - use default values
+      } finally {
+        setIsLoadingCondition(false)
+      }
+    }
+
+    fetchTodayCondition()
+  }, [user])
+
+  if (authLoading || isLoadingCondition) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center" style={{ maxWidth: '390px', margin: '0 auto' }}>
         <div role="status" className="text-center">
@@ -40,7 +78,7 @@ export function ConditionInput() {
     setError(null)
 
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getLocalDateString()
       const trimmedNotes = notes.trim()
       await apiClient.createDailyCondition({
         recorded_date: today,
@@ -219,9 +257,9 @@ export function ConditionInput() {
               hover:bg-[#1E3A8A] transition-colors min-h-[52px]
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2
               disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="保存"
+            aria-label={existingConditionId ? '更新' : '保存'}
           >
-            {isSubmitting ? '保存中...' : '保存'}
+            {isSubmitting ? '保存中...' : existingConditionId ? '更新' : '保存'}
           </button>
         </div>
       </footer>

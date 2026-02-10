@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Check } from 'lucide-react'
 import { api } from '../lib/api'
-import type { CreatePatientRequest, PatientStatus } from '../lib/api-types'
+import type { CreatePatientRequest, PatientStatus, StaffOption } from '../lib/api-types'
 
 interface PatientCreateDialogProps {
   isOpen: boolean
@@ -19,6 +19,7 @@ interface FormData {
   phone: string
   status: PatientStatus
   condition: string
+  assigned_staff_ids: string[]
 }
 
 interface FormErrors {
@@ -39,6 +40,7 @@ const initialFormData: FormData = {
   phone: '',
   status: '維持期',
   condition: '',
+  assigned_staff_ids: [],
 }
 
 export function PatientCreateDialog({
@@ -51,6 +53,8 @@ export function PatientCreateDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [savedPassword, setSavedPassword] = useState('')
+  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([])
+  const [staffLoading, setStaffLoading] = useState(false)
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -59,6 +63,22 @@ export function PatientCreateDialog({
       setErrors({})
       setShowSuccess(false)
       setSavedPassword('')
+    }
+  }, [isOpen])
+
+  // Fetch staff options when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setStaffLoading(true)
+      api.getStaffOptions().then((res) => {
+        if (res.data?.staff_options) {
+          setStaffOptions(res.data.staff_options)
+        }
+      }).catch(() => {
+        setStaffOptions([])
+      }).finally(() => {
+        setStaffLoading(false)
+      })
     }
   }, [isOpen])
 
@@ -121,6 +141,7 @@ export function PatientCreateDialog({
         phone: formData.phone,
         status: formData.status,
         condition: formData.condition,
+        assigned_staff_ids: formData.assigned_staff_ids,
       }
 
       await api.createPatient(requestData)
@@ -151,6 +172,15 @@ export function PatientCreateDialog({
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
+  }
+
+  const handleStaffToggle = (staffId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      assigned_staff_ids: prev.assigned_staff_ids.includes(staffId)
+        ? prev.assigned_staff_ids.filter((id) => id !== staffId)
+        : [...prev.assigned_staff_ids, staffId],
+    }))
   }
 
   const handleClose = () => {
@@ -392,6 +422,37 @@ export function PatientCreateDialog({
                   <option value="回復期">回復期</option>
                   <option value="維持期">維持期</option>
                 </select>
+              </div>
+
+              {/* Assigned Staff */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  担当職員
+                </label>
+                {staffLoading ? (
+                  <p className="text-sm text-gray-500">職員情報を読み込み中...</p>
+                ) : staffOptions.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {staffOptions.map((staff) => (
+                      <label
+                        key={staff.id}
+                        htmlFor={`staff-${staff.id}`}
+                        className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors min-h-[44px]"
+                      >
+                        <input
+                          type="checkbox"
+                          id={`staff-${staff.id}`}
+                          checked={formData.assigned_staff_ids.includes(staff.id)}
+                          onChange={() => handleStaffToggle(staff.id)}
+                          className="w-4 h-4 text-[#1E40AF] border-gray-300 rounded focus:ring-[#3B82F6]"
+                        />
+                        <span className="text-base text-gray-900">{staff.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">職員情報がありません</p>
+                )}
               </div>
 
               {/* Condition */}

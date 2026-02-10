@@ -14,6 +14,10 @@ import type {
   BatchExerciseAssignmentRequest,
   ExerciseAssignmentsResponse,
   StaffListResponse,
+  StaffOptionsResponse,
+  StaffDetail,
+  UpdateStaffRequest,
+  AssignedPatientSummary,
   CreateStaffRequest,
   CreateStaffResponse,
   ChangePasswordRequest,
@@ -84,6 +88,20 @@ class ApiClient {
   async post<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  }
+
+  async patch<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  }
+
+  async put<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     })
   }
@@ -214,6 +232,11 @@ class ApiClient {
     return response.blob()
   }
 
+  // Staff Options for filter dropdowns (accessible to all staff)
+  async getStaffOptions(): Promise<ApiResponse<StaffOptionsResponse>> {
+    return this.get<StaffOptionsResponse>('/staff/options')
+  }
+
   // Staff Management endpoints (S-08)
   async getStaffList(): Promise<ApiResponse<StaffListResponse>> {
     return this.get<StaffListResponse>('/staff')
@@ -221,6 +244,26 @@ class ApiClient {
 
   async createStaff(data: CreateStaffRequest): Promise<ApiResponse<CreateStaffResponse>> {
     return this.post<CreateStaffResponse>('/staff', data)
+  }
+
+  async getStaffDetail(staffId: string): Promise<ApiResponse<StaffDetail>> {
+    return this.get<StaffDetail>(`/staff/${staffId}`)
+  }
+
+  async updateStaff(staffId: string, data: UpdateStaffRequest): Promise<ApiResponse<StaffDetail>> {
+    return this.patch<StaffDetail>(`/staff/${staffId}`, data)
+  }
+
+  async deleteStaff(staffId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.delete<{ message: string }>(`/staff/${staffId}`)
+  }
+
+  async getStaffAssignedPatients(staffId: string): Promise<ApiResponse<{ patients: AssignedPatientSummary[] }>> {
+    return this.get<{ patients: AssignedPatientSummary[] }>(`/staff/${staffId}/assigned_patients`)
+  }
+
+  async updateStaffAssignedPatients(staffId: string, patientIds: string[]): Promise<ApiResponse<{ message: string }>> {
+    return this.put<{ message: string }>(`/staff/${staffId}/assigned_patients`, { patient_ids: patientIds })
   }
 
   // Password Change endpoint (S-09)

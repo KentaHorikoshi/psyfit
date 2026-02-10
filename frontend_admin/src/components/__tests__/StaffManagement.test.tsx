@@ -508,7 +508,7 @@ describe('S-08 StaffManagement', () => {
       await waitFor(() => {
         const table = screen.getByRole('table')
         expect(table).toBeInTheDocument()
-        expect(within(table).getAllByRole('columnheader')).toHaveLength(5)
+        expect(within(table).getAllByRole('columnheader')).toHaveLength(6)
       })
     })
 

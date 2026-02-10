@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Search, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react'
-import type { PatientsListResponse, PatientStatus } from '../lib/api-types'
+import type { PatientsListResponse, PatientStatus, StaffOption } from '../lib/api-types'
 
 interface PatientListProps {
   data: PatientsListResponse
   isLoading: boolean
   onSearch: (query: string) => void
   onFilterStatus: (status: PatientStatus | 'all') => void
+  onFilterStaff: (staffId: string) => void
+  staffOptions: StaffOption[]
   onPageChange: (page: number) => void
   onPatientClick: (path: string) => void
   onCreatePatient?: () => void
@@ -33,12 +35,15 @@ export function PatientList({
   isLoading,
   onSearch,
   onFilterStatus,
+  onFilterStaff,
+  staffOptions,
   onPageChange,
   onPatientClick,
   onCreatePatient,
 }: PatientListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<PatientStatus | 'all'>('all')
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('all')
 
   // Debounced search
   useEffect(() => {
@@ -53,6 +58,11 @@ export function PatientList({
     const statusValue = status as PatientStatus | 'all'
     setSelectedStatus(statusValue)
     onFilterStatus(statusValue)
+  }
+
+  const handleStaffChange = (staffId: string) => {
+    setSelectedStaffId(staffId)
+    onFilterStaff(staffId)
   }
 
   const handleRowClick = (patientId: string) => {
@@ -93,7 +103,7 @@ export function PatientList({
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search Box */}
           <div className="relative">
             <label htmlFor="patient-search" className="sr-only">
@@ -126,6 +136,27 @@ export function PatientList({
               <option value="急性期">急性期</option>
               <option value="回復期">回復期</option>
               <option value="維持期">維持期</option>
+            </select>
+          </div>
+
+          {/* Staff Filter */}
+          <div>
+            <label htmlFor="staff-filter" className="sr-only">
+              担当職員で絞り込み
+            </label>
+            <select
+              id="staff-filter"
+              value={selectedStaffId}
+              onChange={(e) => handleStaffChange(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent text-base min-h-[44px]"
+              aria-label="担当職員で絞り込み"
+            >
+              <option value="all">担当職員: すべて</option>
+              {staffOptions.map((staff) => (
+                <option key={staff.id} value={staff.id}>
+                  {staff.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

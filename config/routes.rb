@@ -50,10 +50,15 @@ Rails.application.routes.draw do
         get "report", to: "patient_reports#show"
       end
 
-      # Staff management (manager only)
-      resources :staff, only: [ :index, :create ] do
+      # Staff management (manager only, except options)
+      resources :staff, only: [ :index, :show, :create, :update, :destroy ] do
         collection do
           post "me/password", to: "staff#change_password"
+          get "options", to: "staff#options"
+        end
+        member do
+          get "assigned_patients", to: "staff#assigned_patients"
+          put "assigned_patients", to: "staff#update_assigned_patients"
         end
       end
 

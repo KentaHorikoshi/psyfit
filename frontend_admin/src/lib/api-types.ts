@@ -279,6 +279,35 @@ export interface CreateExerciseMasterResponse {
   exercise: ExerciseMasterDetail
 }
 
+// Staff Options for filter dropdowns
+export interface StaffOption {
+  id: string
+  name: string
+}
+
+export interface StaffOptionsResponse {
+  staff_options: StaffOption[]
+}
+
+// Staff Detail Types (S-08 edit)
+export interface AssignedPatientSummary {
+  id: string
+  name: string
+  is_primary: boolean
+}
+
+export interface StaffDetail extends StaffMember {
+  assigned_patients: AssignedPatientSummary[]
+}
+
+export interface UpdateStaffRequest {
+  name?: string
+  name_kana?: string
+  email?: string
+  role?: 'manager' | 'staff'
+  department?: string
+}
+
 // Password Change Types (S-09)
 export interface ChangePasswordRequest {
   current_password: string

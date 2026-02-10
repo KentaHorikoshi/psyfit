@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { PatientList } from '../PatientList'
-import type { Patient, PatientsListResponse } from '../../lib/api-types'
+import type { Patient, PatientsListResponse, StaffOption } from '../../lib/api-types'
 
 // Mock useNavigate
 const mockNavigate = vi.fn()
@@ -64,12 +64,19 @@ const mockResponse: PatientsListResponse = {
   },
 }
 
+const mockStaffOptions: StaffOption[] = [
+  { id: 'ST001', name: '山田 太郎' },
+  { id: 'ST002', name: '佐藤 花子' },
+]
+
 function renderPatientList(props = {}) {
   const defaultProps = {
     data: mockResponse,
     isLoading: false,
     onSearch: vi.fn(),
     onFilterStatus: vi.fn(),
+    onFilterStaff: vi.fn(),
+    staffOptions: mockStaffOptions,
     onPageChange: vi.fn(),
     onPatientClick: mockNavigate,
   }
@@ -243,6 +250,50 @@ describe('S-03 PatientList', () => {
       expect(within(filterSelect).getByRole('option', { name: '急性期' })).toBeInTheDocument()
       expect(within(filterSelect).getByRole('option', { name: '回復期' })).toBeInTheDocument()
       expect(within(filterSelect).getByRole('option', { name: '維持期' })).toBeInTheDocument()
+    })
+  })
+
+  describe('staff filter', () => {
+    it('should render staff filter dropdown', () => {
+      renderPatientList()
+
+      expect(screen.getByRole('combobox', { name: /担当職員で絞り込み/ })).toBeInTheDocument()
+    })
+
+    it('should show all staff options plus default option', () => {
+      renderPatientList()
+
+      const filterSelect = screen.getByRole('combobox', { name: /担当職員で絞り込み/ })
+      const options = within(filterSelect).getAllByRole('option')
+
+      expect(options).toHaveLength(3) // "担当職員: すべて" + 2 staff
+      expect(within(filterSelect).getByRole('option', { name: '担当職員: すべて' })).toBeInTheDocument()
+    })
+
+    it('should call onFilterStaff when selecting a staff member', async () => {
+      const user = userEvent.setup()
+      const onFilterStaff = vi.fn()
+      renderPatientList({ onFilterStaff })
+
+      const filterSelect = screen.getByRole('combobox', { name: /担当職員で絞り込み/ })
+      await user.selectOptions(filterSelect, 'ST001')
+
+      expect(onFilterStaff).toHaveBeenCalledWith('ST001')
+    })
+
+    it('should have minimum tap target size', () => {
+      renderPatientList()
+
+      const filterSelect = screen.getByRole('combobox', { name: /担当職員で絞り込み/ })
+      expect(filterSelect).toHaveClass('min-h-[44px]')
+    })
+
+    it('should render gracefully with empty staff options', () => {
+      renderPatientList({ staffOptions: [] })
+
+      const filterSelect = screen.getByRole('combobox', { name: /担当職員で絞り込み/ })
+      const options = within(filterSelect).getAllByRole('option')
+      expect(options).toHaveLength(1) // Only "担当職員: すべて"
     })
   })
 

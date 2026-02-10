@@ -3,8 +3,9 @@
 module Api
   module V1
     class StaffController < BaseController
-      before_action :require_manager!, except: [ :change_password ]
-      before_action :authenticate_staff!, only: [ :change_password ]
+      before_action :require_manager!, except: [ :change_password, :options ]
+      before_action :authenticate_staff!, only: [ :change_password, :options ]
+      before_action :set_staff_member, only: [ :show, :update, :destroy, :assigned_patients, :update_assigned_patients ]
 
       # POST /api/v1/staff/me/password
       def change_password
@@ -38,6 +39,16 @@ module Api
         end
       end
 
+      # GET /api/v1/staff/options
+      # Returns minimal staff list for dropdown filters (accessible to all authenticated staff)
+      def options
+        staff_members = Staff.active.order(:name)
+
+        render_success({
+          staff_options: staff_members.map { |s| { id: s.id, name: s.name } }
+        })
+      end
+
       # GET /api/v1/staff
       def index
         staff_members = Staff.active.order(:staff_id)
@@ -47,6 +58,13 @@ module Api
         render_success({
           staff: serialize_staff_list(staff_members)
         })
+      end
+
+      # GET /api/v1/staff/:id
+      def show
+        log_audit("read", "success", resource_id: @staff_member.id)
+
+        render_success(serialize_staff_detail(@staff_member))
       end
 
       # POST /api/v1/staff
@@ -79,12 +97,80 @@ module Api
         end
       end
 
+      # PATCH /api/v1/staff/:id
+      def update
+        if @staff_member.update(staff_update_params)
+          log_audit("update", "success", resource_id: @staff_member.id)
+          render_success(serialize_staff_detail(@staff_member))
+        else
+          render_error(
+            "バリデーションエラー",
+            errors: @staff_member.errors.to_hash,
+            status: :unprocessable_entity
+          )
+        end
+      end
+
+      # DELETE /api/v1/staff/:id
+      def destroy
+        if @staff_member.id == current_staff.id
+          return render_error("自分自身を削除することはできません", status: :unprocessable_entity)
+        end
+
+        @staff_member.soft_delete
+        log_audit("delete", "success", resource_id: @staff_member.id)
+        render_success({ message: "職員を削除しました" })
+      end
+
+      # GET /api/v1/staff/:id/assigned_patients
+      def assigned_patients
+        assignments = @staff_member.patient_staff_assignments.includes(:user)
+        patients = assignments.map do |a|
+          { id: a.user.id, name: a.user.name, is_primary: a.is_primary }
+        end
+
+        render_success({ patients: patients })
+      end
+
+      # PUT /api/v1/staff/:id/assigned_patients
+      def update_assigned_patients
+        patient_ids = params[:patient_ids] || []
+
+        ActiveRecord::Base.transaction do
+          @staff_member.patient_staff_assignments.destroy_all
+          patient_ids.each do |pid|
+            @staff_member.patient_staff_assignments.create!(
+              user_id: pid,
+              assigned_at: Time.current,
+              is_primary: false
+            )
+          end
+        end
+
+        log_audit("update", "success", resource_id: @staff_member.id)
+        render_success({ message: "担当患者を更新しました" })
+      rescue ActiveRecord::RecordInvalid => e
+        render_error(e.message, status: :unprocessable_entity)
+      end
+
       private
 
       ALLOWED_ROLES = %w[manager staff].freeze
 
+      def set_staff_member
+        @staff_member = Staff.active.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render_error("職員が見つかりません", status: :not_found)
+      end
+
       def staff_params
         permitted = params.permit(:name, :name_kana, :email, :password, :department)
+        permitted[:role] = sanitized_role if params[:role].present?
+        permitted
+      end
+
+      def staff_update_params
+        permitted = params.permit(:name, :name_kana, :email, :department)
         permitted[:role] = sanitized_role if params[:role].present?
         permitted
       end
@@ -102,9 +188,20 @@ module Api
           id: staff.id,
           staff_id: staff.staff_id,
           name: staff.name,
+          name_kana: staff.name_kana,
+          email: staff.email,
           role: staff.role,
-          department: staff.department
+          department: staff.department,
+          created_at: staff.created_at&.iso8601
         }
+      end
+
+      def serialize_staff_detail(staff)
+        serialize_staff(staff).merge(
+          assigned_patients: staff.patient_staff_assignments.includes(:user).map do |a|
+            { id: a.user.id, name: a.user.name, is_primary: a.is_primary }
+          end
+        )
       end
 
       def change_password_params

@@ -107,11 +107,12 @@ module Api
       end
 
       def fetch_patients
-        User.active
+        User.active.includes(patient_staff_assignments: :staff)
       end
 
       def apply_filters(scope)
         scope = scope.by_status(params[:status]) if params[:status].present?
+        scope = scope.assigned_to(params[:staff_id]) if params[:staff_id].present?
         scope
       end
 

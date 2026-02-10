@@ -10,7 +10,7 @@ import {
 } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { api } from './lib/api'
-import type { PatientsListResponse, PatientStatus, DashboardStats, Patient } from './lib/api-types'
+import type { PatientsListResponse, PatientStatus, DashboardStats, Patient, StaffOption } from './lib/api-types'
 
 // Components
 import { Login } from './components/Login'
@@ -159,8 +159,24 @@ function PatientListPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<PatientStatus | 'all'>('all')
+  const [staffFilter, setStaffFilter] = useState<string>('all')
+  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([])
   const [page, setPage] = useState(1)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+
+  useEffect(() => {
+    const fetchStaffOptions = async () => {
+      try {
+        const response = await api.getStaffOptions()
+        if (response.status === 'success' && response.data) {
+          setStaffOptions(response.data.staff_options)
+        }
+      } catch {
+        // Staff options fetch failed - dropdown will show only "すべて"
+      }
+    }
+    fetchStaffOptions()
+  }, [])
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -168,6 +184,7 @@ function PatientListPage() {
       const params: Record<string, string> = { page: String(page) }
       if (searchQuery) params.search = searchQuery
       if (statusFilter !== 'all') params.status = statusFilter
+      if (staffFilter !== 'all') params.staff_id = staffFilter
 
       const response = await api.getPatients(params)
       if (response.status === 'success' && response.data) {
@@ -178,7 +195,7 @@ function PatientListPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, searchQuery, statusFilter])
+  }, [page, searchQuery, statusFilter, staffFilter])
 
   useEffect(() => {
     fetchPatients()
@@ -194,6 +211,11 @@ function PatientListPage() {
     setPage(1)
   }, [])
 
+  const handleFilterStaff = useCallback((staffId: string) => {
+    setStaffFilter(staffId)
+    setPage(1)
+  }, [])
+
   const handleCreateSuccess = useCallback(() => {
     // Refresh patient list after successful creation
     fetchPatients()
@@ -206,6 +228,8 @@ function PatientListPage() {
         isLoading={isLoading}
         onSearch={handleSearch}
         onFilterStatus={handleFilterStatus}
+        onFilterStaff={handleFilterStaff}
+        staffOptions={staffOptions}
         onPageChange={setPage}
         onPatientClick={(path) => navigate(path)}
         onCreatePatient={() => setIsCreateDialogOpen(true)}

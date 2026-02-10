@@ -29,6 +29,7 @@ import type {
   CreateExerciseMasterResponse,
   DashboardStatsResponse,
   TodayAppointmentsResponse,
+  DailyConditionsResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -280,6 +281,20 @@ class ApiClient {
   // Patient Create endpoint (S-03)
   async createPatient(data: CreatePatientRequest): Promise<ApiResponse<CreatePatientResponse>> {
     return this.post<CreatePatientResponse>('/patients', data)
+  }
+
+  // Patient Daily Conditions endpoint (S-04)
+  async getPatientDailyConditions(
+    patientId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<DailyConditionsResponse>> {
+    const params = new URLSearchParams()
+    if (startDate) params.append('start_date', startDate)
+    if (endDate) params.append('end_date', endDate)
+    const query = params.toString()
+    const endpoint = `/patients/${patientId}/daily_conditions${query ? `?${query}` : ''}`
+    return this.get<DailyConditionsResponse>(endpoint)
   }
 }
 

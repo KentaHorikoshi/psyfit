@@ -6,6 +6,7 @@ import { useCalendarData } from './calendar/useCalendarData'
 import { CalendarMonthNav } from './calendar/CalendarMonthNav'
 import { CalendarGrid } from './calendar/CalendarGrid'
 import { DayDetailPanel } from './calendar/DayDetailPanel'
+import { ConditionGraph } from './calendar/ConditionGraph'
 import { formatDateKey } from './calendar/calendar-utils'
 
 export function ExerciseHistory() {
@@ -142,6 +143,11 @@ export function ExerciseHistory() {
               nextVisitDate={user.next_visit_date}
               previousVisitDate={user.previous_visit_date}
             />
+
+            {/* Condition Graph */}
+            <div className="mt-4">
+              <ConditionGraph year={currentYear} month={currentMonth} />
+            </div>
 
             {/* Day Detail Panel */}
             {selectedDate && (

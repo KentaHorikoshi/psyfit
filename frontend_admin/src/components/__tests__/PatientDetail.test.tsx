@@ -15,15 +15,29 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+// Mock Recharts
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  LineChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Line: () => <div />,
+  XAxis: () => <div />,
+  YAxis: () => <div />,
+  CartesianGrid: () => <div />,
+  Tooltip: () => <div />,
+  Legend: () => <div />,
+}))
+
 // Mock the API
 const mockGetPatientDetail = vi.fn()
 const mockGetPatientMeasurements = vi.fn()
+const mockGetPatientDailyConditions = vi.fn()
 
 vi.mock('../../lib/api', () => ({
   api: {
     getPatientDetail: (id: string) => mockGetPatientDetail(id),
     getPatientMeasurements: (id: string, startDate?: string, endDate?: string) =>
       mockGetPatientMeasurements(id, startDate, endDate),
+    getPatientDailyConditions: (...args: unknown[]) => mockGetPatientDailyConditions(...args),
   },
 }))
 
@@ -72,6 +86,12 @@ describe('S-04 PatientDetail', () => {
       status: 'success',
       data: {
         measurements: [],
+      },
+    })
+    mockGetPatientDailyConditions.mockResolvedValue({
+      status: 'success',
+      data: {
+        conditions: [],
       },
     })
   })

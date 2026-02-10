@@ -93,7 +93,12 @@
     - `CalendarGrid.tsx` - カレンダーグリッド + 凡例
     - `CalendarDayCell.tsx` - 日付セル（ステータス色分け）
     - `DayDetailPanel.tsx` - 日付詳細パネル
-- テスト: 45 tests passed (calendar-utils: 21, ExerciseHistory: 24)
+    - `ConditionGraph.tsx` - 体調推移グラフ（痛み・体調の折れ線グラフ）
+- カレンダー下部に体調推移グラフ表示（Recharts LineChart）
+  - 痛みの程度（赤 #EF4444）と体の調子（緑 #10B981）の2本線
+  - Y軸: 0-10 固定、月のデータを表示
+  - データなし時: 「この月の体調データはありません」
+- テスト: 45 tests passed (calendar-utils: 21, ExerciseHistory: 24) + ConditionGraph: 7 tests
 
 ### U-08: 測定値履歴
 - 体重・筋力等の推移グラフ
@@ -204,8 +209,14 @@
 - 個人情報
 - 疾患・身体状態
 - 経過グラフ
+- 体調推移グラフ（担当職員セクション下に配置）
+  - Recharts LineChart: 痛みの程度（赤 #EF4444）、体の調子（緑 #10B981）
+  - Y軸: 0-10 固定、日付範囲フィルタ（デフォルト過去30日）
+  - Loading / Empty / Error 各状態対応
+  - バックエンドAPI: `GET /api/v1/patients/:patient_id/daily_conditions` ✅
+  - 実装: `frontend_admin/src/components/PatientConditionChart.tsx` ✅
 - 実装: `frontend_admin/src/components/PatientDetail.tsx` ✅
-- テスト: 16 tests passed
+- テスト: PatientDetail 20件 + PatientConditionChart 8件
 
 ### S-05: 測定値入力
 - 測定日入力

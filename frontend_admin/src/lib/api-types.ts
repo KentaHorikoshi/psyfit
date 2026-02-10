@@ -333,6 +333,19 @@ export interface ChangePasswordResponse {
   message: string
 }
 
+// Daily Condition Types (S-04 Patient Detail)
+export interface DailyCondition {
+  id: string
+  recorded_date: string
+  pain_level: number
+  body_condition: number
+  notes?: string
+}
+
+export interface DailyConditionsResponse {
+  conditions: DailyCondition[]
+}
+
 // Patient Create Types (S-03)
 export interface CreatePatientRequest {
   name: string

@@ -286,7 +286,8 @@ ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=your_salt
 - [x] 動画アクセス制御の実装
 - [x] レート制限の実装
 - [x] Docker環境構築（docker-compose.yml, .env.example, bin/docker-*）
-- [ ] CI/CDパイプライン構築
+- [x] CI/CDパイプライン構築（GitHub Actions - 8ジョブ）
+- [ ] デプロイ前チェックリスト完了（[08-deployment-checklist.md](.claude/docs/08-deployment-checklist.md)参照）
 - [ ] SSL証明書設定
 - [ ] 本番環境デプロイ
 
@@ -340,6 +341,7 @@ npm run test:e2e:report # レポート表示
 | [05-security-requirements.md](.claude/docs/05-security-requirements.md) | セキュリティ要件 |
 | [06-non-functional-requirements.md](.claude/docs/06-non-functional-requirements.md) | 非機能要件 |
 | [07-browser-test-checklist.md](.claude/docs/07-browser-test-checklist.md) | ブラウザ動作テストチェックリスト |
+| [08-deployment-checklist.md](.claude/docs/08-deployment-checklist.md) | デプロイ前チェックリスト |
 | [99-confirmation-items.md](.claude/docs/99-confirmation-items.md) | 確認事項・TODO |
 
 ## セキュリティ

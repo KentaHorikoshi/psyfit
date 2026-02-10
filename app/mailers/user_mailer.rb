@@ -25,6 +25,6 @@ class UserMailer < ApplicationMailer
                  ENV.fetch("USER_APP_URL", "http://localhost:3000")
                end
 
-    "#{base_url}/password_reset?token=#{reset_token.token}"
+    "#{base_url}/password-reset/#{reset_token.token}"
   end
 end

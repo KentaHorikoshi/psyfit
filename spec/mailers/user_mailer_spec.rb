@@ -24,9 +24,9 @@ RSpec.describe UserMailer, type: :mailer do
       expect(text_body).to include(reset_token.token)
     end
 
-    it "includes the expiration notice (24 hours) in the body" do
+    it "includes the expiration notice (1 hour) in the body" do
       text_body = mail.text_part.body.decoded
-      expect(text_body).to include("24時間")
+      expect(text_body).to include("1時間")
     end
 
     it "renders both text and HTML parts" do
@@ -40,7 +40,7 @@ RSpec.describe UserMailer, type: :mailer do
       let(:text_body) { mail.text_part.body.decoded }
 
       it "includes the reset link" do
-        expect(text_body).to include("password_reset")
+        expect(text_body).to include("password-reset")
         expect(text_body).to include(reset_token.token)
       end
 

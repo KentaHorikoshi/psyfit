@@ -30,6 +30,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | POST /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
 | GET /api/v1/users/me/measurements | ✅ 実装済み | ✅ |
+| GET /api/v1/patients/:patient_id/daily_conditions | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:patient_id/report | ✅ 実装済み | ✅ |
 | GET /api/v1/staff | ✅ 実装済み | ✅ |
 | POST /api/v1/staff | ✅ 実装済み | ✅ |
@@ -776,6 +777,60 @@ Cookie: _psyfit_session=<session_id>
   }
 }
 ```
+
+#### GET /api/v1/patients/:patient_id/daily_conditions (職員用) ✅
+
+患者の体調記録履歴を取得。
+
+**認証**: 職員セッション必須
+
+**認可ルール**:
+- マネージャー: 全患者を閲覧可能
+- 一般職員: 担当患者のみ閲覧可能（`patient_staff_assignments` テーブルで関連付け）
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| patient_id | UUID | 患者ID |
+
+**クエリパラメータ**:
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| start_date | date | NO | 開始日（YYYY-MM-DD）|
+| end_date | date | NO | 終了日（YYYY-MM-DD）|
+
+```json
+// Query Parameters
+?start_date=2026-01-01&end_date=2026-01-31
+
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "conditions": [
+      {
+        "id": "uuid",
+        "recorded_date": "2026-01-21",
+        "pain_level": 3,
+        "body_condition": 7,
+        "notes": "少し痛みがあるが調子は良い"
+      }
+    ]
+  }
+}
+```
+
+**監査ログ**: `action: 'read'`, `resource_type: 'DailyCondition'`
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `403 Forbidden`: 一般職員が担当外の患者にアクセスした場合
+- `404 Not Found`: 患者が存在しない場合
+
+**実装ファイル**:
+- コントローラ: `app/controllers/api/v1/patient_daily_conditions_controller.rb`
+- テスト: `spec/requests/api/v1/patient_daily_conditions_spec.rb` (10件)
+- ルーティング: `config/routes.rb` に `resources :daily_conditions, only: [:index], controller: 'patient_daily_conditions'` 定義済み
 
 ---
 

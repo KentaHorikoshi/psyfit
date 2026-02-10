@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Dumbbell, FileText } from 'lucide-react'
 import { api } from '../lib/api'
 import type { PatientDetail as PatientDetailType, PatientStatus } from '../lib/api-types'
+import { PatientConditionChart } from './PatientConditionChart'
 
 function StatusBadge({ status }: { status: PatientStatus }) {
   const statusStyles = {
@@ -229,7 +230,7 @@ export function PatientDetail() {
       </div>
 
       {/* Assigned Staff Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">担当職員</h2>
 
         <div className="space-y-3">
@@ -249,6 +250,9 @@ export function PatientDetail() {
           ))}
         </div>
       </div>
+
+      {/* Condition Chart */}
+      <PatientConditionChart patientId={patient.id} />
     </div>
   )
 }

@@ -28,6 +28,7 @@ import type {
   CreateExerciseMasterRequest,
   CreateExerciseMasterResponse,
   DashboardStatsResponse,
+  TodayAppointmentsResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -132,6 +133,11 @@ class ApiClient {
   // Dashboard Stats
   async getDashboardStats(): Promise<ApiResponse<DashboardStatsResponse>> {
     return this.get<DashboardStatsResponse>('/dashboard/stats')
+  }
+
+  // Today Appointments (Dashboard drill-down)
+  async getTodayAppointments(): Promise<ApiResponse<TodayAppointmentsResponse>> {
+    return this.get<TodayAppointmentsResponse>('/dashboard/today_appointments')
   }
 
   // Patient Management

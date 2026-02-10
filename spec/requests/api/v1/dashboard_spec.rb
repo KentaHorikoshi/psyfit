@@ -105,6 +105,73 @@ RSpec.describe 'Api::V1::Dashboard', type: :request do
     end
   end
 
+  describe 'GET /api/v1/dashboard/today_appointments' do
+    context 'when not authenticated' do
+      it 'returns 401 unauthorized' do
+        get '/api/v1/dashboard/today_appointments'
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'as authenticated staff' do
+      before { staff_login(manager) }
+
+      it 'returns patients with today appointments' do
+        get '/api/v1/dashboard/today_appointments'
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['status']).to eq('success')
+
+        patients = json_response['data']['patients']
+        expect(patients.length).to eq(2)
+      end
+
+      it 'returns patient details with required fields' do
+        get '/api/v1/dashboard/today_appointments'
+
+        patient = json_response['data']['patients'].first
+        expect(patient).to have_key('id')
+        expect(patient).to have_key('name')
+        expect(patient).to have_key('age')
+        expect(patient).to have_key('gender')
+        expect(patient).to have_key('status')
+        expect(patient).to have_key('condition')
+      end
+
+      it 'does not include patients with future visit dates' do
+        get '/api/v1/dashboard/today_appointments'
+
+        patient_ids = json_response['data']['patients'].map { |p| p['id'] }
+        expect(patient_ids).not_to include(patient3.id)
+      end
+
+      it 'does not include deleted patients' do
+        patient1.update!(deleted_at: Time.current)
+
+        get '/api/v1/dashboard/today_appointments'
+
+        patients = json_response['data']['patients']
+        expect(patients.length).to eq(1)
+      end
+
+      it 'returns empty array when no patients have appointments today' do
+        patient1.update!(next_visit_date: Date.tomorrow)
+        patient2.update!(next_visit_date: Date.tomorrow)
+
+        get '/api/v1/dashboard/today_appointments'
+
+        expect(json_response['data']['patients']).to eq([])
+      end
+
+      it 'creates an audit log entry' do
+        expect {
+          get '/api/v1/dashboard/today_appointments'
+        }.to change(AuditLog, :count).by(1)
+      end
+    end
+  end
+
   private
 
   def staff_login(staff)

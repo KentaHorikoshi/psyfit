@@ -64,6 +64,7 @@ Rails.application.routes.draw do
 
       # Dashboard stats (staff)
       get "dashboard/stats", to: "dashboard#stats"
+      get "dashboard/today_appointments", to: "dashboard#today_appointments"
 
       # Exercise masters (staff)
       resources :exercise_masters, only: [ :index, :create, :destroy ]

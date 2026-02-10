@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { UserCheck, Calendar, Activity, Users, ArrowRight, ClipboardList, Dumbbell } from 'lucide-react'
 import type { Staff, Patient, DashboardStats, PatientStatus } from '../lib/api-types'
+import { TodayAppointmentsDialog } from './TodayAppointmentsDialog'
 
 interface DashboardProps {
   staff: Staff
@@ -13,9 +15,10 @@ interface KPICardProps {
   label: string
   value: string | number
   color: 'blue' | 'green' | 'purple' | 'orange'
+  onClick?: () => void
 }
 
-function KPICard({ icon, label, value, color }: KPICardProps) {
+function KPICard({ icon, label, value, color, onClick }: KPICardProps) {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',
@@ -23,8 +26,8 @@ function KPICard({ icon, label, value, color }: KPICardProps) {
     orange: 'bg-orange-50 text-orange-600',
   }
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+  const cardContent = (
+    <>
       <div
         className={`w-12 h-12 rounded-lg ${colorClasses[color]} flex items-center justify-center mb-4`}
       >
@@ -32,6 +35,25 @@ function KPICard({ icon, label, value, color }: KPICardProps) {
       </div>
       <p className="text-sm text-gray-600 mb-1">{label}</p>
       <p className="text-3xl font-bold text-gray-900">{value}</p>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-left w-full hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer focus:ring-2 focus:ring-[#3B82F6] focus:outline-none min-h-[44px]"
+        aria-label={`${label}の詳細を表示`}
+      >
+        {cardContent}
+      </button>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      {cardContent}
     </div>
   )
 }
@@ -53,6 +75,8 @@ function StatusBadge({ status }: { status: PatientStatus }) {
 }
 
 export function Dashboard({ staff, patients, stats, onNavigate }: DashboardProps) {
+  const [isTodayAppointmentsOpen, setIsTodayAppointmentsOpen] = useState(false)
+
   const handlePatientClick = (patientId: string) => {
     onNavigate(`/patients/${patientId}`)
   }
@@ -90,6 +114,7 @@ export function Dashboard({ staff, patients, stats, onNavigate }: DashboardProps
           label="本日の来院予定"
           value={stats.today_appointments_count}
           color="green"
+          onClick={() => setIsTodayAppointmentsOpen(true)}
         />
         <KPICard
           icon={<Activity className="w-6 h-6" />}
@@ -187,6 +212,13 @@ export function Dashboard({ staff, patients, stats, onNavigate }: DashboardProps
         患者一覧を見る
         <ArrowRight className="w-4 h-4" />
       </button>
+
+      {/* Today Appointments Dialog */}
+      <TodayAppointmentsDialog
+        isOpen={isTodayAppointmentsOpen}
+        onOpenChange={setIsTodayAppointmentsOpen}
+        onPatientClick={(patientId) => onNavigate(`/patients/${patientId}`)}
+      />
     </div>
   )
 }

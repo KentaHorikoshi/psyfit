@@ -78,6 +78,20 @@ export interface DashboardStatsResponse {
   weekly_exercises_count: number
 }
 
+// Today Appointments (Dashboard drill-down)
+export interface TodayAppointmentPatient {
+  id: string
+  name: string
+  age: number
+  gender: '男性' | '女性'
+  status: PatientStatus
+  condition: string
+}
+
+export interface TodayAppointmentsResponse {
+  patients: TodayAppointmentPatient[]
+}
+
 // Patient Detail Types
 export interface AssignedStaff {
   id: string

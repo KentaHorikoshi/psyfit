@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { Dashboard } from '../Dashboard'
 import type { Staff, Patient, DashboardStats } from '../../lib/api-types'
+import { api } from '../../lib/api'
 
 // Mock useNavigate
 const mockNavigate = vi.fn()
@@ -14,6 +15,12 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   }
 })
+
+vi.mock('../../lib/api', () => ({
+  api: {
+    getTodayAppointments: vi.fn(),
+  },
+}))
 
 const mockStaff: Staff = {
   id: '1',
@@ -85,6 +92,10 @@ function renderDashboard() {
 describe('S-02 Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(api.getTodayAppointments).mockResolvedValue({
+      status: 'success',
+      data: { patients: [] },
+    })
   })
 
   describe('rendering', () => {
@@ -251,6 +262,34 @@ describe('S-02 Dashboard', () => {
       )
 
       expect(screen.getByText('担当患者がいません')).toBeInTheDocument()
+    })
+  })
+
+  describe('today appointments KPI card', () => {
+    it('should render today appointments KPI as a clickable button', () => {
+      renderDashboard()
+
+      const button = screen.getByRole('button', { name: '本日の来院予定の詳細を表示' })
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should open dialog when today appointments KPI card is clicked', async () => {
+      const user = userEvent.setup()
+      renderDashboard()
+
+      await user.click(screen.getByRole('button', { name: '本日の来院予定の詳細を表示' }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
+    })
+
+    it('should not render other KPI cards as buttons', () => {
+      renderDashboard()
+
+      expect(screen.queryByRole('button', { name: '担当患者数の詳細を表示' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '今週の運動実施の詳細を表示' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '全患者数の詳細を表示' })).not.toBeInTheDocument()
     })
   })
 

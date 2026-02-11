@@ -22,8 +22,8 @@ class VideoAccessToken < ApplicationRecord
   DEFAULT_EXPIRATION = 1.hour
 
   # Scopes
-  scope :valid, -> { where('expires_at > ? AND used_at IS NULL', Time.current) }
-  scope :expired, -> { where('expires_at <= ?', Time.current) }
+  scope :valid, -> { where("expires_at > ? AND used_at IS NULL", Time.current) }
+  scope :expired, -> { where("expires_at <= ?", Time.current) }
   scope :used, -> { where.not(used_at: nil) }
   scope :for_user, ->(user_id) { where(user_id: user_id) }
   scope :for_exercise, ->(exercise_id) { where(exercise_id: exercise_id) }

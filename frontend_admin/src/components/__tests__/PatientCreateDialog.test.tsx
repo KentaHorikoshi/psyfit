@@ -24,7 +24,6 @@ const mockManagerUser: Staff = {
 }
 
 // mockStaffUser is available for future access control tests
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _mockStaffUser: Staff = {
   id: 'staff1',
   staff_id: 'STF001',
@@ -32,6 +31,7 @@ const _mockStaffUser: Staff = {
   role: 'staff',
   department: 'リハビリテーション科',
 }
+void _mockStaffUser
 
 function createMockAuthContext(staff: Staff | null): AuthContextType {
   return {

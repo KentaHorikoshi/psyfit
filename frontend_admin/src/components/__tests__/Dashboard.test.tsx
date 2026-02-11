@@ -174,14 +174,14 @@ describe('S-02 Dashboard', () => {
     it('should render measurement input buttons', () => {
       renderDashboard()
 
-      const measurementButtons = screen.getAllByRole('button', { name: /測定値入力/ })
+      const measurementButtons = screen.getAllByLabelText(/の測定値入力/)
       expect(measurementButtons).toHaveLength(3)
     })
 
     it('should render exercise menu buttons', () => {
       renderDashboard()
 
-      const menuButtons = screen.getAllByRole('button', { name: /メニュー設定/ })
+      const menuButtons = screen.getAllByLabelText(/のメニュー設定/)
       expect(menuButtons).toHaveLength(3)
     })
   })
@@ -216,17 +216,17 @@ describe('S-02 Dashboard', () => {
       const user = userEvent.setup()
       renderDashboard()
 
-      const measurementButtons = screen.getAllByRole('button', { name: /測定値入力/ })
+      const measurementButtons = screen.getAllByLabelText(/の測定値入力/)
       await user.click(measurementButtons[0]!)
 
-      expect(mockNavigate).toHaveBeenCalledWith('/patients/p1/measurements')
+      expect(mockNavigate).toHaveBeenCalledWith('/patients/p1/measurements/new')
     })
 
     it('should navigate to exercise menu page when menu button is clicked', async () => {
       const user = userEvent.setup()
       renderDashboard()
 
-      const menuButtons = screen.getAllByRole('button', { name: /メニュー設定/ })
+      const menuButtons = screen.getAllByLabelText(/のメニュー設定/)
       await user.click(menuButtons[0]!)
 
       expect(mockNavigate).toHaveBeenCalledWith('/patients/p1/exercise-menu')

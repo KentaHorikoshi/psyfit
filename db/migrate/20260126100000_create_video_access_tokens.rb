@@ -13,8 +13,8 @@ class CreateVideoAccessTokens < ActiveRecord::Migration[8.0]
     end
 
     add_index :video_access_tokens, :token, unique: true
-    add_index :video_access_tokens, [:user_id, :exercise_id]
+    add_index :video_access_tokens, [ :user_id, :exercise_id ]
     add_index :video_access_tokens, :expires_at
-    add_index :video_access_tokens, [:expires_at, :used_at], name: 'index_video_access_tokens_on_valid'
+    add_index :video_access_tokens, [ :expires_at, :used_at ], name: 'index_video_access_tokens_on_valid'
   end
 end

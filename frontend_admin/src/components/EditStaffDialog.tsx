@@ -129,8 +129,6 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
       await loadAssignedPatients(staff.id)
       setPatientSaveSuccess(true)
       setTimeout(() => setPatientSaveSuccess(false), 2000)
-    } catch (err) {
-      throw err
     } finally {
       setIsSavingPatients(false)
     }

@@ -44,9 +44,15 @@ frontend_admin/e2e/.auth/
 frontend_admin/test-results/
 
 node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
+
+# Coverage reports
+coverage/
+frontend_user/coverage/
+frontend_admin/coverage/
+
+# Build output
+frontend_user/dist/
+frontend_admin/dist/
+
+# TypeScript build info
+*.tsbuildinfo

@@ -130,6 +130,7 @@ export interface ExerciseRecordsResponse {
 
 // Date Filter Params
 export interface DateFilterParams {
+  [key: string]: string | undefined
   start_date?: string
   end_date?: string
 }

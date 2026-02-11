@@ -18,6 +18,11 @@ FactoryBot.define do
 
     trait :last_week do
       completed_at { 1.week.ago }
+      to_create { |instance| instance.save!(validate: false) }
+    end
+
+    trait :historical do
+      to_create { |instance| instance.save!(validate: false) }
     end
   end
 end

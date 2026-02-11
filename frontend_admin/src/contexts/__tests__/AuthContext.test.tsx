@@ -96,7 +96,7 @@ describe('Staff AuthContext', () => {
 
       vi.mocked(api.getCurrentStaff).mockResolvedValueOnce({
         status: 'success',
-        data: mockStaff,
+        data: { staff: mockStaff } as never,
       })
 
       renderWithProviders(<TestComponent />)
@@ -137,7 +137,7 @@ describe('Staff AuthContext', () => {
       vi.mocked(api.getCurrentStaff).mockRejectedValueOnce(new Error('Unauthorized'))
       vi.mocked(api.staffLogin).mockResolvedValueOnce({
         status: 'success',
-        data: { staff: mockStaff },
+        data: { staff: mockStaff } as never,
       })
 
       renderWithProviders(<TestComponent />)
@@ -197,7 +197,7 @@ describe('Staff AuthContext', () => {
 
       vi.mocked(api.getCurrentStaff).mockResolvedValueOnce({
         status: 'success',
-        data: mockStaff,
+        data: { staff: mockStaff } as never,
       })
       vi.mocked(api.logout).mockResolvedValueOnce({
         status: 'success',

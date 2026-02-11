@@ -108,7 +108,7 @@ module Api
       end
 
       def assign_staff_to_patient(patient)
-        staff_ids = params[:assigned_staff_ids]&.map(&:to_s)&.uniq
+        staff_ids = params[:assigned_staff_ids]&.map(&:to_s)&.reject(&:blank?)&.uniq
         return if staff_ids.blank?
 
         staff_members = Staff.active.where(id: staff_ids)

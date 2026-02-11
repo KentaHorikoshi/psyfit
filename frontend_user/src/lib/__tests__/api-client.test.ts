@@ -214,7 +214,7 @@ describe('ApiClient', () => {
 
         expect(response.status).toBe('success')
         expect(response.data?.exercises).toHaveLength(1)
-        expect(response.data?.exercises[0].name).toBe('スクワット')
+        expect(response.data!.exercises[0]!.name).toBe('スクワット')
       })
     })
 
@@ -509,7 +509,7 @@ describe('ApiClient', () => {
 
         expect(response.status).toBe('success')
         expect(response.data?.measurements).toHaveLength(1)
-        expect(response.data?.measurements[0].weight_kg).toBe(65.5)
+        expect(response.data!.measurements[0]!.weight_kg).toBe(65.5)
       })
 
       it('should include date filter params in query string', async () => {

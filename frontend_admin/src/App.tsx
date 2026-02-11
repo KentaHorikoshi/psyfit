@@ -150,7 +150,6 @@ function DashboardPage() {
  * Patient list page wrapper - manages search, filter, pagination state and fetches data.
  */
 function PatientListPage() {
-  const { staff } = useAuth()
   const navigate = useNavigate()
   const [data, setData] = useState<PatientsListResponse>({
     patients: [],

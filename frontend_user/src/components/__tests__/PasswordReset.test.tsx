@@ -319,7 +319,7 @@ describe('PasswordReset', () => {
         const passwordInput = screen.getByLabelText('新しいパスワード')
         expect(passwordInput).toHaveAttribute('type', 'password')
 
-        const toggleButton = screen.getAllByRole('button', { name: /パスワードを(表示|非表示)/ })[0]
+        const toggleButton = screen.getAllByRole('button', { name: /パスワードを(表示|非表示)/ })[0]!
         fireEvent.click(toggleButton)
 
         expect(passwordInput).toHaveAttribute('type', 'text')

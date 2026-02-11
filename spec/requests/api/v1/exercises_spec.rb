@@ -11,7 +11,7 @@ RSpec.describe 'Api::V1::Exercises', type: :request do
     create(:exercise,
       name: 'スクワット',
       description: '下半身の筋力強化',
-      category: '筋力',
+      exercise_type: 'トレーニング',
       difficulty: 'easy',
       recommended_reps: 10,
       recommended_sets: 3,
@@ -25,7 +25,7 @@ RSpec.describe 'Api::V1::Exercises', type: :request do
     create(:exercise,
       name: '片足立ち',
       description: 'バランス訓練',
-      category: 'バランス',
+      exercise_type: 'バランス',
       difficulty: 'medium'
     )
   end
@@ -63,7 +63,7 @@ RSpec.describe 'Api::V1::Exercises', type: :request do
             'id' => exercise.id,
             'name' => 'スクワット',
             'description' => '下半身の筋力強化',
-            'category' => 'lower_body',
+            'exercise_type' => 'training',
             'reps' => 10,
             'sets' => 3,
             'video_url' => '/videos/squat.mp4',

@@ -228,8 +228,8 @@ export function ReportGeneration() {
 
           {/* Additional Info */}
           <p className="text-sm text-gray-500 text-center mt-4">
-            期間: {new Date(startDate).toLocaleDateString('ja-JP')} 〜{' '}
-            {new Date(endDate).toLocaleDateString('ja-JP')}
+            期間: {startDate ? new Date(startDate).toLocaleDateString('ja-JP') : ''} 〜{' '}
+            {endDate ? new Date(endDate).toLocaleDateString('ja-JP') : ''}
           </p>
 
           {/* Error message */}

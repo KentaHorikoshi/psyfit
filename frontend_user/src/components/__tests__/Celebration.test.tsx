@@ -162,7 +162,9 @@ describe('U-13 Celebration', () => {
       setupApiMocks({ exerciseRecordCount: 1, conditionCount: 0 })
       renderCelebration()
 
-      // Wait for API calls to resolve
+      // Flush promises (Promise.all + React state update + useEffect)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(0)
 
       // Fast-forward 3 seconds
@@ -176,6 +178,8 @@ describe('U-13 Celebration', () => {
       renderCelebration()
 
       await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(3000)
 
       expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
@@ -185,6 +189,8 @@ describe('U-13 Celebration', () => {
       setupApiMocks({ exerciseRecordCount: 1, conditionCount: 1 })
       renderCelebration()
 
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(3000)
 
@@ -197,6 +203,8 @@ describe('U-13 Celebration', () => {
       renderCelebration()
 
       await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(3000)
 
       expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true })
@@ -205,6 +213,8 @@ describe('U-13 Celebration', () => {
     it('should not navigate before 3 seconds after target is determined', async () => {
       renderCelebration()
 
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(2000)
 
@@ -226,6 +236,8 @@ describe('U-13 Celebration', () => {
       renderCelebration()
 
       await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(0)
 
       const { unmount } = renderCelebration()
       unmount()
@@ -240,6 +252,7 @@ describe('U-13 Celebration', () => {
       const today = new Date().toISOString().split('T')[0]
       renderCelebration()
 
+      await vi.advanceTimersByTimeAsync(0)
       await vi.advanceTimersByTimeAsync(0)
 
       expect(mockGetExerciseRecords).toHaveBeenCalledWith({

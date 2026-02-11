@@ -380,7 +380,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
           expect(first_record).to include(
             'exercise_id' => exercise2.id,
             'exercise_name' => '片足立ち',
-            'exercise_category' => exercise2.category,
+            'exercise_category' => exercise2.exercise_type,
             'sets_completed' => 2,
             'reps_completed' => 15
           )

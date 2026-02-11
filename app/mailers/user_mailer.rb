@@ -21,9 +21,9 @@ class UserMailer < ApplicationMailer
   def build_reset_url(recipient, reset_token)
     base_url = if recipient.is_a?(Staff)
                  ENV.fetch("ADMIN_APP_URL", "http://localhost:3003")
-               else
+    else
                  ENV.fetch("USER_APP_URL", "http://localhost:3000")
-               end
+    end
 
     "#{base_url}/password-reset/#{reset_token.token}"
   end

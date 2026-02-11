@@ -128,7 +128,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         context 'with optional parameters' do
           it 'allows target_reps to be nil' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              assignments: [{ exercise_id: exercise.id, sets: 3 }]
+              assignments: [ { exercise_id: exercise.id, sets: 3 } ]
             }, as: :json
 
             expect(response).to have_http_status(:created)
@@ -137,7 +137,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
           it 'allows target_sets to be nil' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              assignments: [{ exercise_id: exercise.id, reps: 10 }]
+              assignments: [ { exercise_id: exercise.id, reps: 10 } ]
             }, as: :json
 
             expect(response).to have_http_status(:created)
@@ -181,7 +181,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
             )
 
             post "/api/v1/patients/#{patient.id}/exercises", params: {
-              assignments: [{ exercise_id: another_exercise.id, sets: 2, reps: 15 }]
+              assignments: [ { exercise_id: another_exercise.id, sets: 2, reps: 15 } ]
             }, as: :json
 
             expect(response).to have_http_status(:created)

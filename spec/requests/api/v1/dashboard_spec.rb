@@ -43,9 +43,9 @@ RSpec.describe 'Api::V1::Dashboard', type: :request do
       end
 
       it 'returns weekly_exercises_count for all patients' do
-        create(:exercise_record, user: patient1, exercise: exercise, completed_at: 1.day.ago)
-        create(:exercise_record, user: patient2, exercise: exercise, completed_at: 2.days.ago)
-        create(:exercise_record, user: patient3, exercise: exercise, completed_at: 3.days.ago)
+        create(:exercise_record, :historical, user: patient1, exercise: exercise, completed_at: 1.day.ago)
+        create(:exercise_record, :historical, user: patient2, exercise: exercise, completed_at: 2.days.ago)
+        create(:exercise_record, :historical, user: patient3, exercise: exercise, completed_at: 3.days.ago)
 
         get '/api/v1/dashboard/stats'
 
@@ -53,8 +53,8 @@ RSpec.describe 'Api::V1::Dashboard', type: :request do
       end
 
       it 'does not count exercise records older than 1 week' do
-        create(:exercise_record, user: patient1, exercise: exercise, completed_at: 1.day.ago)
-        create(:exercise_record, user: patient2, exercise: exercise, completed_at: 8.days.ago)
+        create(:exercise_record, :historical, user: patient1, exercise: exercise, completed_at: 1.day.ago)
+        create(:exercise_record, :historical, user: patient2, exercise: exercise, completed_at: 8.days.ago)
 
         get '/api/v1/dashboard/stats'
 

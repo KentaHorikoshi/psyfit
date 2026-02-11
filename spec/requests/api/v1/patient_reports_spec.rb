@@ -73,13 +73,13 @@ RSpec.describe 'Api::V1::PatientReports', type: :request do
           let(:exercise) { create(:exercise, name: 'スクワット') }
 
           before do
-            create(:exercise_record,
+            create(:exercise_record, :historical,
                    user: patient,
                    exercise: exercise,
                    completed_at: Time.zone.parse('2026-01-15 10:00:00'),
                    completed_reps: 10,
                    completed_sets: 3)
-            create(:exercise_record,
+            create(:exercise_record, :historical,
                    user: patient,
                    exercise: exercise,
                    completed_at: Time.zone.parse('2026-01-16 10:00:00'),
@@ -251,7 +251,7 @@ RSpec.describe 'Api::V1::PatientReports', type: :request do
         get "/api/v1/patients/#{patient.id}/report",
             params: { start_date: start_date, end_date: end_date, format: 'csv' }
 
-        expect(response.body.bytes[0..2]).to eq([0xEF, 0xBB, 0xBF])
+        expect(response.body.bytes[0..2]).to eq([ 0xEF, 0xBB, 0xBF ])
       end
 
       it 'sets charset=utf-8 in Content-Type header' do
@@ -295,7 +295,7 @@ RSpec.describe 'Api::V1::PatientReports', type: :request do
         let(:exercise) { create(:exercise, name: 'スクワット') }
 
         before do
-          create(:exercise_record,
+          create(:exercise_record, :historical,
                  user: patient,
                  exercise: exercise,
                  completed_at: Time.zone.parse('2026-01-15 10:00:00'),

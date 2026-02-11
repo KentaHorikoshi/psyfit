@@ -10,8 +10,8 @@ RSpec.describe UserMailer, type: :mailer do
 
     it "renders the headers" do
       expect(mail.subject).to eq("【PsyFit】パスワードリセットのご案内")
-      expect(mail.to).to eq(["tanaka@example.com"])
-      expect(mail.from).to eq(["noreply@psyfit.jp"])
+      expect(mail.to).to eq([ "tanaka@example.com" ])
+      expect(mail.from).to eq([ "noreply@psyfit.jp" ])
     end
 
     it "includes the user name in the body" do
@@ -75,7 +75,7 @@ RSpec.describe UserMailer, type: :mailer do
 
     it "renders the headers for staff" do
       expect(mail.subject).to eq("【PsyFit】パスワードリセットのご案内")
-      expect(mail.to).to eq(["yamada@hospital.jp"])
+      expect(mail.to).to eq([ "yamada@hospital.jp" ])
     end
 
     it "includes the staff name in the body" do

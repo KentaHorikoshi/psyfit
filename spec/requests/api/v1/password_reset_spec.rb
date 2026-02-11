@@ -47,7 +47,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
           end
 
           mail = ActionMailer::Base.deliveries.last
-          expect(mail.to).to eq([user.email])
+          expect(mail.to).to eq([ user.email ])
           expect(mail.subject).to eq('【PsyFit】パスワードリセットのご案内')
         end
 
@@ -150,7 +150,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
           end
 
           mail = ActionMailer::Base.deliveries.last
-          expect(mail.to).to eq([staff.email])
+          expect(mail.to).to eq([ staff.email ])
           expect(mail.subject).to eq('【PsyFit】パスワードリセットのご案内')
         end
       end

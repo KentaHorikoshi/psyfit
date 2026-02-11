@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { MeasurementInput } from '../MeasurementInput'
@@ -162,7 +162,7 @@ describe('S-05 MeasurementInput', () => {
 
       // WBI should be auto-calculated and included
       await waitFor(() => {
-        const callArgs = mockCreateMeasurement.mock.calls[0][1]
+        const callArgs = mockCreateMeasurement.mock.calls[0]![1]
         expect(callArgs.wbi_left).toBeDefined()
         expect(callArgs.wbi_right).toBeDefined()
       })

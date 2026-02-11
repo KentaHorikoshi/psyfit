@@ -100,7 +100,7 @@ describe('AuthContext', () => {
 
       vi.mocked(apiClient.getCurrentUser).mockResolvedValueOnce({
         status: 'success',
-        data: mockUser,
+        data: { user: mockUser } as never,
       })
 
       renderWithProviders(<TestComponent />)
@@ -140,7 +140,7 @@ describe('AuthContext', () => {
       vi.mocked(apiClient.getCurrentUser).mockRejectedValueOnce(new Error('Unauthorized'))
       vi.mocked(apiClient.login).mockResolvedValueOnce({
         status: 'success',
-        data: { user: mockUser },
+        data: { user: mockUser } as never,
       })
 
       renderWithProviders(<TestComponent />)
@@ -200,7 +200,7 @@ describe('AuthContext', () => {
 
       vi.mocked(apiClient.getCurrentUser).mockResolvedValueOnce({
         status: 'success',
-        data: mockUser,
+        data: { user: mockUser } as never,
       })
       vi.mocked(apiClient.logout).mockResolvedValueOnce({
         status: 'success',
@@ -235,7 +235,7 @@ describe('AuthContext', () => {
 
       vi.mocked(apiClient.getCurrentUser).mockResolvedValueOnce({
         status: 'success',
-        data: mockUser,
+        data: { user: mockUser } as never,
       })
 
       renderWithProviders(<TestComponent />)

@@ -25,12 +25,12 @@ class RateLimitHeaders
     status, headers, body = @app.call(env)
 
     if status == 429
-      return [status, headers, body]
+      return [ status, headers, body ]
     end
 
     inject_rate_limit_headers(env, request, headers)
 
-    [status, headers, body]
+    [ status, headers, body ]
   end
 
   private
@@ -43,7 +43,7 @@ class RateLimitHeaders
     limit, remaining, reset_time = extract_rate_info(throttle_data, user_type, request)
 
     headers["X-RateLimit-Limit"] = limit.to_s
-    headers["X-RateLimit-Remaining"] = [remaining, 0].max.to_s
+    headers["X-RateLimit-Remaining"] = [ remaining, 0 ].max.to_s
     headers["X-RateLimit-Reset"] = reset_time.to_s
   end
 
@@ -70,7 +70,7 @@ class RateLimitHeaders
     else "api/ip"
     end
 
-    rate_info_for(throttle_data, [throttle_key], limit, API_PERIOD, now)
+    rate_info_for(throttle_data, [ throttle_key ], limit, API_PERIOD, now)
   end
 
   def rate_info_for(throttle_data, keys, limit, period, now)
@@ -79,10 +79,10 @@ class RateLimitHeaders
       count = data[:count] || 0
       effective_period = data[:period] || period
       reset_time = now + (effective_period - (now % effective_period))
-      [limit, limit - count, reset_time]
+      [ limit, limit - count, reset_time ]
     else
       reset_time = now + (period - (now % period))
-      [limit, limit, reset_time]
+      [ limit, limit, reset_time ]
     end
   end
 

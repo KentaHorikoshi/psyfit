@@ -4,15 +4,15 @@ module Api
   module V1
     class ExercisesController < BaseController
       before_action :authenticate_user!
-      before_action :set_exercise, only: [:show]
-      before_action :authorize_exercise_access, only: [:show]
+      before_action :set_exercise, only: [ :show ]
+      before_action :authorize_exercise_access, only: [ :show ]
 
       # Exercise type mapping from Japanese (DB) to English (frontend)
       EXERCISE_TYPE_MAP = {
-        'ストレッチ' => 'stretch',
-        'トレーニング' => 'training',
-        'ほぐす' => 'massage',
-        'バランス' => 'balance'
+        "\u30B9\u30C8\u30EC\u30C3\u30C1" => "stretch",
+        "\u30C8\u30EC\u30FC\u30CB\u30F3\u30B0" => "training",
+        "\u307B\u3050\u3059" => "massage",
+        "\u30D0\u30E9\u30F3\u30B9" => "balance"
       }.freeze
 
       # GET /api/v1/exercises/:id
@@ -50,7 +50,7 @@ module Api
           sets: patient_exercise&.target_sets || exercise.recommended_sets || 1,
           reps: patient_exercise&.target_reps || exercise.recommended_reps || 1,
           duration_seconds: exercise.duration_seconds,
-          exercise_type: EXERCISE_TYPE_MAP[exercise.exercise_type] || 'training',
+          exercise_type: EXERCISE_TYPE_MAP[exercise.exercise_type] || "training",
           body_part_major: exercise.body_part_major,
           body_part_minor: exercise.body_part_minor
         }

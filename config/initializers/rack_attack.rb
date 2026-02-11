@@ -105,13 +105,13 @@ class Rack::Attack
       retry_after: retry_after
     }.to_json
 
-    [429, headers, [body]]
+    [ 429, headers, [ body ] ]
   end
 
   # Custom response for blocked requests
   self.blocklisted_responder = lambda do |req|
     body = { error: "Access denied" }.to_json
-    [403, { "Content-Type" => "application/json" }, [body]]
+    [ 403, { "Content-Type" => "application/json" }, [ body ] ]
   end
 
   ### Helper methods ###

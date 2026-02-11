@@ -13,9 +13,9 @@
 module Api
   module V1
     class VideosController < BaseController
-      before_action :authenticate_user!, only: [:token]
-      before_action :set_exercise, only: [:token, :stream]
-      before_action :verify_exercise_assignment, only: [:token]
+      before_action :authenticate_user!, only: [ :token ]
+      before_action :set_exercise, only: [ :token, :stream ]
+      before_action :verify_exercise_assignment, only: [ :token ]
 
       # GET /api/v1/videos/:exercise_id/token
       # Generate a temporary access token for video streaming
@@ -38,35 +38,35 @@ module Api
         token_string = params[:token]
 
         if token_string.blank?
-          return render_error('トークンが必要です', status: :unauthorized)
+          return render_error("\u30C8\u30FC\u30AF\u30F3\u304C\u5FC5\u8981\u3067\u3059", status: :unauthorized)
         end
 
         access_token = VideoAccessToken.find_valid_token(token_string)
 
         if access_token.nil?
-          return render_error('トークンが無効または期限切れです', status: :unauthorized)
+          return render_error("\u30C8\u30FC\u30AF\u30F3\u304C\u7121\u52B9\u307E\u305F\u306F\u671F\u9650\u5207\u308C\u3067\u3059", status: :unauthorized)
         end
 
         if access_token.exercise_id != @exercise.id
-          return render_error('トークンと動画が一致しません', status: :forbidden)
+          return render_error("\u30C8\u30FC\u30AF\u30F3\u3068\u52D5\u753B\u304C\u4E00\u81F4\u3057\u307E\u305B\u3093", status: :forbidden)
         end
 
         if access_token.user_id != current_user&.id
           if current_user.nil?
-            return render_error('認証が必要です', status: :unauthorized)
+            return render_error("\u8A8D\u8A3C\u304C\u5FC5\u8981\u3067\u3059", status: :unauthorized)
           end
-          return render_error('このトークンへのアクセス権限がありません', status: :forbidden)
+          return render_error("\u3053\u306E\u30C8\u30FC\u30AF\u30F3\u3078\u306E\u30A2\u30AF\u30BB\u30B9\u6A29\u9650\u304C\u3042\u308A\u307E\u305B\u3093", status: :forbidden)
         end
 
         video = @exercise.primary_video
         if video.nil?
-          return render_error('動画が見つかりません', status: :not_found)
+          return render_error("\u52D5\u753B\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093", status: :not_found)
         end
 
         video_path = resolve_video_path(video.video_url)
 
         unless File.exist?(video_path)
-          return render_error('動画ファイルが見つかりません', status: :not_found)
+          return render_error("\u52D5\u753B\u30D5\u30A1\u30A4\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093", status: :not_found)
         end
 
         # Record audit log
@@ -90,30 +90,30 @@ module Api
         assignment = PatientExercise.active.find_by(user: current_user, exercise: @exercise)
 
         if assignment.nil?
-          render_forbidden('この動画へのアクセス権限がありません')
+          render_forbidden("\u3053\u306E\u52D5\u753B\u3078\u306E\u30A2\u30AF\u30BB\u30B9\u6A29\u9650\u304C\u3042\u308A\u307E\u305B\u3093")
         end
       end
 
       def resolve_video_path(video_url)
         # Handle relative paths from storage
-        if video_url.start_with?('/')
-          Rails.root.join(video_url.sub(/^\//, ''))
+        if video_url.start_with?("/")
+          Rails.root.join(video_url.sub(/^\//, ""))
         else
           # For external URLs, we'd need different handling
           # For now, assume local storage
-          Rails.root.join('storage', 'videos', File.basename(video_url))
+          Rails.root.join("storage", "videos", File.basename(video_url))
         end
       end
 
       def stream_video(video_path)
         file_size = File.size(video_path)
-        content_type = 'video/mp4'
+        content_type = "video/mp4"
 
         # Set common headers
-        response.headers['Accept-Ranges'] = 'bytes'
-        response.headers['Content-Type'] = content_type
+        response.headers["Accept-Ranges"] = "bytes"
+        response.headers["Content-Type"] = content_type
 
-        if request.headers['Range'].present?
+        if request.headers["Range"].present?
           stream_partial_content(video_path, file_size)
         else
           stream_full_content(video_path, file_size)
@@ -121,7 +121,7 @@ module Api
       end
 
       def stream_partial_content(video_path, file_size)
-        range_header = request.headers['Range']
+        range_header = request.headers["Range"]
         ranges = parse_range_header(range_header, file_size)
 
         if ranges.nil?
@@ -132,8 +132,8 @@ module Api
         start_pos, end_pos = ranges
         content_length = end_pos - start_pos + 1
 
-        response.headers['Content-Range'] = "bytes #{start_pos}-#{end_pos}/#{file_size}"
-        response.headers['Content-Length'] = content_length.to_s
+        response.headers["Content-Range"] = "bytes #{start_pos}-#{end_pos}/#{file_size}"
+        response.headers["Content-Length"] = content_length.to_s
 
         response.status = :partial_content
 
@@ -141,11 +141,11 @@ module Api
       end
 
       def stream_full_content(video_path, file_size)
-        response.headers['Content-Length'] = file_size.to_s
+        response.headers["Content-Length"] = file_size.to_s
 
         send_file video_path,
-                  type: 'video/mp4',
-                  disposition: 'inline',
+                  type: "video/mp4",
+                  disposition: "inline",
                   status: :ok
       end
 
@@ -160,16 +160,16 @@ module Api
         return nil if start_pos >= file_size
 
         # Clamp end_pos to file size
-        end_pos = [end_pos, file_size - 1].min
+        end_pos = [ end_pos, file_size - 1 ].min
 
-        [start_pos, end_pos]
+        [ start_pos, end_pos ]
       end
 
       def send_file_range(video_path, start_pos, length)
-        File.open(video_path, 'rb') do |file|
+        File.open(video_path, "rb") do |file|
           file.seek(start_pos)
           data = file.read(length)
-          send_data data, type: 'video/mp4', disposition: 'inline'
+          send_data data, type: "video/mp4", disposition: "inline"
         end
       end
     end

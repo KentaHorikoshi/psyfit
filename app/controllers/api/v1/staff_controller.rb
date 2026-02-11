@@ -176,7 +176,7 @@ module Api
       end
 
       def sanitized_role
-        ALLOWED_ROLES.include?(params[:role]) ? params[:role] : "staff"
+        params[:role]
       end
 
       def serialize_staff_list(staff_members)

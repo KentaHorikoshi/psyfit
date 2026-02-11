@@ -372,7 +372,7 @@ export function ExerciseMenu() {
                                 const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(10, raw))
                                 setExerciseSettings(prev => ({
                                   ...prev,
-                                  [exerciseId]: { ...prev[exerciseId], sets: value }
+                                  [exerciseId]: { sets: value, reps: prev[exerciseId]?.reps ?? 1 }
                                 }))
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-sm"
@@ -394,7 +394,7 @@ export function ExerciseMenu() {
                                 const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(50, raw))
                                 setExerciseSettings(prev => ({
                                   ...prev,
-                                  [exerciseId]: { ...prev[exerciseId], reps: value }
+                                  [exerciseId]: { sets: prev[exerciseId]?.sets ?? 1, reps: value }
                                 }))
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-sm"

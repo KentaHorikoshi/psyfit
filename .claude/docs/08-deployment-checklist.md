@@ -12,7 +12,7 @@ GitHub Actions（`.github/workflows/ci.yml`）の全ジョブがパスするこ�
 |----------|---------|---------|
 | [x] Brakeman（Rails脆弱性スキャン） | `bundle exec brakeman --no-pager` | scan-ruby |
 | [x] bundler-audit（Gem脆弱性チェック） | `bundle exec bundler-audit check --update` | scan-ruby |
-| [ ] importmap audit（JS依存スキャン） | `bin/importmap audit` | scan-js |
+| [x] importmap audit（JS依存スキャン） | `bin/importmap audit` | scan-js |
 
 ### 1-2. リント
 
@@ -48,8 +48,8 @@ GitHub Actions（`.github/workflows/ci.yml`）の全ジョブがパスするこ�
 
 | チェック | コマンド | CIジョブ |
 |----------|---------|---------|
-| [ ] Playwright（利用者向け） | `cd frontend_user && npm run test:e2e` | e2e-test |
-| [ ] Playwright（職員向け） | `cd frontend_admin && npm run test:e2e` | e2e-test |
+| [x] Playwright（利用者向け） | `cd frontend_user && npm run test:e2e` | e2e-test |
+| [x] Playwright（職員向け） | `cd frontend_admin && npm run test:e2e` | e2e-test |
 
 > **注意**: E2Eテストはバックエンド（Rails + PostgreSQL + Redis）が起動している状態で実行する必要がある。
 

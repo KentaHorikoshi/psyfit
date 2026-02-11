@@ -32,6 +32,8 @@
 
 # Ignore assets.
 /node_modules/
+/frontend_user/node_modules/
+/frontend_admin/node_modules/
 /app/assets/builds/*
 !/app/assets/builds/.keep
 /public/assets
@@ -51,6 +53,6 @@
 /Dockerfile*
 /docker-compose*.yml
 
-# Ignore frontend directories (not needed for API build)
-/frontend_user/
-/frontend_admin/
+# frontend_user/ と frontend_admin/ は Dockerfile のマルチステージビルドで使用するため除外しない
+# /frontend_user/
+# /frontend_admin/

@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { ConnectionTest } from './components/ConnectionTest'
 import { Welcome } from './components/Welcome'
 import { Login } from './components/Login'
 import { PasswordReset } from './components/PasswordReset'
@@ -35,7 +34,6 @@ export default function App() {
             <Route path="/record" element={<BatchRecord />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/guide" element={<UserGuide />} />
-            <Route path="/connection-test" element={<ConnectionTest />} />
             <Route path="/welcome" element={<Welcome />} />
           </Routes>
         </div>

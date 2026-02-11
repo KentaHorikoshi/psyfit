@@ -5,8 +5,33 @@
 # docker build -t psyfit .
 # docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name psyfit psyfit
 
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
+# ============================================================
+# Stage 1: Build user frontend (React SPA → public/)
+# ============================================================
+FROM node:22-slim AS frontend-user-build
 
+WORKDIR /app
+COPY frontend_user/package*.json ./
+RUN npm ci --ignore-scripts
+
+COPY frontend_user/ ./
+RUN npm run build
+
+# ============================================================
+# Stage 2: Build admin frontend (React SPA → public/admin/)
+# ============================================================
+FROM node:22-slim AS frontend-admin-build
+
+WORKDIR /app
+COPY frontend_admin/package*.json ./
+RUN npm ci --ignore-scripts
+
+COPY frontend_admin/ ./
+RUN npm run build
+
+# ============================================================
+# Stage 3: Ruby base image
+# ============================================================
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=4.0.1
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
@@ -27,7 +52,9 @@ ENV RAILS_ENV="production" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
-# Throw-away build stage to reduce size of final image
+# ============================================================
+# Stage 4: Build Rails gems and application
+# ============================================================
 FROM base AS build
 
 # Install packages needed to build gems
@@ -47,6 +74,12 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+# Copy built frontend assets into Rails public/
+# User SPA → public/ (root)
+# Admin SPA → public/admin/
+COPY --from=frontend-user-build /app/dist /rails/public
+COPY --from=frontend-admin-build /app/dist /rails/public/admin
+
 # Precompile bootsnap code for faster boot times.
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
@@ -54,10 +87,9 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
-
-
-
-# Final stage for app image
+# ============================================================
+# Stage 5: Final production image
+# ============================================================
 FROM base
 
 # Run and own only the runtime files as a non-root user for security

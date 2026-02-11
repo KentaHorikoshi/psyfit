@@ -25,7 +25,6 @@ import { StaffManagement } from './components/StaffManagement'
 import { ExerciseMenuManagement } from './components/ExerciseMenuManagement'
 import { PasswordReset } from './components/PasswordReset'
 import { Sidebar } from './components/Sidebar'
-import { ConnectionTest } from './components/ConnectionTest'
 
 /**
  * Redirects unauthenticated users to login.
@@ -242,16 +241,17 @@ function PatientListPage() {
   )
 }
 
+const BASENAME = import.meta.env.MODE === 'production' ? '/admin' : '/'
+
 export default function App() {
   return (
-    <Router>
+    <Router basename={BASENAME}>
       <AuthProvider>
         <div className="min-h-screen bg-background-secondary">
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/connection-test" element={<ConnectionTest />} />
 
             {/* Authenticated routes with sidebar layout */}
             <Route element={<ProtectedRoute />}>

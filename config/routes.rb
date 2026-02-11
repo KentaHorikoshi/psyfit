@@ -81,6 +81,12 @@ Rails.application.routes.draw do
     end
   end
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Serve admin SPA (must be before user catch-all)
+  get "/admin", to: "spa#admin_index"
+  get "/admin/*path", to: "spa#admin_index"
+
+  # Serve user SPA for all remaining non-API paths
+  get "/*path", to: "spa#user_index",
+    constraints: ->(req) { !req.path.start_with?("/api/", "/up", "/letter_opener") }
+  root to: "spa#user_index"
 end

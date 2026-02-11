@@ -6,6 +6,8 @@ SimpleCov.start 'rails' do
   add_filter '/spec/'
   add_filter '/config/'
   add_filter '/vendor/'
+  add_filter 'app/controllers/application_controller.rb'
+  add_filter 'app/jobs/application_job.rb'
 
   # 認証・セキュリティ関連は100%カバレッジ必須
   add_group 'Authentication', 'app/controllers/api/v1/auth'

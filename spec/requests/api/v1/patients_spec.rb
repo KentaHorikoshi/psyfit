@@ -404,7 +404,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
 
         post '/api/v1/patients', params: valid_params
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
         expect(json_response['errors']).to have_key('email_bidx')
       end
@@ -412,35 +412,35 @@ RSpec.describe 'Api::V1::Patients', type: :request do
       it 'returns 422 when required fields are missing' do
         post '/api/v1/patients', params: { name: '太郎' }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
       end
 
       it 'returns 422 when password is too weak' do
         post '/api/v1/patients', params: valid_params.merge(password: 'weak')
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['errors']).to have_key('password')
       end
 
       it 'returns 422 when status is invalid' do
         post '/api/v1/patients', params: valid_params.merge(status: '無効な状態')
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['errors']).to have_key('status')
       end
 
       it 'returns 422 when gender is invalid' do
         post '/api/v1/patients', params: valid_params.merge(gender: 'invalid')
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['errors']).to have_key('gender')
       end
 
       it 'returns 422 when birth_date is in the future' do
         post '/api/v1/patients', params: valid_params.merge(birth_date: 1.year.from_now.to_date.to_s)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['errors']).to have_key('birth_date')
       end
 
@@ -510,7 +510,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
             )
           }.not_to change(User, :count)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end
@@ -631,7 +631,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
       it 'returns 422 for invalid status value' do
         patch "/api/v1/patients/#{patient_acute.id}", params: { status: '無効な状態' }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
         expect(json_response['errors']).to have_key('status')
       end
@@ -639,7 +639,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
       it 'returns 422 for invalid gender value' do
         patch "/api/v1/patients/#{patient_acute.id}", params: { gender: 'invalid' }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
         expect(json_response['errors']).to have_key('gender')
       end
@@ -647,7 +647,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
       it 'returns 422 for duplicate email' do
         patch "/api/v1/patients/#{patient_acute.id}", params: { email: patient_recovery.email }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
         expect(json_response['errors']).to have_key('email_bidx')
       end
@@ -655,7 +655,7 @@ RSpec.describe 'Api::V1::Patients', type: :request do
       it 'returns 422 for future birth_date' do
         patch "/api/v1/patients/#{patient_acute.id}", params: { birth_date: 1.year.from_now.to_date.to_s }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
         expect(json_response['errors']).to have_key('birth_date')
       end

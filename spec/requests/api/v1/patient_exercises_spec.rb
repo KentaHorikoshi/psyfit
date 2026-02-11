@@ -151,7 +151,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
               pain_flag: false
             }, as: :json
 
-            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response).to have_http_status(:unprocessable_content)
           end
 
           it 'returns error when assignments is empty' do
@@ -159,7 +159,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
               assignments: []
             }, as: :json
 
-            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response).to have_http_status(:unprocessable_content)
           end
 
           it 'returns error when exercise_id is invalid' do

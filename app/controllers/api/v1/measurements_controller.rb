@@ -32,7 +32,7 @@ module Api
           render_error(
             "バリデーションエラー",
             errors: @measurement.errors.to_hash,
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end

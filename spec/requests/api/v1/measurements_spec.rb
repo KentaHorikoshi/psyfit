@@ -137,7 +137,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             weight_kg: -1
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when weight_kg exceeds limit' do
@@ -146,7 +146,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             weight_kg: 600
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when nrs_pain_score is out of range' do
@@ -155,7 +155,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             nrs_pain_score: 11
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when mmt_score is out of range' do
@@ -164,7 +164,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             mmt_score: 6
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when knee_extension_strength exceeds 500' do
@@ -173,7 +173,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             knee_extension_strength_left: 501
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when wbi_left exceeds 200' do
@@ -182,7 +182,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             wbi_left: 201
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when wbi_right is negative' do
@@ -191,7 +191,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             wbi_right: -1
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'accepts valid wbi values' do

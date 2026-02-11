@@ -37,7 +37,7 @@ module Api
         assignments_array = normalize_assignments(assignments_params)
 
         if assignments_array.blank?
-          return render_error("assignmentsは必須です", status: :unprocessable_entity)
+          return render_error("assignmentsは必須です", status: :unprocessable_content)
         end
 
         created_exercises = []

@@ -36,7 +36,7 @@ module Api
           conditions: conditions.map { |c| condition_response(c) }
         })
       rescue Date::Error, ArgumentError
-        render_error("日付の形式が正しくありません", status: :unprocessable_entity)
+        render_error("日付の形式が正しくありません", status: :unprocessable_content)
       end
 
       private

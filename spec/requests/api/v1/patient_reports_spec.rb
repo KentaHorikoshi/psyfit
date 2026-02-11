@@ -130,7 +130,7 @@ RSpec.describe 'Api::V1::PatientReports', type: :request do
             get "/api/v1/patients/#{patient.id}/report",
                 params: { start_date: '2026-01-31', end_date: '2026-01-01', format: 'pdf' }
 
-            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response).to have_http_status(:unprocessable_content)
             expect(json_response['message']).to include('日付')
           end
         end

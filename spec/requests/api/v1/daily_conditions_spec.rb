@@ -93,7 +93,7 @@ RSpec.describe 'Api::V1::DailyConditions', type: :request do
             body_condition: 7
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['status']).to eq('error')
         end
 
@@ -104,7 +104,7 @@ RSpec.describe 'Api::V1::DailyConditions', type: :request do
             body_condition: 7
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns error when body_condition is out of range' do
@@ -114,7 +114,7 @@ RSpec.describe 'Api::V1::DailyConditions', type: :request do
             body_condition: -1
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end

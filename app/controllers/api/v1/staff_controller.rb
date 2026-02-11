@@ -12,18 +12,18 @@ module Api
         staff = current_staff
 
         unless staff.authenticate(change_password_params[:current_password].to_s)
-          return render_error("現在のパスワードが正しくありません", status: :unprocessable_entity)
+          return render_error("現在のパスワードが正しくありません", status: :unprocessable_content)
         end
 
         new_password = change_password_params[:new_password]
         new_password_confirmation = change_password_params[:new_password_confirmation]
 
         if new_password.blank?
-          return render_error("新しいパスワードを入力してください", status: :unprocessable_entity)
+          return render_error("新しいパスワードを入力してください", status: :unprocessable_content)
         end
 
         if new_password != new_password_confirmation
-          return render_error("新しいパスワードが一致しません", status: :unprocessable_entity)
+          return render_error("新しいパスワードが一致しません", status: :unprocessable_content)
         end
 
         if staff.update(password: new_password, password_confirmation: new_password_confirmation)
@@ -34,7 +34,7 @@ module Api
           render_error(
             "パスワードの更新に失敗しました",
             errors: staff.errors.to_hash,
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -84,7 +84,7 @@ module Api
             render_error(
               "バリデーションエラー",
               errors: staff.errors.to_hash,
-              status: :unprocessable_entity
+              status: :unprocessable_content
             )
           end
         rescue ActiveRecord::RecordNotUnique => e
@@ -106,7 +106,7 @@ module Api
           render_error(
             "バリデーションエラー",
             errors: @staff_member.errors.to_hash,
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -114,7 +114,7 @@ module Api
       # DELETE /api/v1/staff/:id
       def destroy
         if @staff_member.id == current_staff.id
-          return render_error("自分自身を削除することはできません", status: :unprocessable_entity)
+          return render_error("自分自身を削除することはできません", status: :unprocessable_content)
         end
 
         @staff_member.soft_delete
@@ -150,7 +150,7 @@ module Api
         log_audit("update", "success", resource_id: @staff_member.id)
         render_success({ message: "担当患者を更新しました" })
       rescue ActiveRecord::RecordInvalid => e
-        render_error(e.message, status: :unprocessable_entity)
+        render_error(e.message, status: :unprocessable_content)
       end
 
       private

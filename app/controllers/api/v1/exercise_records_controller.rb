@@ -8,7 +8,7 @@ module Api
       # POST /api/v1/exercise_records
       def create
         if params[:exercise_id].blank?
-          render_error("バリデーションエラー", errors: { exercise_id: [ "を入力してください" ] }, status: :unprocessable_entity)
+          render_error("バリデーションエラー", errors: { exercise_id: [ "を入力してください" ] }, status: :unprocessable_content)
           return
         end
 
@@ -22,7 +22,7 @@ module Api
           log_create_action(record)
           render_success(record_response(record), status: :created)
         else
-          render_error("バリデーションエラー", errors: record.errors.to_hash, status: :unprocessable_entity)
+          render_error("バリデーションエラー", errors: record.errors.to_hash, status: :unprocessable_content)
         end
       end
 

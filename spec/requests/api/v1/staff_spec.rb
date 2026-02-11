@@ -171,7 +171,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         it 'rejects password with only one character type (lowercase only)' do
           post '/api/v1/staff', params: valid_params.merge(password: 'onlylowercase')
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['status']).to eq('error')
           expect(json['errors']['password']).to be_present
@@ -180,7 +180,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         it 'rejects password with only one character type (numbers only)' do
           post '/api/v1/staff', params: valid_params.merge(password: '12345678')
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['errors']['password']).to be_present
         end
@@ -188,7 +188,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         it 'rejects password that is too short' do
           post '/api/v1/staff', params: valid_params.merge(password: 'Short1!')
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['errors']['password']).to be_present
         end
@@ -212,7 +212,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
 
           post '/api/v1/staff', params: valid_params.merge(email: 'duplicate@example.com')
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['errors']['email_bidx']).to be_present
         end
@@ -222,7 +222,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         it 'rejects missing name' do
           post '/api/v1/staff', params: valid_params.except(:name)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['errors']['name']).to be_present
         end
@@ -230,7 +230,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         it 'rejects missing password' do
           post '/api/v1/staff', params: valid_params.except(:password)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['errors']['password']).to be_present
         end
@@ -238,7 +238,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
         it 'rejects invalid role' do
           post '/api/v1/staff', params: valid_params.merge(role: 'invalid_role')
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = json_response
           expect(json['errors']['role']).to be_present
         end
@@ -370,7 +370,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
           current_password: 'WrongPassword1!'
         )
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = json_response
         expect(json['status']).to eq('error')
         expect(json['message']).to eq('現在のパスワードが正しくありません')
@@ -382,7 +382,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
           new_password_confirmation: 'Short1!'
         )
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = json_response
         expect(json['status']).to eq('error')
       end
@@ -393,7 +393,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
           new_password_confirmation: 'onlylowercase'
         )
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = json_response
         expect(json['status']).to eq('error')
       end
@@ -403,7 +403,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
           new_password_confirmation: 'Mismatch456!'
         )
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = json_response
         expect(json['status']).to eq('error')
         expect(json['message']).to eq('新しいパスワードが一致しません')
@@ -412,7 +412,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
       it 'returns 422 when current_password is missing' do
         post '/api/v1/staff/me/password', params: valid_params.except(:current_password)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = json_response
         expect(json['status']).to eq('error')
       end
@@ -420,7 +420,7 @@ RSpec.describe 'Api::V1::Staff', type: :request do
       it 'returns 422 when new_password is missing' do
         post '/api/v1/staff/me/password', params: valid_params.except(:new_password)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = json_response
         expect(json['status']).to eq('error')
       end

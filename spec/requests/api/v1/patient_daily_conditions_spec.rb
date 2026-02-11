@@ -81,7 +81,7 @@ RSpec.describe 'Api::V1::PatientDailyConditions', type: :request do
           get "/api/v1/patients/#{patient.id}/daily_conditions"
         }.to change(AuditLog, :count).by(1)
 
-        audit = AuditLog.last
+        audit = AuditLog.order(:created_at).last
         expect(audit.action).to eq('read')
         expect(audit.status).to eq('success')
         expect(audit.staff_id).to eq(manager.id)

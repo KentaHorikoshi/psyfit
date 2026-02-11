@@ -84,7 +84,7 @@ module Api
         render json: { status: "success", data: data }, status: status
       end
 
-      def render_error(message, errors: nil, status: :unprocessable_entity)
+      def render_error(message, errors: nil, status: :unprocessable_content)
         response = { status: "error", message: message }
         response[:errors] = errors if errors.present?
         render json: response, status: status
@@ -108,7 +108,7 @@ module Api
         render_error(
           "バリデーションエラー",
           errors: exception.record.errors.to_hash,
-          status: :unprocessable_entity
+          status: :unprocessable_content
         )
       end
 
@@ -117,7 +117,7 @@ module Api
       end
 
       def range_error(_exception)
-        render_error("入力値が許容範囲を超えています", status: :unprocessable_entity)
+        render_error("入力値が許容範囲を超えています", status: :unprocessable_content)
       end
 
       # Request info helpers

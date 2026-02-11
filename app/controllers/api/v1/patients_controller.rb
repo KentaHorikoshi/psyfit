@@ -51,13 +51,13 @@ module Api
           return render_error(
             "バリデーションエラー",
             errors: patient.errors.any? ? patient.errors.to_hash : { assigned_staff_ids: [ e.message ] },
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         rescue ActiveRecord::RecordNotFound
           return render_error(
             "指定された職員が見つかりません",
             errors: { assigned_staff_ids: [ "指定された職員が見つかりません" ] },
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
 
@@ -86,7 +86,7 @@ module Api
           render_error(
             "バリデーションエラー",
             errors: @patient.errors.to_hash,
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end

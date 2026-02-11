@@ -110,7 +110,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
               completed_sets: 3
             }
 
-            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response).to have_http_status(:unprocessable_content)
             expect(json_response['status']).to eq('error')
           end
         end
@@ -135,7 +135,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
               completed_sets: 3
             }
 
-            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response).to have_http_status(:unprocessable_content)
           end
         end
 
@@ -147,7 +147,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
               completed_sets: 0
             }
 
-            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response).to have_http_status(:unprocessable_content)
           end
         end
       end
@@ -197,7 +197,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
             completed_at: two_days_ago
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['errors']).to have_key('completed_at')
         end
 
@@ -210,7 +210,7 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
             completed_at: future
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['errors']).to have_key('completed_at')
         end
       end

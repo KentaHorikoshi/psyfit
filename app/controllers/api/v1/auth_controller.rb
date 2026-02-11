@@ -104,7 +104,7 @@ module Api
         staff_id = password_reset_request_params[:staff_id]
 
         if email.blank? && staff_id.blank?
-          return render_error("email または staff_id が必要です", status: :unprocessable_entity)
+          return render_error("email または staff_id が必要です", status: :unprocessable_content)
         end
 
         if email.present?
@@ -126,11 +126,11 @@ module Api
         reset_token = PasswordResetToken.find_valid_token(token_string)
 
         if reset_token.nil?
-          return render_error("トークンが無効または期限切れです", status: :unprocessable_entity)
+          return render_error("トークンが無効または期限切れです", status: :unprocessable_content)
         end
 
         if new_password != new_password_confirmation
-          return render_error("パスワードが一致しません", status: :unprocessable_entity)
+          return render_error("パスワードが一致しません", status: :unprocessable_content)
         end
 
         target = reset_token.target
@@ -145,7 +145,7 @@ module Api
           render_error(
             "パスワードの更新に失敗しました",
             errors: target.errors.to_hash,
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end

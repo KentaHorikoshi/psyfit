@@ -179,7 +179,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
       it 'returns error' do
         post '/api/v1/auth/password_reset_request', params: {}
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(json_response['status']).to eq('error')
       end
     end
@@ -266,7 +266,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
             new_password_confirmation: new_password
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['status']).to eq('error')
           expect(json_response['message']).to include('無効')
         end
@@ -282,7 +282,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
             new_password_confirmation: new_password
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['status']).to eq('error')
         end
       end
@@ -295,7 +295,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
             new_password_confirmation: new_password
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['status']).to eq('error')
         end
       end
@@ -308,7 +308,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
             new_password_confirmation: 'DifferentPassword123!'
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['status']).to eq('error')
         end
       end
@@ -321,7 +321,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
             new_password_confirmation: 'short'
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(json_response['status']).to eq('error')
         end
 
@@ -332,7 +332,7 @@ RSpec.describe 'Api::V1::Auth Password Reset', type: :request do
             new_password_confirmation: 'alllowercase'
           }
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end

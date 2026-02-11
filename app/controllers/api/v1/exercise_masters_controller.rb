@@ -29,7 +29,7 @@ module Api
           render_error(
             "バリデーションエラー",
             errors: exercise.errors.to_hash,
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -45,7 +45,7 @@ module Api
           log_audit("delete", "failure", resource_id: exercise.id)
           render_error(
             "この運動は患者に割り当てられているため削除できません",
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       rescue ActiveRecord::RecordNotFound

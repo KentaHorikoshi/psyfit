@@ -70,10 +70,10 @@ module Api
         end_date = Date.parse(params[:end_date])
 
         if start_date > end_date
-          render_error("開始日付は終了日付より前である必要があります", status: :unprocessable_entity)
+          render_error("開始日付は終了日付より前である必要があります", status: :unprocessable_content)
         end
       rescue ArgumentError
-        render_error("日付の形式が正しくありません", status: :unprocessable_entity)
+        render_error("日付の形式が正しくありません", status: :unprocessable_content)
       end
 
       def report_start_date

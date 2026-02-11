@@ -12,7 +12,7 @@ GitHub Actions（`.github/workflows/ci.yml`）の全ジョブがパスするこ�
 |----------|---------|---------|
 | [x] Brakeman（Rails脆弱性スキャン） | `bundle exec brakeman --no-pager` | scan-ruby |
 | [x] bundler-audit（Gem脆弱性チェック） | `bundle exec bundler-audit check --update` | scan-ruby |
-| [ ] importmap audit（JS依存スキャン） | `bundle exec importmap audit` | scan-js |
+| [ ] importmap audit（JS依存スキャン） | `bin/importmap audit` | scan-js |
 
 ### 1-2. リント
 

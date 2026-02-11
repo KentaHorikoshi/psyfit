@@ -9,7 +9,10 @@ test.describe('体調入力フロー', () => {
     await page.goto('/condition-input')
 
     // 体調入力画面の表示確認
-    await expect(page.getByText(/体調|コンディション|痛み|調子/)).toBeVisible({ timeout: 10000 })
+    await expect(
+      page.getByRole('heading', { name: /体調|コンディション/ })
+        .or(page.getByText(/体調|コンディション|痛み|調子/).first())
+    ).toBeVisible({ timeout: 10000 })
   })
 
   test('痛みレベルを入力できる', async ({ page }) => {

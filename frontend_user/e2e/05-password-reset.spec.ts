@@ -40,9 +40,9 @@ test.describe('パスワードリセットフロー', () => {
     const submitButton = page.getByRole('button', { name: /送信|リセット|メールを送る/ })
     await submitButton.click()
 
-    // 成功メッセージまたは確認画面の表示
+    // 成功メッセージまたはエラーアラートの表示を確認
     await expect(
-      page.getByText(/送信|メール|確認/)
+      page.getByRole('heading', { name: /メールを送信しました/ })
         .or(page.getByRole('alert'))
     ).toBeVisible({ timeout: 10000 })
   })
@@ -50,15 +50,19 @@ test.describe('パスワードリセットフロー', () => {
   test('無効なメールアドレスでエラーが表示される', async ({ page }) => {
     await page.goto('/password-reset')
 
-    // 無効なメールアドレスを入力
-    await page.getByLabel(/メールアドレス/).fill('invalid-email')
+    // HTML5 email validationを回避するためにtype属性を一時変更
+    const emailInput = page.getByLabel(/メールアドレス/)
+    await emailInput.evaluate((el: HTMLInputElement) => {
+      el.type = 'text'
+    })
+    await emailInput.fill('invalid-email')
 
     // 送信ボタンをクリック
     const submitButton = page.getByRole('button', { name: /送信|リセット|メールを送る/ })
     await submitButton.click()
 
     // バリデーションエラーの表示確認
-    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page.getByRole('alert').first()).toBeVisible()
   })
 
   test('ログイン画面に戻れる', async ({ page }) => {

@@ -18,11 +18,11 @@ test.describe('ログイン・ログアウトフロー', () => {
       // ログインフォームの表示確認
       await expect(page.getByRole('heading', { name: /サイテック/ })).toBeVisible()
       await expect(page.getByLabel('メールアドレス')).toBeVisible()
-      await expect(page.getByLabel('パスワード')).toBeVisible()
+      await expect(page.getByLabel('パスワード', { exact: true })).toBeVisible()
 
       // ログイン情報入力
       await page.getByLabel('メールアドレス').fill(TEST_EMAIL)
-      await page.getByLabel('パスワード').fill(TEST_PASSWORD)
+      await page.getByLabel('パスワード', { exact: true }).fill(TEST_PASSWORD)
 
       // ログインボタンクリック
       await page.getByRole('button', { name: 'ログイン' }).click()
@@ -34,12 +34,17 @@ test.describe('ログイン・ログアウトフロー', () => {
     test('無効なメールアドレスでエラーが表示される', async ({ page }) => {
       await page.goto('/login')
 
-      await page.getByLabel('メールアドレス').fill('invalid-email')
-      await page.getByLabel('パスワード').fill('password123')
+      // HTML5 email validationを回避するためにtype属性を一時変更
+      const emailInput = page.getByLabel('メールアドレス')
+      await emailInput.evaluate((el: HTMLInputElement) => {
+        el.type = 'text'
+      })
+      await emailInput.fill('invalid-email')
+      await page.getByLabel('パスワード', { exact: true }).fill('password123')
       await page.getByRole('button', { name: 'ログイン' }).click()
 
       // バリデーションエラーの表示確認
-      await expect(page.getByRole('alert')).toBeVisible()
+      await expect(page.getByRole('alert').first()).toBeVisible()
     })
 
     test('未入力でエラーが表示される', async ({ page }) => {
@@ -49,13 +54,13 @@ test.describe('ログイン・ログアウトフロー', () => {
       await page.getByRole('button', { name: 'ログイン' }).click()
 
       // バリデーションエラーの表示確認
-      await expect(page.getByRole('alert')).toBeVisible()
+      await expect(page.getByRole('alert').first()).toBeVisible()
     })
 
     test('パスワード表示/非表示の切り替えができる', async ({ page }) => {
       await page.goto('/login')
 
-      const passwordInput = page.getByLabel('パスワード')
+      const passwordInput = page.getByLabel('パスワード', { exact: true })
       await passwordInput.fill('testpassword')
 
       // 初期状態はパスワード非表示
@@ -79,38 +84,22 @@ test.describe('ログイン・ログアウトフロー', () => {
       await expect(page.locator('body')).toBeVisible()
 
       // ナビゲーション要素の確認（継続日数、運動メニューなど）
-      await expect(page.getByText(/継続日数|運動する|ホーム/)).toBeVisible()
+      await expect(page.getByText(/継続日数|運動する|ホーム/).first()).toBeVisible()
     })
   })
 
   test.describe('ログアウト', () => {
     test('ログアウトができる', async ({ page }) => {
-      await page.goto('/home')
+      // ログアウトはマイページ（プロフィール画面）にある
+      await page.goto('/profile')
 
-      // プロフィールページへ移動（ログアウトはプロフィールにある可能性）
+      // ログアウトボタンをクリック
       const logoutButton = page.getByRole('button', { name: /ログアウト/ })
-        .or(page.getByText('ログアウト'))
+      await expect(logoutButton).toBeVisible({ timeout: 5000 })
+      await logoutButton.click()
 
-      if (await logoutButton.isVisible()) {
-        await logoutButton.click()
-        await expect(page).toHaveURL(/\/login/)
-      } else {
-        // メニューまたはプロフィールリンクからアクセス
-        const profileLink = page.getByRole('link', { name: /マイページ|プロフィール/ })
-          .or(page.getByRole('button', { name: /メニュー/ }))
-          .or(page.locator('[data-testid="menu-button"]'))
-
-        if (await profileLink.isVisible()) {
-          await profileLink.click()
-          // ログアウトボタンを探す
-          const logoutBtn = page.getByRole('button', { name: /ログアウト/ })
-            .or(page.getByText('ログアウト'))
-          if (await logoutBtn.isVisible({ timeout: 3000 })) {
-            await logoutBtn.click()
-            await expect(page).toHaveURL(/\/login/)
-          }
-        }
-      }
+      // ログイン画面に戻ることを確認
+      await expect(page).toHaveURL(/\/login/, { timeout: 10000 })
     })
   })
 })

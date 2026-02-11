@@ -18,11 +18,11 @@ test.describe('職員ログイン・ログアウトフロー', () => {
       // ログインフォームの表示確認
       await expect(page.getByRole('heading', { name: /サイテック病院/ })).toBeVisible()
       await expect(page.getByLabel('職員ID')).toBeVisible()
-      await expect(page.getByLabel('パスワード')).toBeVisible()
+      await expect(page.getByLabel('パスワード', { exact: true })).toBeVisible()
 
       // ログイン情報入力
       await page.getByLabel('職員ID').fill(TEST_STAFF_ID)
-      await page.getByLabel('パスワード').fill(TEST_PASSWORD)
+      await page.getByLabel('パスワード', { exact: true }).fill(TEST_PASSWORD)
 
       // ログインボタンクリック
       await page.getByRole('button', { name: 'ログイン' }).click()
@@ -38,13 +38,13 @@ test.describe('職員ログイン・ログアウトフロー', () => {
       await page.getByRole('button', { name: 'ログイン' }).click()
 
       // バリデーションエラーの表示確認
-      await expect(page.getByRole('alert')).toBeVisible()
+      await expect(page.getByRole('alert').first()).toBeVisible()
     })
 
     test('パスワード表示/非表示の切り替えができる', async ({ page }) => {
       await page.goto('/login')
 
-      const passwordInput = page.getByLabel('パスワード')
+      const passwordInput = page.getByLabel('パスワード', { exact: true })
       await passwordInput.fill('testpassword')
 
       // 初期状態はパスワード非表示

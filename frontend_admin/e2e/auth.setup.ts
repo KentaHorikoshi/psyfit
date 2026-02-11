@@ -19,7 +19,7 @@ setup('authenticate', async ({ page }) => {
 
   // 認証情報を入力
   await page.getByLabel('職員ID').fill(testStaffId)
-  await page.getByLabel('パスワード').fill(testPassword)
+  await page.getByLabel('パスワード', { exact: true }).fill(testPassword)
 
   // ログインボタンをクリック
   await page.getByRole('button', { name: 'ログイン' }).click()

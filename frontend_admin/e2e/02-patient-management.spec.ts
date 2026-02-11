@@ -6,7 +6,7 @@ import { test, expect, type Page } from '@playwright/test'
  */
 async function navigateToFirstPatient(page: Page): Promise<string | null> {
   await page.goto('/patients')
-  await expect(page.getByText(/患者一覧|患者/)).toBeVisible({ timeout: 10000 })
+  await expect(page.getByRole('heading', { name: '患者一覧' })).toBeVisible({ timeout: 10000 })
 
   // 患者行をクリック
   const patientRow = page.locator('table tbody tr').first()
@@ -33,13 +33,13 @@ test.describe('患者管理フロー', () => {
     await page.goto('/patients')
 
     // 患者一覧画面の表示確認
-    await expect(page.getByText(/患者一覧|患者/)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: '患者一覧' })).toBeVisible({ timeout: 10000 })
 
     // テーブルまたはリストの存在確認
     const patientList = page.locator('table')
       .or(page.locator('[data-testid="patient-list"]'))
 
-    await expect(patientList.or(page.getByText(/患者|データがありません/))).toBeVisible()
+    await expect(patientList.or(page.getByText('患者が見つかりません'))).toBeVisible()
   })
 
   test('患者を検索できる', async ({ page }) => {
@@ -73,20 +73,22 @@ test.describe('患者管理フロー', () => {
     const patientId = await navigateToFirstPatient(page)
     if (patientId) {
       // 患者情報の表示確認
-      await expect(page.getByText(/患者情報|詳細|名前|田中|高橋|渡辺|伊藤|小林/)).toBeVisible({ timeout: 10000 })
+      await expect(page.getByText(/患者情報|詳細|名前|田中|高橋|渡辺|伊藤|小林/).first()).toBeVisible({ timeout: 10000 })
     }
   })
 
   test('患者の病期ステータスが表示される', async ({ page }) => {
     await page.goto('/patients')
 
-    // ステータスバッジまたはテーブルの確認
-    const statusBadge = page.getByText(/急性期|回復期|維持期/)
-    const table = page.locator('table')
+    // 患者一覧ページの読み込みを待つ
+    await expect(page.getByRole('heading', { name: '患者一覧' })).toBeVisible({ timeout: 10000 })
 
-    await expect(
-      statusBadge.first().or(table)
-    ).toBeVisible({ timeout: 10000 })
+    // テーブルが表示されていればステータスバッジを確認
+    const table = page.locator('table')
+    if (await table.isVisible({ timeout: 5000 })) {
+      // テーブル内のステータスバッジを確認
+      await expect(table.getByText(/急性期|回復期|維持期/).first()).toBeVisible()
+    }
   })
 
   test('ページネーションが機能する', async ({ page }) => {

@@ -40,14 +40,11 @@ test.describe('履歴表示フロー', () => {
   test('測定値グラフが表示される', async ({ page }) => {
     await page.goto('/measurements')
 
-    // グラフまたはチャートの表示確認
-    const chart = page.locator('.recharts-wrapper')
-      .or(page.locator('[data-testid="chart"]'))
-      .or(page.locator('svg').first())
-
-    // グラフまたはデータなしメッセージが表示される
+    // 測定値グラフのページが表示されることを確認
     await expect(
-      chart.or(page.getByText(/データがありません|測定値|まだ/))
+      page.getByRole('heading', { name: /測定値/ })
+        .or(page.getByText('推移グラフ'))
+        .or(page.locator('.recharts-wrapper'))
     ).toBeVisible({ timeout: 10000 })
   })
 

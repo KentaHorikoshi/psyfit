@@ -5,7 +5,7 @@ import { test, expect, type Page } from '@playwright/test'
  */
 async function navigateToMeasurementInput(page: Page): Promise<boolean> {
   await page.goto('/patients')
-  await expect(page.getByText(/患者一覧|患者/)).toBeVisible({ timeout: 10000 })
+  await expect(page.getByRole('heading', { name: '患者一覧' })).toBeVisible({ timeout: 10000 })
 
   // 患者行をクリック
   const patientRow = page.locator('table tbody tr').first()

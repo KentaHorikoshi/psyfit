@@ -6,8 +6,8 @@
 
 puts "Seeding database..."
 
-# Clear existing data in development
-if Rails.env.development?
+# Clear existing data in development/test
+if Rails.env.development? || Rails.env.test?
   puts "Clearing existing data..."
   ExerciseRecord.delete_all
   DailyCondition.delete_all

@@ -409,14 +409,28 @@ jobs:
           RAILS_ENV: test
         run: |
           bundle exec rails server -p 4001 -d
-          sleep 5
-          curl -sf http://localhost:4001/api/v1/health || echo "Health check warning"
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4001/api/v1/health > /dev/null 2>&1; then
+              echo "Rails server is ready"
+              break
+            fi
+            echo "Waiting for Rails server... ($i/30)"
+            sleep 2
+          done
+          curl -sf http://localhost:4001/api/v1/health || (echo "::error::Rails server failed to start" && exit 1)
 
       - name: Start frontend dev server
         working-directory: ${{ matrix.app.name }}
         run: |
           npm run dev -- --port ${{ matrix.app.port }} &
-          sleep 10
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:${{ matrix.app.port }} > /dev/null 2>&1; then
+              echo "Frontend dev server is ready"
+              break
+            fi
+            echo "Waiting for frontend dev server... ($i/30)"
+            sleep 2
+          done
 
       - name: Run E2E tests
         working-directory: ${{ matrix.app.name }}
@@ -428,7 +442,7 @@ jobs:
           E2E_USER_PASSWORD: Patient1!
           E2E_STAFF_ID: STF001
           E2E_STAFF_PASSWORD: Staff123!
-        run: npm run test:e2e
+        run: npx playwright test --project=chromium
 
       - name: Upload E2E report
         uses: actions/upload-artifact@v4

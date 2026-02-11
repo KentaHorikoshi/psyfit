@@ -7,9 +7,9 @@ const authFile = 'e2e/.auth/user.json'
  * テスト用の認証情報でログインし、セッション状態を保存する
  */
 setup('authenticate', async ({ page }) => {
-  // テスト用の認証情報
-  const testEmail = process.env.E2E_USER_EMAIL || 'test@example.com'
-  const testPassword = process.env.E2E_USER_PASSWORD || 'password123'
+  // テスト用の認証情報（シードデータに合わせたデフォルト値）
+  const testEmail = process.env.E2E_USER_EMAIL || 'tanaka@example.com'
+  const testPassword = process.env.E2E_USER_PASSWORD || 'Patient1!'
 
   // ログインページにアクセス
   await page.goto('/login')

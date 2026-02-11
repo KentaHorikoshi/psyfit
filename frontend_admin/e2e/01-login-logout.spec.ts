@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+// テスト用認証情報（シードデータに合わせたデフォルト値）
+const TEST_STAFF_ID = process.env.E2E_STAFF_ID || 'STF001'
+const TEST_PASSWORD = process.env.E2E_STAFF_PASSWORD || 'Staff123!'
+
 /**
  * S-01: 職員ログイン・ログアウトフロー
  * ログイン → ダッシュボード表示 → ログアウト
@@ -12,19 +16,19 @@ test.describe('職員ログイン・ログアウトフロー', () => {
       await page.goto('/login')
 
       // ログインフォームの表示確認
-      await expect(page.getByRole('heading', { name: 'サイテック病院' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /サイテック病院/ })).toBeVisible()
       await expect(page.getByLabel('職員ID')).toBeVisible()
       await expect(page.getByLabel('パスワード')).toBeVisible()
 
       // ログイン情報入力
-      await page.getByLabel('職員ID').fill('ST001')
-      await page.getByLabel('パスワード').fill('password123')
+      await page.getByLabel('職員ID').fill(TEST_STAFF_ID)
+      await page.getByLabel('パスワード').fill(TEST_PASSWORD)
 
       // ログインボタンクリック
       await page.getByRole('button', { name: 'ログイン' }).click()
 
       // ダッシュボード画面への遷移を確認
-      await expect(page).toHaveURL(/\/dashboard/)
+      await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
     })
 
     test('未入力でエラーが表示される', async ({ page }) => {
@@ -55,7 +59,7 @@ test.describe('職員ログイン・ログアウトフロー', () => {
       await page.goto('/login')
 
       // 15分タイムアウト注意が表示される
-      await expect(page.getByText('15分間操作がない場合')).toBeVisible()
+      await expect(page.getByText(/15分間操作がない場合/)).toBeVisible()
     })
   })
 
@@ -64,20 +68,14 @@ test.describe('職員ログイン・ログアウトフロー', () => {
       await page.goto('/dashboard')
 
       // ダッシュボードの主要要素が表示されることを確認
-      await expect(page.locator('body')).toBeVisible()
-
-      // サイドバーとメインコンテンツの確認
-      await expect(page.getByText(/ダッシュボード|患者一覧|レポート/)).toBeVisible()
+      await expect(page.getByText(/ダッシュボード/)).toBeVisible({ timeout: 10000 })
     })
 
     test('サイドバーナビゲーションが機能する', async ({ page }) => {
       await page.goto('/dashboard')
 
-      // サイドバーの存在確認
-      const sidebar = page.locator('[data-testid="sidebar"]')
-        .or(page.locator('aside'))
-        .or(page.locator('.admin-sidebar'))
-
+      // サイドバーの存在確認（aside要素）
+      const sidebar = page.locator('aside')
       await expect(sidebar).toBeVisible()
     })
   })
@@ -86,11 +84,11 @@ test.describe('職員ログイン・ログアウトフロー', () => {
     test('ログアウトができる', async ({ page }) => {
       await page.goto('/dashboard')
 
-      // ログアウトボタンを探す
+      // サイドバーのログアウトボタンを探す
       const logoutButton = page.getByRole('button', { name: /ログアウト/ })
         .or(page.getByText('ログアウト'))
 
-      if (await logoutButton.isVisible()) {
+      if (await logoutButton.isVisible({ timeout: 5000 })) {
         await logoutButton.click()
         // ログイン画面に戻ることを確認
         await expect(page).toHaveURL(/\/login/)

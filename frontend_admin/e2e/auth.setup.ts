@@ -7,9 +7,9 @@ const authFile = 'e2e/.auth/staff.json'
  * テスト用の認証情報でログインし、セッション状態を保存する
  */
 setup('authenticate', async ({ page }) => {
-  // テスト用の認証情報
-  const testStaffId = process.env.E2E_STAFF_ID || 'ST001'
-  const testPassword = process.env.E2E_STAFF_PASSWORD || 'password123'
+  // テスト用の認証情報（シードデータに合わせたデフォルト値）
+  const testStaffId = process.env.E2E_STAFF_ID || 'STF001'
+  const testPassword = process.env.E2E_STAFF_PASSWORD || 'Staff123!'
 
   // ログインページにアクセス
   await page.goto('/login')

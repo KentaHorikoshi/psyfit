@@ -5,6 +5,9 @@
 # docker build -t psyfit .
 # docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name psyfit psyfit
 
+# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
+ARG RUBY_VERSION=4.0.1
+
 # ============================================================
 # Stage 1: Build user frontend (React SPA → public/)
 # ============================================================
@@ -32,8 +35,6 @@ RUN npm run build
 # ============================================================
 # Stage 3: Ruby base image
 # ============================================================
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
-ARG RUBY_VERSION=4.0.1
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here

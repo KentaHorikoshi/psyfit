@@ -2,7 +2,7 @@
 service: psyfit
 
 # Name of the container image.
-image: ghcr.io/hirototoda/psyfit
+image: hirototoda/psyfit
 
 # Deploy to these servers.
 servers:

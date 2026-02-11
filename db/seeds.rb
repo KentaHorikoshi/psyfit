@@ -158,16 +158,21 @@ patients.each do |patient|
     date = days_ago.days.ago
 
     # Complete 1-3 exercises per day
+    # Use beginning_of_day + fixed hours to avoid future date issues
+    record_date = date.beginning_of_day + rand(8..18).hours
+
     patient_exercises.sample(rand(1..3)).each do |pe|
-      ExerciseRecord.create!(
+      # Skip date range validation for seed data (allows historical records beyond yesterday)
+      record = ExerciseRecord.new(
         user: patient,
         exercise: pe.exercise,
-        completed_at: date + rand(0..12).hours,
+        completed_at: record_date,
         completed_reps: pe.target_reps || 10,
         completed_sets: pe.target_sets || 2,
         duration_seconds: rand(120..600),
         notes: rand < 0.2 ? 'とても調子が良かった' : nil
       )
+      record.save!(validate: false)
     end
   end
   puts "  Created exercise records for #{patient.user_code}"

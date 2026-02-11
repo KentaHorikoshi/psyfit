@@ -85,8 +85,11 @@ COPY --from=frontend-admin-build /app/dist /rails/public/admin
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompiling assets for production without requiring secret keys at build time
+RUN SECRET_KEY_BASE_DUMMY=1 \
+    ATTR_ENCRYPTED_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
+    BLIND_INDEX_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
+    ./bin/rails assets:precompile
 
 # ============================================================
 # Stage 5: Final production image

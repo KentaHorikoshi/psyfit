@@ -14,6 +14,19 @@ const EXERCISE_TYPE_LABELS: Record<ExerciseType, string> = {
 
 const EXERCISE_TYPE_ORDER: ExerciseType[] = ['training', 'stretch', 'massage', 'balance']
 
+// Fallback mapping: Japanese DB values → English frontend keys
+const EXERCISE_TYPE_JP_MAP: Record<string, ExerciseType> = {
+  'ストレッチ': 'stretch',
+  'トレーニング': 'training',
+  'ほぐす': 'massage',
+  'バランス': 'balance',
+}
+
+function normalizeExerciseType(type: string): ExerciseType {
+  if (EXERCISE_TYPE_LABELS[type as ExerciseType]) return type as ExerciseType
+  return EXERCISE_TYPE_JP_MAP[type] ?? 'training'
+}
+
 interface ExerciseCardItemProps {
   exercise: Exercise
   onClick: () => void
@@ -97,8 +110,10 @@ export function ExerciseMenu() {
           apiClient.getExerciseRecords({ start_date: today, end_date: today }),
         ])
 
-        if (exercisesRes.data) {
-          setExercises(exercisesRes.data.exercises ?? [])
+        if (exercisesRes.status === 'success' && exercisesRes.data) {
+          const data = exercisesRes.data as unknown as Record<string, unknown>
+          const list = data.exercises ?? data.assigned_exercises
+          setExercises(Array.isArray(list) ? list as Exercise[] : [])
         }
         if (recordsRes.status === 'success' && recordsRes.data) {
           setTodayRecords(recordsRes.data.records)
@@ -130,10 +145,8 @@ export function ExerciseMenu() {
     }
 
     exercises.forEach(exercise => {
-      const type = exercise.exercise_type
-      if (groups[type]) {
-        groups[type].push(exercise)
-      }
+      const type = normalizeExerciseType(exercise.exercise_type)
+      groups[type].push(exercise)
     })
 
     return EXERCISE_TYPE_ORDER

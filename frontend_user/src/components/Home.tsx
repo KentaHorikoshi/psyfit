@@ -67,19 +67,22 @@ export function Home() {
         const today = new Date().toISOString().split('T')[0]
 
         const [exercisesRes, recordsRes, conditionsRes] = await Promise.all([
-          apiClient.getUserExercises(),
-          apiClient.getExerciseRecords({ start_date: today, end_date: today }),
-          apiClient.getMyDailyConditions({ start_date: today, end_date: today }),
+          apiClient.getUserExercises().catch(() => null),
+          apiClient.getExerciseRecords({ start_date: today, end_date: today }).catch(() => null),
+          apiClient.getMyDailyConditions({ start_date: today, end_date: today }).catch(() => null),
         ])
 
-        if (exercisesRes.status === 'success' && exercisesRes.data) {
-          setExercises(exercisesRes.data.exercises ?? [])
+        if (exercisesRes?.status === 'success' && exercisesRes.data) {
+          const data = exercisesRes.data as unknown as Record<string, unknown>
+          const list = data.exercises ?? data.assigned_exercises
+          setExercises(Array.isArray(list) ? list as Exercise[] : [])
         }
-        if (recordsRes.status === 'success' && recordsRes.data) {
-          setTodayRecords(recordsRes.data.records ?? [])
+        if (recordsRes?.status === 'success' && recordsRes.data) {
+          setTodayRecords(Array.isArray(recordsRes.data.records) ? recordsRes.data.records : [])
         }
-        if (conditionsRes.status === 'success' && conditionsRes.data) {
-          setHasConditionToday((conditionsRes.data.conditions ?? []).length > 0)
+        if (conditionsRes?.status === 'success' && conditionsRes.data) {
+          const conditions = Array.isArray(conditionsRes.data.conditions) ? conditionsRes.data.conditions : []
+          setHasConditionToday(conditions.length > 0)
         }
       } catch {
         // Silently handle errors for exercise list
@@ -101,6 +104,7 @@ export function Home() {
 
   // Calculate remaining exercises count
   const remainingCount = useMemo(() => {
+    if (!Array.isArray(exercises)) return 0
     return exercises.filter(ex => !completedExerciseIds.has(ex.id)).length
   }, [exercises, completedExerciseIds])
 

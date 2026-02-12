@@ -51,6 +51,8 @@
 /Dockerfile*
 /docker-compose*.yml
 
-# Ignore frontend directories (not needed for API build)
-/frontend_user/
-/frontend_admin/
+# Frontend node_modules are rebuilt in Docker build stages
+/frontend_user/node_modules/
+/frontend_user/dist/
+/frontend_admin/node_modules/
+/frontend_admin/dist/

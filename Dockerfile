@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
+ARG RUBY_VERSION=4.0.1
+
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
 # docker build -t psyfit .
 # docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name psyfit psyfit
@@ -85,7 +87,10 @@ COPY --from=frontend-admin-build /app/dist /rails/public/admin
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+RUN SECRET_KEY_BASE_DUMMY=1 \
+    ATTR_ENCRYPTED_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
+    BLIND_INDEX_KEY=0000000000000000000000000000000000000000000000000000000000000000 \
+    ./bin/rails assets:precompile
 
 # ============================================================
 # Stage 5: Final production image

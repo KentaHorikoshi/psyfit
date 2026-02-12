@@ -35,7 +35,18 @@ cd "$APP_DIR/frontend_admin"
 npm ci
 npm run build
 
+# Copy frontend builds to Rails public/ directory
+echo "--- Copying frontend builds to public/ ---"
 cd "$APP_DIR"
+
+# User SPA → public/ (root)
+rm -rf "$APP_DIR/public/index.html" "$APP_DIR/public/assets/index-"*.js "$APP_DIR/public/assets/index-"*.css
+cp -r "$APP_DIR/frontend_user/dist/"* "$APP_DIR/public/"
+
+# Admin SPA → public/admin/
+rm -rf "$APP_DIR/public/admin"
+mkdir -p "$APP_DIR/public/admin"
+cp -r "$APP_DIR/frontend_admin/dist/"* "$APP_DIR/public/admin/"
 
 # Run database migrations
 echo "--- Running database migrations ---"

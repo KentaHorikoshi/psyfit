@@ -16,6 +16,10 @@ RSpec.describe AuditLog, type: :model do
   end
 
   describe 'scopes' do
+    # Freeze time at noon (Tokyo) to prevent timezone-related flakiness in CI (UTC)
+    # Without this, 3.hours.ago can cross the date boundary when CI runs near midnight JST
+    before { Timecop.freeze(Time.zone.now.change(hour: 12)) }
+
     let!(:success_log) { create(:audit_log, :login_success, created_at: 1.hour.ago) }
     let!(:failure_log) { create(:audit_log, :login_failure, created_at: 2.hours.ago) }
     let!(:logout_log) { create(:audit_log, :logout, created_at: 3.hours.ago) }

@@ -30,10 +30,14 @@ vi.mock('react-router-dom', async () => {
 // Mock API client
 const mockGetExercise = vi.fn()
 const mockCreateExerciseRecord = vi.fn()
+const mockGetVideoToken = vi.fn()
+const mockGetVideoStreamUrl = vi.fn()
 vi.mock('../../lib/api-client', () => ({
   apiClient: {
     getExercise: (id: string) => mockGetExercise(id),
     createExerciseRecord: (data: unknown) => mockCreateExerciseRecord(data),
+    getVideoToken: (exerciseId: string) => mockGetVideoToken(exerciseId),
+    getVideoStreamUrl: (exerciseId: string, token: string) => mockGetVideoStreamUrl(exerciseId, token),
   },
 }))
 
@@ -76,6 +80,11 @@ describe('U-04 ExercisePlayer', () => {
       status: 'success',
       data: { id: 'record-1', exercise_id: '1', completed_at: new Date().toISOString() },
     })
+    mockGetVideoToken.mockResolvedValue({
+      status: 'success',
+      data: { token: 'test-token-abc', expires_at: '2026-02-13T11:00:00Z', exercise_id: '1' },
+    })
+    mockGetVideoStreamUrl.mockReturnValue('/api/v1/videos/1/stream?token=test-token-abc')
   })
 
   afterEach(() => {
@@ -99,13 +108,13 @@ describe('U-04 ExercisePlayer', () => {
       expect(screen.getByRole('status')).toBeInTheDocument()
     })
 
-    it('should render video player', async () => {
+    it('should render video player with secure streaming URL', async () => {
       renderExercisePlayer()
 
       await waitFor(() => {
         const video = screen.getByTestId('exercise-video')
         expect(video).toBeInTheDocument()
-        expect(video).toHaveAttribute('src', '/videos/knee-extension.mp4')
+        expect(video).toHaveAttribute('src', '/api/v1/videos/1/stream?token=test-token-abc')
       })
     })
 
@@ -327,6 +336,69 @@ describe('U-04 ExercisePlayer', () => {
       renderExercisePlayer()
 
       expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true })
+    })
+  })
+
+  describe('secure video streaming', () => {
+    it('should fetch video token after exercise data loads', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(mockGetVideoToken).toHaveBeenCalledWith('1')
+      })
+    })
+
+    it('should set video src to streaming URL with token', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        const video = screen.getByTestId('exercise-video')
+        expect(video).toHaveAttribute('src', '/api/v1/videos/1/stream?token=test-token-abc')
+      })
+    })
+
+    it('should call getVideoStreamUrl with exercise id and token', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(mockGetVideoStreamUrl).toHaveBeenCalledWith('1', 'test-token-abc')
+      })
+    })
+
+    it('should show error when video token fetch fails', async () => {
+      mockGetVideoToken.mockRejectedValue(new Error('Token fetch failed'))
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText(/動画の読み込みに失敗しました/)).toBeInTheDocument()
+      })
+    })
+
+    it('should still show exercise info when token fetch fails', async () => {
+      mockGetVideoToken.mockRejectedValue(new Error('Token fetch failed'))
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /膝伸展運動/ })).toBeInTheDocument()
+      })
+    })
+
+    it('should not set video src directly from exercise.video_url', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        const video = screen.getByTestId('exercise-video')
+        expect(video).not.toHaveAttribute('src', '/videos/knee-extension.mp4')
+      })
+    })
+
+    it('should use thumbnail_url directly for poster', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        const video = screen.getByTestId('exercise-video')
+        expect(video).toHaveAttribute('poster', '/thumbnails/knee-extension.jpg')
+      })
     })
   })
 

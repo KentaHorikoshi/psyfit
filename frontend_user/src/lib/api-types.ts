@@ -128,6 +128,13 @@ export interface ExerciseRecordsResponse {
   records: ExerciseRecordWithExercise[]
 }
 
+// Video Token Types
+export interface VideoTokenResponse {
+  token: string
+  expires_at: string
+  exercise_id: string
+}
+
 // Date Filter Params
 export interface DateFilterParams {
   [key: string]: string | undefined

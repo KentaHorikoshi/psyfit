@@ -20,6 +20,8 @@ export function ExercisePlayer() {
   const [isCompleting, setIsCompleting] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [completionError, setCompletionError] = useState<string | null>(null)
+  const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null)
+  const [videoError, setVideoError] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -52,6 +54,26 @@ export function ExercisePlayer() {
 
     fetchExercise()
   }, [isAuthenticated, id])
+
+  // Fetch video token after exercise is loaded
+  useEffect(() => {
+    async function fetchVideoToken() {
+      if (!exercise || !isAuthenticated) return
+
+      try {
+        setVideoError(null)
+        const response = await apiClient.getVideoToken(exercise.id)
+        if (response.status === 'success' && response.data) {
+          const streamUrl = apiClient.getVideoStreamUrl(exercise.id, response.data.token)
+          setVideoStreamUrl(streamUrl)
+        }
+      } catch {
+        setVideoError('動画の読み込みに失敗しました。再度お試しください。')
+      }
+    }
+
+    fetchVideoToken()
+  }, [exercise, isAuthenticated])
 
   const handlePlayPause = () => {
     if (!videoRef.current) return
@@ -203,7 +225,7 @@ export function ExercisePlayer() {
         <video
           ref={videoRef}
           data-testid="exercise-video"
-          src={exercise.video_url}
+          src={videoStreamUrl ?? undefined}
           poster={exercise.thumbnail_url}
           className="w-full h-full object-contain"
           aria-label={`${exercise.name}の動画`}
@@ -253,6 +275,13 @@ export function ExercisePlayer() {
         <div className="px-4 py-4">
           <p className="text-gray-600">{exercise.description}</p>
         </div>
+
+        {/* Video error */}
+        {videoError && (
+          <div role="alert" className="px-4 py-3 mx-4 mt-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-center">{videoError}</p>
+          </div>
+        )}
 
         {/* Completion success message */}
         {isCompleted && (

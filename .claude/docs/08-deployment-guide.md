@@ -23,11 +23,61 @@ Client (HTTPS)
         → psyfit-redis (Redis, Docker内部ネットワーク)
 ```
 
-## デプロイ方法
+**注意**: サーバー上には systemd Puma も存在するが、本番トラフィックは上記の Docker/kamal-proxy 経由で配信される。systemd Puma は本番トラフィックには使用されていない。
 
-### 方法1: Docker イメージの再ビルド（推奨）
+## CI/CD パイプライン
 
-コードの変更を反映するにはDockerイメージを再ビルドしてデプロイします。
+### GitHub Actions ワークフロー
+
+| ワークフロー | ファイル | トリガー | 内容 |
+|---|---|---|---|
+| CI | `.github/workflows/ci.yml` | `main`/`develop` への push、PR | テスト・lint・セキュリティスキャン・ビルドチェック・E2E |
+| Deploy | `.github/workflows/deploy.yml` | `main` への push | SSH経由で `bin/deploy.sh` を実行 |
+
+### CI ワークフローの内容
+
+1. **セキュリティスキャン**: Brakeman（Ruby）、bundler-audit、importmap audit（JS）
+2. **Lint**: RuboCop
+3. **バックエンドテスト**: RSpec + カバレッジ80%チェック
+4. **フロントエンドテスト**: Vitest（User/Admin）+ カバレッジ80%チェック
+5. **ビルドチェック**: frontend_user / frontend_admin のビルド確認
+6. **E2Eテスト**: Playwright（バックエンドテスト通過後に実行）
+
+### Deploy ワークフローの制限事項
+
+`deploy.yml` は `bin/deploy.sh` を SSH 経由で実行するが、これは **systemd Puma のみ**を更新する。本番トラフィックは Docker/kamal-proxy 経由のため、**Docker コンテナの更新は別途手動で必要**（後述の方法1）。
+
+## 正しいデプロイ手順
+
+### ステップ1: ブランチで開発 → PR → CI → マージ
+
+```bash
+# 1. ブランチを切る
+git checkout main
+git pull origin main
+git checkout -b fix/issue-description
+
+# 2. 作業・コミット
+git add <files>
+git commit -m "fix: 説明"
+
+# 3. push して PR 作成
+git push -u origin fix/issue-description
+gh pr create --title "fix: 説明" --body "変更内容の説明"
+
+# 4. CI が通るのを待つ
+gh run watch
+# または GitHub の PR ページで確認
+
+# 5. CI 全パス確認後、マージ
+gh pr merge --merge
+```
+
+**重要**: main ブランチへの直接 push は禁止。必ず PR 経由でマージすること。
+
+### ステップ2: Docker コンテナの更新（本番反映）
+
+main へのマージ後、`deploy.yml` が自動で `bin/deploy.sh` を実行するが、これは systemd Puma のみ更新する。**本番に反映するには以下の Docker 再ビルドが必要。**
 
 ```bash
 # 1. mainブランチの最新コードに切り替え
@@ -79,21 +129,33 @@ docker stop <旧コンテナ名>
 rm -f /tmp/psyfit_env.txt
 ```
 
-### 方法2: GitHub Actions 自動デプロイ
+### まとめ: デプロイの全体フロー
 
-`main` ブランチへの push で `.github/workflows/deploy.yml` が実行されます。
-これは `bin/deploy.sh` を SSH 経由で実行し、systemd の Puma を更新します。
-
-**注意**: この方法は systemd の Puma を更新しますが、本番トラフィックは Docker コンテナ経由で配信されます。Docker コンテナの更新には方法1を使用してください。
-
-### 方法3: bin/deploy.sh（SSH デプロイ）
-
-```bash
-/var/www/psyfit/bin/deploy.sh
+```
+feature/fix ブランチで作業
+       ↓
+  git push origin <branch>
+       ↓
+  gh pr create（PR を作成）
+       ↓
+  CI workflow が自動実行（テスト・lint・ビルド・E2E）
+       ↓
+  CI 全パス確認後、GitHub上でマージ
+       ↓
+  deploy.yml が自動実行 → bin/deploy.sh（systemd Puma 更新）
+       ↓
+  サーバーで Docker 再ビルド（上記ステップ2）を手動実行
+       ↓
+  本番反映完了
 ```
 
-systemd Puma + public/ のフロントエンドを更新します。
-本番トラフィックが kamal-proxy 経由の場合は、方法1も併用してください。
+## ブランチ保護について
+
+GitHub Free プラン（プライベートリポジトリ）では、ブランチ保護ルール（PR必須、CI パス必須）を設定できない。技術的には main への直接 push が可能だが、**運用ルールとして必ず PR 経由でマージすること**。
+
+ブランチ保護を有効にするには:
+- GitHub Pro/Team プランにアップグレード、または
+- リポジトリを public にする
 
 ## 重要な環境変数
 
@@ -171,4 +233,9 @@ systemctl reload nginx
 
 - `ARG RUBY_VERSION` はファイル先頭（最初の FROM の前）に定義
 - `assets:precompile` 時にダミーの暗号化キーが必要
-- `.dockerignore` で `frontend_user/` と `frontend_admin/` を除外しないこと（マルチステージビルドで使用）
+- `.dockerignore` で `frontend_user/` と `frontend_admin/` を除外しないこと（マルチステージビルドで使用。`node_modules/` と `dist/` のみ除外）
+
+## 今後の改善候補
+
+- `deploy.yml` を Docker 再ビルド + kamal-proxy 切り替えに対応させ、main マージだけで本番反映を完結させる
+- GitHub Pro/Team プランで main ブランチ保護を有効化（PR 必須 + CI パス必須）

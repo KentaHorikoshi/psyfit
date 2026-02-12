@@ -20,7 +20,9 @@ git pull origin main
 
 # Install Ruby dependencies
 echo "--- Installing Ruby dependencies ---"
-bundle install --deployment --without development test
+bundle config set --local path vendor/bundle
+bundle config set --local without development:test
+bundle install
 
 # Install frontend dependencies and build
 echo "--- Building frontend_user ---"

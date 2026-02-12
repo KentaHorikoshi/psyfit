@@ -57,13 +57,13 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
 
           expect(response).to have_http_status(:ok)
           expect(json_response['status']).to eq('success')
-          expect(json_response['data']['assigned_exercises'].length).to eq(2)
+          expect(json_response['data']['exercises'].length).to eq(2)
         end
 
         it 'returns exercise details in correct format' do
           get '/api/v1/users/me/exercises'
 
-          first_exercise = json_response['data']['assigned_exercises'].find do |e|
+          first_exercise = json_response['data']['exercises'].find do |e|
             e['id'] == patient_exercise1.id
           end
 
@@ -84,7 +84,7 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
         it 'includes completed_today flag as false when not exercised today' do
           get '/api/v1/users/me/exercises'
 
-          first_exercise = json_response['data']['assigned_exercises'].first
+          first_exercise = json_response['data']['exercises'].first
           expect(first_exercise['completed_today']).to eq(false)
         end
 
@@ -100,10 +100,10 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
           it 'returns completed_today as true for exercised item' do
             get '/api/v1/users/me/exercises'
 
-            completed_exercise = json_response['data']['assigned_exercises'].find do |e|
+            completed_exercise = json_response['data']['exercises'].find do |e|
               e['id'] == patient_exercise1.id
             end
-            not_completed_exercise = json_response['data']['assigned_exercises'].find do |e|
+            not_completed_exercise = json_response['data']['exercises'].find do |e|
               e['id'] == patient_exercise2.id
             end
 
@@ -124,7 +124,7 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
           it 'returns completed_today as false' do
             get '/api/v1/users/me/exercises'
 
-            first_exercise = json_response['data']['assigned_exercises'].find do |e|
+            first_exercise = json_response['data']['exercises'].find do |e|
               e['id'] == patient_exercise1.id
             end
             expect(first_exercise['completed_today']).to eq(false)
@@ -154,8 +154,8 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
           get '/api/v1/users/me/exercises'
 
           expect(response).to have_http_status(:ok)
-          expect(json_response['data']['assigned_exercises'].length).to eq(1)
-          expect(json_response['data']['assigned_exercises'].first['id']).to eq(active_assignment.id)
+          expect(json_response['data']['exercises'].length).to eq(1)
+          expect(json_response['data']['exercises'].first['id']).to eq(active_assignment.id)
         end
       end
 
@@ -165,7 +165,7 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
 
           expect(response).to have_http_status(:ok)
           expect(json_response['status']).to eq('success')
-          expect(json_response['data']['assigned_exercises']).to eq([])
+          expect(json_response['data']['exercises']).to eq([])
         end
       end
 
@@ -191,8 +191,8 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
         it 'returns only current user exercises' do
           get '/api/v1/users/me/exercises'
 
-          expect(json_response['data']['assigned_exercises'].length).to eq(1)
-          expect(json_response['data']['assigned_exercises'].first['id']).to eq(current_user_exercise.id)
+          expect(json_response['data']['exercises'].length).to eq(1)
+          expect(json_response['data']['exercises'].first['id']).to eq(current_user_exercise.id)
         end
       end
     end

@@ -73,13 +73,13 @@ export function Home() {
         ])
 
         if (exercisesRes.status === 'success' && exercisesRes.data) {
-          setExercises(exercisesRes.data.exercises)
+          setExercises(exercisesRes.data.exercises ?? [])
         }
         if (recordsRes.status === 'success' && recordsRes.data) {
-          setTodayRecords(recordsRes.data.records)
+          setTodayRecords(recordsRes.data.records ?? [])
         }
         if (conditionsRes.status === 'success' && conditionsRes.data) {
-          setHasConditionToday(conditionsRes.data.conditions.length > 0)
+          setHasConditionToday((conditionsRes.data.conditions ?? []).length > 0)
         }
       } catch {
         // Silently handle errors for exercise list

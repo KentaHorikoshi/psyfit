@@ -524,7 +524,7 @@ Cookie: _psyfit_session=<session_id>
 {
   "status": "success",
   "data": {
-    "assigned_exercises": [
+    "exercises": [
       {
         "id": "uuid",
         "exercise": {

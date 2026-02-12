@@ -41,13 +41,13 @@ env:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     SOLID_QUEUE_IN_PUMA: true
 
-    # Database
+    # Database (connects via Docker network name)
     POSTGRES_USER: psyfit_prod
-    POSTGRES_HOST: 127.0.0.1
+    POSTGRES_HOST: psyfit-db
     POSTGRES_DB: psyfit_production
 
-    # Redis
-    REDIS_URL: redis://localhost:6379/0
+    # Redis (connects via Docker network name)
+    REDIS_URL: redis://psyfit-redis:6379/0
 
     # Application URLs
     USER_APP_URL: https://psytech.jp
@@ -89,7 +89,7 @@ accessories:
   db:
     image: postgres:16
     host: 160.251.230.38
-    port: "127.0.0.1:5432:5432"
+    port: "127.0.0.1:5433:5432"
     env:
       secret:
         - POSTGRES_PASSWORD
@@ -101,8 +101,8 @@ accessories:
   redis:
     image: redis:7
     host: 160.251.230.38
-    port: "127.0.0.1:6379:6379"
-    cmd: "redis-server --requirepass ${REDIS_PASSWORD}"
+    port: "127.0.0.1:6380:6379"
+    cmd: "sh -c 'exec redis-server --requirepass \"$REDIS_PASSWORD\"'"
     env:
       secret:
         - REDIS_PASSWORD

@@ -60,75 +60,29 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
           expect(json_response['data']['exercises'].length).to eq(2)
         end
 
-        it 'returns exercise details in correct format' do
+        it 'returns exercise details in flat format matching frontend Exercise type' do
           get '/api/v1/users/me/exercises'
 
           first_exercise = json_response['data']['exercises'].find do |e|
-            e['id'] == patient_exercise1.id
+            e['id'] == exercise1.id
           end
 
           expect(first_exercise).to include(
-            'id' => patient_exercise1.id,
-            'target_reps' => 10,
-            'target_sets' => 3
-          )
-
-          expect(first_exercise['exercise']).to include(
             'id' => exercise1.id,
             'name' => 'スクワット',
             'video_url' => '/videos/squat.mp4',
-            'thumbnail_url' => '/thumbnails/squat.jpg'
+            'thumbnail_url' => '/thumbnails/squat.jpg',
+            'sets' => 3,
+            'reps' => 10
           )
         end
 
-        it 'includes completed_today flag as false when not exercised today' do
+        it 'maps exercise_type from Japanese to English' do
           get '/api/v1/users/me/exercises'
 
-          first_exercise = json_response['data']['exercises'].first
-          expect(first_exercise['completed_today']).to eq(false)
-        end
-
-        context 'when exercise was completed today' do
-          before do
-            create(:exercise_record,
-              user: user,
-              exercise: exercise1,
-              completed_at: Time.current
-            )
-          end
-
-          it 'returns completed_today as true for exercised item' do
-            get '/api/v1/users/me/exercises'
-
-            completed_exercise = json_response['data']['exercises'].find do |e|
-              e['id'] == patient_exercise1.id
-            end
-            not_completed_exercise = json_response['data']['exercises'].find do |e|
-              e['id'] == patient_exercise2.id
-            end
-
-            expect(completed_exercise['completed_today']).to eq(true)
-            expect(not_completed_exercise['completed_today']).to eq(false)
-          end
-        end
-
-        context 'when exercise was completed yesterday' do
-          before do
-            create(:exercise_record,
-              user: user,
-              exercise: exercise1,
-              completed_at: 1.day.ago
-            )
-          end
-
-          it 'returns completed_today as false' do
-            get '/api/v1/users/me/exercises'
-
-            first_exercise = json_response['data']['exercises'].find do |e|
-              e['id'] == patient_exercise1.id
-            end
-            expect(first_exercise['completed_today']).to eq(false)
-          end
+          exercises = json_response['data']['exercises']
+          exercise_types = exercises.map { |e| e['exercise_type'] }
+          expect(exercise_types).to all(be_in(%w[stretch training massage balance]))
         end
       end
 
@@ -155,7 +109,7 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
 
           expect(response).to have_http_status(:ok)
           expect(json_response['data']['exercises'].length).to eq(1)
-          expect(json_response['data']['exercises'].first['id']).to eq(active_assignment.id)
+          expect(json_response['data']['exercises'].first['id']).to eq(exercise1.id)
         end
       end
 
@@ -192,7 +146,7 @@ RSpec.describe 'Api::V1::UserExercises', type: :request do
           get '/api/v1/users/me/exercises'
 
           expect(json_response['data']['exercises'].length).to eq(1)
-          expect(json_response['data']['exercises'].first['id']).to eq(current_user_exercise.id)
+          expect(json_response['data']['exercises'].first['id']).to eq(exercise2.id)
         end
       end
     end

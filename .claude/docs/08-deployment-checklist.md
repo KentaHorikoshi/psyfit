@@ -106,14 +106,18 @@ GitHub Actions（`.github/workflows/ci.yml`）の全ジョブがパスするこ�
 
 | 変数名 | 説明 | 状態 |
 |--------|------|------|
-| [ ] `SMTP_ADDRESS` | SMTPサーバーアドレス | **要設定** |
+| [x] `SMTP_ADDRESS` | SMTPサーバーアドレス（SendGrid: smtp.sendgrid.net） | 環境変数設定済 |
 | [x] `SMTP_PORT` | SMTPポート（587） | deploy.yml設定済 |
-| [ ] `SMTP_USERNAME` | SMTP認証ユーザー | **要設定** |
-| [ ] `SMTP_PASSWORD` | SMTP認証パスワード | **要設定** |
+| [x] `SMTP_USERNAME` | SMTP認証ユーザー（SendGrid: `apikey`） | 環境変数設定済 |
+| [x] `SMTP_PASSWORD` | SMTP認証パスワード（SendGrid APIキー） | 環境変数設定済 |
 | [x] `SMTP_DOMAIN` | メール送信ドメイン（psytech.jp） | deploy.yml設定済 |
 | [x] `MAILER_FROM_ADDRESS` | Fromアドレス（noreply@psytech.jp） | deploy.yml設定済 |
 
-> **注意**: パスワードリセットメール機能が実装済みのため、SMTPは必須。デプロイ前にSMTP情報を取得すること。
+**SendGrid設定内容（2026-02-11完了）**:
+- SendGridアカウント作成済み
+- ドメイン認証（psytech.jp）設定済み（ConoHa DNS CNAMEレコード追加）
+- APIキー発行済み（Mail Sendスコープのみ）
+- 環境変数（`~/.bashrc`）に設定済み
 
 ### Phase 2 で作成・更新したファイル
 
@@ -207,10 +211,10 @@ GitHub Actions（`.github/workflows/ci.yml`）の全ジョブがパスするこ�
    ├── ローカルで全チェック実行  ✅
    ├── 失敗箇所を修正          ✅
    └── GitHubにpushしてCI確認  ✅
-2. 本番環境変数を準備          ✅ テンプレート作成完了（2026-02-11）
+2. 本番環境変数を準備          ✅ 完了（2026-02-11）
    ├── .env.production 作成    ✅
    ├── production.rb 更新      ✅
-   └── SMTP情報の取得          ⏳ 未完了
+   └── SMTP情報の取得          ✅ SendGrid設定完了
 3. Kamalデプロイ設定を更新      ✅ 完了（2026-02-11）
    ├── deploy.yml 更新         ✅
    ├── .kamal/secrets 更新     ✅
@@ -269,12 +273,12 @@ https://psytech.jp/api/v1/    → Rails API
 
 | チェック | 内容 | 備考 |
 |----------|------|------|
-| [ ] SMTP設定 | SMTP情報取得後、`.kamal/secrets` に追加 | デプロイ前に必須 |
-| [ ] GitHub PAT発行 | packages:write スコープのトークンを発行 | KAMAL_REGISTRY_PASSWORD |
-| [ ] セキュリティキー生成 | `bin/rails secret` で2つ、`openssl rand -base64 32` で1つ | サーバーで実行 |
+| [x] SMTP設定 | SendGrid設定・環境変数セット完了 | 完了（2026-02-11） |
+| [x] GitHub PAT発行 | packages:write スコープのトークンを発行 | `KAMAL_REGISTRY_PASSWORD` 設定済 |
+| [x] セキュリティキー生成 | `SECRET_KEY_BASE` / `ATTR_ENCRYPTED_KEY` / `POSTGRES_PASSWORD` / `REDIS_PASSWORD` 生成済み | 環境変数（`~/.bashrc`）設定済 |
 | [ ] DNS設定 | `psytech.jp` → `160.251.230.38` のAレコード設定 | ドメインレジストラ |
-| [ ] SSL証明書 | Let's Encrypt（Kamal proxy自動設定） | kamal deploy で自動 |
-| [ ] バックアップ | PostgreSQLの定期バックアップ設定（cron等） | サーバー設定 |
+| [ ] SSL証明書 | Let's Encrypt（Kamal proxy自動設定） | `kamal deploy` で自動取得 |
+| [ ] バックアップ | PostgreSQLの定期バックアップ設定（cron等） | デプロイ後に設定 |
 | [ ] 監視 | ヘルスチェック `/api/v1/health` の外部監視 | UptimeRobot等 |
 
 ---

@@ -1,0 +1,56 @@
+name: Deploy Psyfit App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # GitHub画面から手動実行も可能にする設定
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # 1. プロジェクトのディレクトリに移動
+            # ※ 実際のサーバー上のパスに合わせて書き換えてください
+            cd /var/www/psyfit 
+
+            # 2. 最新コードの取得
+            git pull origin main
+
+            # --- Backend (Rails) ---
+            echo "Deploying Backend..."
+            # 依存関係のインストール
+            bundle config set --local deployment 'true'
+            bundle install --jobs 4 --retry 3
+            
+            # データベースマイグレーション
+            bundle exec rails db:migrate RAILS_ENV=production
+            
+            # Railsサーバーの再起動
+            # ※ Pumaを使用し、systemdで管理している場合の例です
+            # sudo systemctl restart puma.service 
+            # または touch tmp/restart.txt など環境に合わせてください
+            
+            # --- Frontend User (利用者用) ---
+            echo "Building Frontend User..."
+            cd frontend_user
+            npm ci  # または yarn install --frozen-lockfile
+            npm run build
+            cd ..
+
+            # --- Frontend Admin (職員用) ---
+            echo "Building Frontend Admin..."
+            cd frontend_admin
+            npm ci
+            npm run build
+            cd ..
+
+            echo "Deployment Finished!"

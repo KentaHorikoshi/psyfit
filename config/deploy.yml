@@ -2,22 +2,27 @@
 service: psyfit
 
 # Name of the container image.
-image: hirototoda/psyfit
+image: kentahorikoshi/psyfit
 
 # Deploy to these servers.
 servers:
   web:
     - 160.251.230.38
 
-# Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
+# Proxy settings (SSL is terminated by nginx, kamal-proxy listens on localhost:8080)
 proxy:
-  ssl: true
+  ssl: false
   host: psytech.jp
+  run:
+    http_port: 8080
+    https_port: 8443
+    bind_ips:
+      - 127.0.0.1
 
 # Where you keep your container images.
 registry:
   server: ghcr.io
-  username: hirototoda
+  username: kentahorikoshi
   password:
     - KAMAL_REGISTRY_PASSWORD
 

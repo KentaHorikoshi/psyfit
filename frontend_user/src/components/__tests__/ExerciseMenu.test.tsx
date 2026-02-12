@@ -270,5 +270,40 @@ describe('U-03 ExerciseMenu', () => {
         expect(stretchTexts.length).toBeGreaterThan(0)
       })
     })
+
+    it('should handle Japanese exercise_type values from API', async () => {
+      const japaneseTypeExercises: Exercise[] = [
+        {
+          id: '10',
+          name: 'チェアスクワット',
+          description: '椅子スクワット',
+          video_url: '/videos/chair-squat.mp4',
+          sets: 3,
+          reps: 10,
+          exercise_type: 'トレーニング' as Exercise['exercise_type'],
+        },
+        {
+          id: '11',
+          name: '肘を曲げる運動',
+          description: 'ストレッチ運動',
+          video_url: '/videos/elbow.mp4',
+          sets: 2,
+          reps: 5,
+          exercise_type: 'ストレッチ' as Exercise['exercise_type'],
+        },
+      ]
+
+      mockGetUserExercises.mockResolvedValue({
+        status: 'success',
+        data: { exercises: japaneseTypeExercises },
+      })
+
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByText('チェアスクワット')).toBeInTheDocument()
+        expect(screen.getByText('肘を曲げる運動')).toBeInTheDocument()
+      })
+    })
   })
 })

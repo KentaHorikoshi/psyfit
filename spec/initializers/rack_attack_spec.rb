@@ -10,6 +10,9 @@ RSpec.describe 'Rack::Attack', type: :request do
     @original_store = Rack::Attack.cache.store
     Rack::Attack.cache.store = memory_store
     Rack::Attack.reset!
+    # Freeze time to prevent throttle period rollover when many requests
+    # take longer than 60 seconds in CI
+    Timecop.freeze
   end
 
   after(:each) do

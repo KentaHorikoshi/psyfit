@@ -13,7 +13,8 @@ import type {
   Exercise,
   ExercisesResponse,
   ExerciseRecord,
-  CreateExerciseRecordRequest
+  CreateExerciseRecordRequest,
+  VideoTokenResponse
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
@@ -119,6 +120,15 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     })
+  }
+
+  // Video streaming endpoints
+  async getVideoToken(exerciseId: string): Promise<ApiResponse<VideoTokenResponse>> {
+    return this.request<VideoTokenResponse>(`/videos/${exerciseId}/token`)
+  }
+
+  getVideoStreamUrl(exerciseId: string, token: string): string {
+    return `${this.baseUrl}/videos/${exerciseId}/stream?token=${encodeURIComponent(token)}`
   }
 }
 

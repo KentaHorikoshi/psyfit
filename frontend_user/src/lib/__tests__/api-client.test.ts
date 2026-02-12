@@ -532,6 +532,67 @@ describe('ApiClient', () => {
       })
     })
   })
+
+  describe('video token API', () => {
+    describe('getVideoToken', () => {
+      it('should fetch a video token for an exercise', async () => {
+        const mockTokenResponse = {
+          token: 'abc123secure',
+          expires_at: '2026-02-13T11:00:00Z',
+          exercise_id: 'exercise-1',
+        }
+
+        server.use(
+          http.get(`${API_BASE_URL}/videos/exercise-1/token`, () => {
+            return HttpResponse.json({
+              status: 'success',
+              data: mockTokenResponse,
+            })
+          })
+        )
+
+        const response = await apiClient.getVideoToken('exercise-1')
+
+        expect(response.status).toBe('success')
+        expect(response.data?.token).toBe('abc123secure')
+        expect(response.data?.expires_at).toBe('2026-02-13T11:00:00Z')
+        expect(response.data?.exercise_id).toBe('exercise-1')
+      })
+
+      it('should throw ApiError when user has no access to exercise', async () => {
+        server.use(
+          http.get(`${API_BASE_URL}/videos/exercise-99/token`, () => {
+            return HttpResponse.json(
+              { status: 'error', message: 'この動画へのアクセス権限がありません' },
+              { status: 403 }
+            )
+          })
+        )
+
+        await expect(apiClient.getVideoToken('exercise-99')).rejects.toThrow(ApiError)
+      })
+
+      it('should throw AuthenticationError when not authenticated', async () => {
+        server.use(
+          http.get(`${API_BASE_URL}/videos/exercise-1/token`, () => {
+            return HttpResponse.json(
+              { status: 'error', message: '認証が必要です' },
+              { status: 401 }
+            )
+          })
+        )
+
+        await expect(apiClient.getVideoToken('exercise-1')).rejects.toThrow(AuthenticationError)
+      })
+    })
+
+    describe('getVideoStreamUrl', () => {
+      it('should return streaming URL with token', () => {
+        const url = apiClient.getVideoStreamUrl('exercise-1', 'abc123secure')
+        expect(url).toBe(`${API_BASE_URL}/videos/exercise-1/stream?token=abc123secure`)
+      })
+    })
+  })
 })
 
 describe('ApiError', () => {

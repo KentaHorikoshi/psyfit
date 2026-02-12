@@ -46,7 +46,7 @@ module Api
           }
         end
 
-        render_success({ assigned_exercises: assigned_exercises })
+        render_success({ exercises: assigned_exercises })
       end
     end
   end

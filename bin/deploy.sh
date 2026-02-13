@@ -99,7 +99,7 @@ echo "New container IP: ${NEW_IP}"
 
 HEALTH_OK=false
 for i in $(seq 1 30); do
-  if curl -sf --max-time 5 "http://${NEW_IP}:3000/api/v1/health" > /dev/null 2>&1; then
+  if curl -sf --max-time 5 -H "Host: psytech.jp" "http://${NEW_IP}:3000/api/v1/health" > /dev/null 2>&1; then
     echo "Health check passed on attempt ${i}"
     HEALTH_OK=true
     break

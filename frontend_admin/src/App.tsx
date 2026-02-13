@@ -24,6 +24,7 @@ import { ReportGeneration } from './components/ReportGeneration'
 import { StaffManagement } from './components/StaffManagement'
 import { ExerciseMenuManagement } from './components/ExerciseMenuManagement'
 import { PasswordReset } from './components/PasswordReset'
+import { ForgotPassword } from './components/ForgotPassword'
 import { Sidebar } from './components/Sidebar'
 
 /**
@@ -252,6 +253,7 @@ export default function App() {
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Authenticated routes with sidebar layout */}
             <Route element={<ProtectedRoute />}>

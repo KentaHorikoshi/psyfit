@@ -226,7 +226,7 @@ describe('S-01 Staff Login', () => {
 
       await user.click(screen.getByText('パスワードをお忘れですか？'))
 
-      expect(mockNavigate).toHaveBeenCalledWith('/password-reset')
+      expect(mockNavigate).toHaveBeenCalledWith('/forgot-password')
     })
 
     it('should redirect to dashboard if already authenticated', () => {

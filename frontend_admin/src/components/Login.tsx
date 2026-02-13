@@ -90,7 +90,7 @@ export function Login() {
   }
 
   const handlePasswordReset = () => {
-    navigate('/password-reset')
+    navigate('/forgot-password')
   }
 
   // Get first validation error for alert

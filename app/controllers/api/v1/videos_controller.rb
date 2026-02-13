@@ -95,14 +95,8 @@ module Api
       end
 
       def resolve_video_path(video_url)
-        # Handle relative paths from storage
-        if video_url.start_with?("/")
-          Rails.root.join(video_url.sub(/^\//, ""))
-        else
-          # For external URLs, we'd need different handling
-          # For now, assume local storage
-          Rails.root.join("storage", "videos", File.basename(video_url))
-        end
+        # Always resolve to storage/videos/ using the filename
+        Rails.root.join("storage", "videos", File.basename(video_url))
       end
 
       def stream_video(video_path)

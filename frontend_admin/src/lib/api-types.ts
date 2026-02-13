@@ -333,6 +333,15 @@ export interface ChangePasswordResponse {
   message: string
 }
 
+// Password Reset Request Types (Forgot Password)
+export interface StaffPasswordResetRequest {
+  staff_id: string
+}
+
+export interface PasswordResetResponse {
+  message: string
+}
+
 // Daily Condition Types (S-04 Patient Detail)
 export interface DailyCondition {
   id: string

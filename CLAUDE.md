@@ -192,13 +192,19 @@ Client (HTTPS)
 5. **ビルドチェック**: frontend_user / frontend_admin のビルド確認
 6. **E2Eテスト**: Playwright（バックエンドテスト通過後に実行）
 
-### Deploy ワークフローの制限事項
+### Deploy ワークフローの内容
 
-`deploy.yml` は `bin/deploy.sh` を SSH 経由で実行するが、これは **systemd Puma のみ**を更新する。本番トラフィックは Docker/kamal-proxy 経由のため、**Docker コンテナの更新は別途手動で必要**。
+`deploy.yml` は `bin/deploy.sh` を SSH 経由で実行し、以下を自動で行う:
+
+1. **Docker デプロイ（本番）**: イメージビルド → 新コンテナ起動 → ヘルスチェック → kamal-proxy 切り替え → 旧コンテナ停止
+2. **systemd Puma 更新（フォールバック）**: bundle install → フロントエンドビルド → DB migration → Puma 再起動
+3. **クリーンアップ**: 古い停止済みコンテナ・ダングリングイメージの削除
+
+デプロイ中にヘルスチェックが失敗した場合、自動で旧コンテナにロールバックする。同時デプロイは `concurrency` 設定で防止。
 
 ## Deploy手順
 
-### ステップ1: ブランチで開発 → PR → CI → マージ
+### ブランチで開発 → PR → CI → マージ → 自動デプロイ
 
 ```bash
 # 1. ブランチを切る
@@ -215,57 +221,11 @@ gh pr create --title "fix: 説明" --body "変更内容の説明"
 
 # 4. CI が通るのを待つ → マージ
 gh pr merge --merge
+
+# 5. deploy.yml が自動実行 → Docker コンテナ更新 → 本番反映完了
 ```
 
 **重要**: main ブランチへの直接 push は禁止。必ず PR 経由でマージすること。
-
-### ステップ2: Docker コンテナの更新（本番反映）
-
-main へのマージ後、`deploy.yml` が `bin/deploy.sh` を自動実行するが systemd Puma のみ更新。**本番に反映するには以下の Docker 再ビルドが必要。**
-
-```bash
-# 1. mainブランチの最新コードに切り替え
-cd /var/www/psyfit
-git checkout main && git pull origin main
-
-# 2. Docker イメージをビルド
-docker build -t psyfit-local:latest --platform linux/amd64 .
-
-# 3. 現在のコンテナの環境変数を保存
-docker exec <現在のコンテナ名> env | \
-  grep -v "^HOSTNAME=" | grep -v "^KAMAL_" | grep -v "^PATH=" | \
-  grep -v "^HOME=" | grep -v "^RUBY_DOWNLOAD" | grep -v "^BUNDLE_" | \
-  grep -v "^GEM_HOME=" | grep -v "^LANG=" | grep -v "^LD_PRELOAD=" \
-  > /tmp/psyfit_env.txt
-
-# 4. RAILS_MASTER_KEY をソースコードに合わせて更新
-sed -i "s/RAILS_MASTER_KEY=.*/RAILS_MASTER_KEY=$(cat config/master.key)/" /tmp/psyfit_env.txt
-
-# 5. 新しいコンテナを起動
-docker run -d \
-  --name psyfit-web-new \
-  --network kamal \
-  --env-file /tmp/psyfit_env.txt \
-  -v psyfit_storage:/rails/storage \
-  psyfit-local:latest
-
-# 6. 起動確認（Puma が Listening になるまで待つ）
-sleep 10
-docker logs psyfit-web-new 2>&1 | tail -5
-
-# 7. 新コンテナの IP を取得 → kamal-proxy を切り替え
-NEW_IP=$(docker inspect psyfit-web-new --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
-docker exec kamal-proxy kamal-proxy deploy psyfit-web \
-  --target ${NEW_IP}:3000 --host psytech.jp
-
-# 8. 動作確認
-curl -s -H "Host: psytech.jp" http://127.0.0.1:8080/api/v1/health
-curl -s -H "Host: psytech.jp" http://127.0.0.1:8080/home | head -3
-
-# 9. 問題なければ旧コンテナを停止・クリーンアップ
-docker stop <旧コンテナ名>
-rm -f /tmp/psyfit_env.txt
-```
 
 ### デプロイの全体フロー
 
@@ -275,14 +235,21 @@ feature/fix ブランチで作業
   → gh pr create（PR を作成）
   → CI workflow が自動実行（テスト・lint・ビルド・E2E）
   → CI 全パス確認後、GitHub上でマージ
-  → deploy.yml が自動実行 → bin/deploy.sh（systemd Puma 更新）
-  → サーバーで Docker 再ビルド（上記ステップ2）を手動実行
+  → deploy.yml が自動実行 → bin/deploy.sh
+    → Phase 1: Docker ビルド + ブルーグリーンスワップ + ヘルスチェック
+    → Phase 2: systemd Puma 更新（フォールバック）
+    → Phase 3: クリーンアップ
   → 本番反映完了
 ```
 
-### ロールバック
+### 手動ロールバック
+
+デプロイスクリプトは自動ロールバック機能を持つが、手動で戻す場合:
 
 ```bash
+# 停止済みの旧コンテナを確認
+docker ps -a --filter "name=psyfit-web-" --filter "status=exited"
+
 # 旧コンテナを再起動
 docker start <旧コンテナ名>
 

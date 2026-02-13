@@ -6,6 +6,11 @@ on:
       - main
   workflow_dispatch:
 
+# Prevent concurrent deployments (wait for in-progress deploy to finish)
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,5 +22,5 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          command_timeout: 10m
+          command_timeout: 15m
           script: /var/www/psyfit/bin/deploy.sh

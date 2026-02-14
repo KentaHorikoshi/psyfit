@@ -110,8 +110,8 @@ done
 
 if [ "$HEALTH_OK" != true ]; then
   echo "ERROR: New container failed health check after 60 seconds"
-  echo "--- Container logs ---"
-  docker logs "$NEW_CONTAINER_NAME" 2>&1 | tail -20
+  echo "--- Container logs (last 80 lines) ---"
+  docker logs "$NEW_CONTAINER_NAME" 2>&1 | tail -80
   docker stop "$NEW_CONTAINER_NAME" || true
   rm -f "$ENV_FILE"
   exit 1

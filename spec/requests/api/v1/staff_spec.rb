@@ -457,4 +457,63 @@ RSpec.describe 'Api::V1::Staff', type: :request do
       end
     end
   end
+
+  describe 'GET /api/v1/staff/options' do
+    context 'when authenticated as staff' do
+      before { sign_in_as_staff(staff_member) }
+
+      it 'returns active staff options ordered by staff_id' do
+        staff_a = create(:staff, staff_id: 'STF100', name: 'Zアルファ', password: 'Password123', password_confirmation: 'Password123')
+        staff_b = create(:staff, staff_id: 'STF050', name: 'Aベータ', password: 'Password123', password_confirmation: 'Password123')
+
+        get '/api/v1/staff/options'
+
+        expect(response).to have_http_status(:ok)
+        json = json_response
+        expect(json['status']).to eq('success')
+
+        options = json['data']['staff_options']
+        ids = options.map { |o| o['id'] }
+
+        # STF050 should come before STF100 (ordered by staff_id)
+        expect(ids.index(staff_b.id)).to be < ids.index(staff_a.id)
+      end
+
+      it 'returns id and name for each staff option' do
+        get '/api/v1/staff/options'
+
+        expect(response).to have_http_status(:ok)
+        json = json_response
+        options = json['data']['staff_options']
+        expect(options).to all(include('id', 'name'))
+      end
+
+      it 'records audit log' do
+        get '/api/v1/staff/options'
+
+        audit_log = AuditLog.where(action: 'read', staff_id: staff_member.id).last
+        expect(audit_log).to be_present
+        expect(audit_log.status).to eq('success')
+      end
+
+      it 'excludes soft deleted staff' do
+        create(:staff, :deleted, password: 'Password123', password_confirmation: 'Password123')
+
+        get '/api/v1/staff/options'
+
+        expect(response).to have_http_status(:ok)
+        json = json_response
+        ids = json['data']['staff_options'].map { |o| o['id'] }
+        expect(ids).not_to include(Staff.deleted.first&.id)
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns 401 unauthorized' do
+        get '/api/v1/staff/options'
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
 end

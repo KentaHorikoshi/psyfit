@@ -51,24 +51,32 @@ exercises (運動マスタ)
 
 ### 2. staff (職員)
 
-| カラム名 | 型 | NULL | 説明 |
-|---------|-----|------|------|
-| id | UUID | NO | プライマリキー |
-| staff_id | VARCHAR(50) | NO | 職員ID (ログイン用) |
-| password_digest | VARCHAR(255) | NO | パスワードハッシュ |
-| name | VARCHAR(100) | NO | 職員氏名 |
-| email | VARCHAR(255) | NO | メールアドレス |
-| role | VARCHAR(20) | NO | 権限 (manager/staff) |
-| department | VARCHAR(100) | YES | 所属部署 |
-| failed_login_attempts | INTEGER | NO | ログイン失敗回数 |
-| locked_until | TIMESTAMP | YES | アカウントロック解除時刻 |
-| created_at | TIMESTAMP | NO | 作成日時 |
-| updated_at | TIMESTAMP | NO | 更新日時 |
-| deleted_at | TIMESTAMP | YES | 削除日時 |
+| カラム名 | 型 | NULL | 暗号化 | 説明 |
+|---------|-----|------|--------|------|
+| id | UUID | NO | - | プライマリキー |
+| staff_id | VARCHAR(50) | NO | - | 職員ID (ログイン用) |
+| password_digest | VARCHAR(255) | NO | - | パスワードハッシュ |
+| name_encrypted | VARCHAR | YES | AES-256-GCM | 職員氏名（暗号化） |
+| name_encrypted_iv | VARCHAR | YES | - | name暗号化IV |
+| name_kana_encrypted | VARCHAR | YES | AES-256-GCM | 職員氏名カナ（暗号化） |
+| name_kana_encrypted_iv | VARCHAR | YES | - | name_kana暗号化IV |
+| email_encrypted | VARCHAR | YES | AES-256-GCM | メールアドレス（暗号化） |
+| email_encrypted_iv | VARCHAR | YES | - | email暗号化IV |
+| email_bidx | VARCHAR | YES | HMAC-SHA256 | メール検索用ブラインドインデックス |
+| role | VARCHAR(20) | NO | - | 権限 (manager/staff) |
+| department | VARCHAR(100) | YES | - | 所属部署 |
+| failed_login_count | INTEGER | NO | - | ログイン失敗回数 |
+| locked_until | TIMESTAMP | YES | - | アカウントロック解除時刻 |
+| created_at | TIMESTAMP | NO | - | 作成日時 |
+| updated_at | TIMESTAMP | NO | - | 更新日時 |
+| deleted_at | TIMESTAMP | YES | - | 削除日時（論理削除） |
+
+**暗号化:** `attr_encrypted` gem による AES-256-GCM 暗号化。`name`, `name_kana`, `email` は仮想属性として復号データにアクセス。
 
 **インデックス:**
 - PRIMARY KEY (id)
 - UNIQUE INDEX (staff_id)
+- UNIQUE INDEX (email_bidx)
 - INDEX (role)
 
 ### 3. exercises (運動マスタ)

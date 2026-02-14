@@ -2,19 +2,36 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  # Wait for database to be ready (max 30 attempts, 2 seconds apart)
-  echo "Waiting for database to be ready..."
-  for i in $(seq 1 30); do
+  # Phase 1: Wait for PostgreSQL to accept connections (lightweight check)
+  echo "Waiting for PostgreSQL to accept connections..."
+  DB_HOST="${POSTGRES_HOST:-psyfit-db}"
+  DB_PORT="${POSTGRES_PORT:-5432}"
+  for i in $(seq 1 60); do
+    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+      echo "PostgreSQL is accepting connections (attempt ${i})."
+      break
+    fi
+    if [ "$i" -eq 60 ]; then
+      echo "ERROR: PostgreSQL not ready after 120 seconds, exiting."
+      exit 1
+    fi
+    echo "PostgreSQL not ready yet, retrying in 2 seconds... (${i}/60)"
+    sleep 2
+  done
+
+  # Phase 2: Run db:prepare (migrate or create)
+  echo "Running database preparation..."
+  for i in $(seq 1 5); do
     if ./bin/rails db:prepare 2>&1; then
       echo "Database ready."
       break
     fi
-    if [ "$i" -eq 30 ]; then
-      echo "ERROR: Database not ready after 60 seconds, exiting."
+    if [ "$i" -eq 5 ]; then
+      echo "ERROR: db:prepare failed after 5 attempts, exiting."
       exit 1
     fi
-    echo "Database not ready yet, retrying in 2 seconds... (${i}/30)"
-    sleep 2
+    echo "db:prepare failed, retrying in 3 seconds... (${i}/5)"
+    sleep 3
   done
 fi
 

@@ -319,6 +319,7 @@ psyfit/
 ├── bin/docker-start       # 起動スクリプト
 ├── bin/docker-test        # Docker環境テスト
 ├── bin/deploy.sh          # デプロイスクリプト (systemd Puma用)
+├── bin/cleanup-docker.sh  # Docker定期クリーンアップ (週次cron)
 ├── .github/workflows/
 │   ├── ci.yml             # CI ワークフロー
 │   └── deploy.yml         # Deploy ワークフロー

@@ -2,7 +2,20 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+  # Wait for database to be ready (max 30 attempts, 2 seconds apart)
+  echo "Waiting for database to be ready..."
+  for i in $(seq 1 30); do
+    if ./bin/rails db:prepare 2>&1; then
+      echo "Database ready."
+      break
+    fi
+    if [ "$i" -eq 30 ]; then
+      echo "ERROR: Database not ready after 60 seconds, exiting."
+      exit 1
+    fi
+    echo "Database not ready yet, retrying in 2 seconds... (${i}/30)"
+    sleep 2
+  done
 fi
 
 exec "${@}"

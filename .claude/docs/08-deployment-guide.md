@@ -305,6 +305,46 @@ df -h /var/backups/
 
 ---
 
+## Docker 定期クリーンアップ
+
+デプロイを繰り返すと古いイメージやビルドキャッシュが蓄積する。週次で自動クリーンアップを実行する。
+
+### クリーンアップ対象
+
+| 対象 | 処理 | 保持 |
+|------|------|------|
+| 停止済み `psyfit-web-*` コンテナ | 古いものを削除 | 直近1つ（ロールバック用） |
+| ダングリングイメージ | 全て削除 | なし |
+| `psyfit-local` イメージ | 古いものを削除 | 直近2つ |
+| ビルドキャッシュ | 7日以上前を削除 | 7日以内 |
+
+### 手動実行
+
+```bash
+bin/cleanup-docker.sh
+```
+
+### crontab 設定（毎週日曜 3:00）
+
+```bash
+crontab -e
+
+# 以下の行を追加
+0 3 * * 0 /var/www/psyfit/bin/cleanup-docker.sh >> /var/log/psyfit-cleanup.log 2>&1
+```
+
+### crontab 設定確認
+
+```bash
+# 設定済みか確認
+crontab -l | grep cleanup
+
+# ログ確認
+tail -30 /var/log/psyfit-cleanup.log
+```
+
+---
+
 ## SSL 証明書管理
 
 ### 現在の構成

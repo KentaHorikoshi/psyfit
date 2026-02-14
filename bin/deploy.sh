@@ -138,18 +138,18 @@ NEW_IP=$(docker inspect "$NEW_CONTAINER_NAME" \
 echo "New container IP: ${NEW_IP}"
 
 HEALTH_OK=false
-for i in $(seq 1 30); do
+for i in $(seq 1 60); do
   if curl -sf --max-time 5 -H "Host: psytech.jp" "http://${NEW_IP}:3000/api/v1/health" > /dev/null 2>&1; then
     echo "Health check passed on attempt ${i}"
     HEALTH_OK=true
     break
   fi
-  echo "Waiting for health check... (${i}/30)"
-  sleep 2
+  echo "Waiting for health check... (${i}/60)"
+  sleep 3
 done
 
 if [ "$HEALTH_OK" != true ]; then
-  echo "ERROR: New container failed health check after 60 seconds"
+  echo "ERROR: New container failed health check after 180 seconds"
   echo "--- Container logs (last 80 lines) ---"
   docker logs "$NEW_CONTAINER_NAME" 2>&1 | tail -80
   docker stop "$NEW_CONTAINER_NAME" || true

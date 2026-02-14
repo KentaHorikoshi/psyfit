@@ -105,8 +105,9 @@ if Rails.env.production?
     { name: '山下大輝', role: 'staff' },
     { name: '児島雄貴', role: 'staff' },
     { name: '浅井菜々穂', role: 'staff' },
-    { name: '渡辺直仁', role: 'staff' },
-    { name: '吉田美希', role: 'staff' }
+    { name: '浅沼直樹', role: 'staff' },
+    { name: '山口桃佳', role: 'staff' },
+    { name: '吉川美希', role: 'staff' }
   ]
 
   created_staff = []

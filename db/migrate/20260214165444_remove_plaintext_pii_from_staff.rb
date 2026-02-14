@@ -8,16 +8,17 @@
 # Security: Eliminates plaintext PII exposure risk for staff records.
 class RemovePlaintextPiiFromStaff < ActiveRecord::Migration[8.1]
   def up
-    # Safety check: verify all staff records have encrypted data
-    # for required PII fields before removing plaintext columns
+    # Safety check: verify all staff records have encrypted name data
+    # before removing plaintext columns.
+    # Note: email is optional for staff (production seed creates staff without email),
+    # so only name_encrypted is checked as a required field.
     missing = execute(<<~SQL).to_a
       SELECT id FROM staff
       WHERE name_encrypted IS NULL OR name_encrypted = ''
-         OR email_encrypted IS NULL OR email_encrypted = ''
     SQL
 
     if missing.any?
-      raise "Aborting: #{missing.count} staff record(s) missing encrypted name/email data. " \
+      raise "Aborting: #{missing.count} staff record(s) missing encrypted name data. " \
             "IDs: #{missing.map { |r| r['id'] }.join(', ')}"
     end
 

@@ -39,7 +39,7 @@ find_active_container() {
 
   # Extract target IP from kamal-proxy list output
   local target_ip
-  target_ip=$(echo "$proxy_output" | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1)
+  target_ip=$(echo "$proxy_output" | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1 || echo "")
 
   if [ -z "$target_ip" ]; then
     echo ""
@@ -47,9 +47,12 @@ find_active_container() {
   fi
 
   # Find container with that IP on the kamal network
-  docker network inspect kamal \
+  # Note: grep may return exit 1 if no match, so use || true to avoid pipefail exit
+  local container_name
+  container_name=$(docker network inspect kamal \
     --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}' 2>/dev/null | \
-    grep "$target_ip" | awk '{print $1}' | head -1
+    grep "$target_ip" | awk '{print $1}' | head -1 || echo "")
+  echo "$container_name"
 }
 
 CURRENT_CONTAINER=$(find_active_container)

@@ -235,7 +235,236 @@ systemctl reload nginx
 - `assets:precompile` 時にダミーの暗号化キーが必要
 - `.dockerignore` で `frontend_user/` と `frontend_admin/` を除外しないこと（マルチステージビルドで使用。`node_modules/` と `dist/` のみ除外）
 
+## バックアップ・リストア
+
+### 日次バックアップ
+
+要件（[06-non-functional-requirements.md](06-non-functional-requirements.md) 準拠）:
+- 対象: PostgreSQL データベース
+- 頻度: 日次（深夜 2:00）
+- 保持期間: 30日間
+- 保存先: `/var/backups/psyfit/`
+
+#### バックアップスクリプト
+
+```bash
+# 手動実行
+bin/backup.sh
+
+# 実行結果の確認
+ls -lh /var/backups/psyfit/
+```
+
+#### crontab 設定（本番サーバーで実行）
+
+```bash
+# crontab を編集
+crontab -e
+
+# 以下の行を追加（毎日深夜2:00に実行）
+0 2 * * * /var/www/psyfit/bin/backup.sh >> /var/log/psyfit-backup.log 2>&1
+```
+
+#### crontab 設定確認
+
+```bash
+# 設定済みか確認
+crontab -l | grep backup
+
+# ログ確認
+tail -20 /var/log/psyfit-backup.log
+```
+
+### リストア手順
+
+```bash
+# 利用可能なバックアップを一覧表示
+bin/restore.sh --list
+
+# 最新のバックアップからリストア
+bin/restore.sh --latest
+
+# 特定のバックアップファイルからリストア
+bin/restore.sh /var/backups/psyfit/psyfit_production_20260214_020000.sql.gz
+```
+
+**注意**: リストア実行前に自動で現在のDBのバックアップを取得します（`pre_restore_*`）。リストア後に問題があれば、このファイルから再度リストアできます。
+
+### バックアップ検証（月次推奨）
+
+```bash
+# 1. バックアップファイルの整合性チェック
+gunzip -t /var/backups/psyfit/psyfit_production_YYYYMMDD_HHMMSS.sql.gz
+
+# 2. バックアップの容量推移確認
+ls -lhS /var/backups/psyfit/
+
+# 3. ディスク空き容量確認
+df -h /var/backups/
+```
+
+---
+
+## SSL 証明書管理
+
+### 現在の構成
+
+| 項目 | 値 |
+|------|------|
+| ドメイン | psytech.jp |
+| 発行者 | Let's Encrypt (E8) |
+| 証明書期間 | 90日間 |
+| 自動更新 | certbot (要確認) |
+| SSL終端 | Nginx (:443) |
+
+### 証明書の確認
+
+```bash
+# 証明書の有効期限を確認
+echo | openssl s_client -servername psytech.jp -connect psytech.jp:443 2>/dev/null \
+  | openssl x509 -noout -dates -subject -issuer
+
+# certbot で管理している証明書を確認
+sudo certbot certificates
+```
+
+### 自動更新の確認
+
+```bash
+# certbot 自動更新タイマーの確認
+systemctl list-timers | grep certbot
+
+# 更新テスト（ドライラン）— 実際の更新は行わない
+sudo certbot renew --dry-run
+
+# certbot の更新ログ確認
+sudo cat /var/log/letsencrypt/letsencrypt.log | tail -30
+```
+
+### 手動更新（緊急時）
+
+```bash
+# 証明書を手動更新
+sudo certbot renew
+
+# Nginx をリロードして新しい証明書を反映
+sudo systemctl reload nginx
+```
+
+### 自動更新が設定されていない場合
+
+```bash
+# certbot の自動更新タイマーを有効化
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
+
+# 更新後にNginxをリロードするフック設定
+echo '#!/bin/bash' | sudo tee /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh
+echo 'systemctl reload nginx' | sudo tee -a /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh
+```
+
+---
+
+## 監視
+
+### ヘルスチェックエンドポイント
+
+| URL | 用途 |
+|-----|------|
+| `https://psytech.jp/api/v1/health` | アプリケーション死活監視 |
+
+レスポンス例:
+```json
+{
+  "status": "success",
+  "data": {
+    "health_status": "healthy",
+    "timestamp": "2026-02-14T14:06:19+09:00",
+    "version": "1.0.0"
+  }
+}
+```
+
+### UptimeRobot 設定手順
+
+1. [UptimeRobot](https://uptimerobot.com/) にアカウント登録（無料プラン: 50モニター、5分間隔）
+2. 「Add New Monitor」をクリック
+3. 以下の設定で作成:
+
+| 設定項目 | 値 |
+|---------|------|
+| Monitor Type | HTTP(s) |
+| Friendly Name | PsyFit - Health Check |
+| URL | `https://psytech.jp/api/v1/health` |
+| Monitoring Interval | 5 minutes |
+| Monitor Timeout | 30 seconds |
+
+4. Alert Contacts でメール通知先を設定
+5. 「Create Monitor」で保存
+
+### 追加推奨モニター
+
+| モニター名 | URL | タイプ |
+|-----------|-----|--------|
+| PsyFit - User App | `https://psytech.jp/` | HTTP(s) - Keyword "PsyFit" |
+| PsyFit - SSL | `https://psytech.jp/` | HTTP(s) - SSL有効期限アラート |
+
+### ローカルヘルスチェック（補助）
+
+本番サーバーの crontab に追加して、UptimeRobot の補完として使用:
+
+```bash
+# 10分ごとにヘルスチェック、失敗時にログ記録
+*/10 * * * * curl -sf --max-time 10 https://psytech.jp/api/v1/health > /dev/null 2>&1 || echo "[$(date)] Health check FAILED" >> /var/log/psyfit-health.log
+```
+
+---
+
+## SMTP 設定（SendGrid）
+
+### 前提条件
+
+- SendGrid アカウント作成済み
+- API Key 発行済み（Mail Send 権限）
+- 送信元ドメイン認証済み（Domain Authentication）
+
+### 本番サーバーでの環境変数設定
+
+```bash
+# .kamal/secrets を使用する場合（Kamal デプロイ時）
+export SMTP_ADDRESS=smtp.sendgrid.net
+export SMTP_USERNAME=apikey
+export SMTP_PASSWORD=SG.xxxxx  # SendGrid API Key
+
+# Docker コンテナに直接設定する場合
+docker exec <コンテナ名> env | grep SMTP  # 現在の設定確認
+```
+
+### 送信テスト
+
+```bash
+# Rails console でテストメール送信
+docker exec -it <コンテナ名> bin/rails console
+
+# console 内で実行:
+# UserMailer.password_reset_instructions(User.first, "test-token").deliver_now
+```
+
+### SendGrid 設定手順
+
+1. [SendGrid](https://sendgrid.com/) にサインアップ（無料: 100通/日）
+2. Settings → API Keys → Create API Key（Restricted Access: Mail Send のみ）
+3. Settings → Sender Authentication → Domain Authentication で `psytech.jp` を認証
+4. DNS に CNAME レコードを追加（SendGrid が指定する値）
+5. 環境変数にAPI Keyを設定
+
+---
+
 ## 今後の改善候補
 
 - `deploy.yml` を Docker 再ビルド + kamal-proxy 切り替えに対応させ、main マージだけで本番反映を完結させる
 - GitHub Pro/Team プランで main ブランチ保護を有効化（PR 必須 + CI パス必須）
+- Sentry 統合（エラートラッキング）
+- GitHub Actions デプロイ失敗時の Slack 通知
+- バックアップの外部ストレージ（S3等）への転送

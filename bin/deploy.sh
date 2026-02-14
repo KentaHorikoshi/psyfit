@@ -53,7 +53,16 @@ find_active_container() {
   local running_container
   running_container=$(docker ps --filter "name=psyfit-web-" --filter "status=running" \
     --format '{{.Names}}' | sort -r | head -1 || echo "")
-  echo "$running_container"
+  if [ -n "$running_container" ]; then
+    echo "$running_container"
+    return
+  fi
+
+  # Method 3: Last resort - find the most recent stopped psyfit-web container (for env extraction)
+  local stopped_container
+  stopped_container=$(docker ps -a --filter "name=psyfit-web-" --filter "status=exited" \
+    --format '{{.Names}}' | sort -r | head -1 || echo "")
+  echo "$stopped_container"
 }
 
 CURRENT_CONTAINER=$(find_active_container)
@@ -66,11 +75,29 @@ docker build -t psyfit-local:latest --platform linux/amd64 . 2>&1 | tail -5
 # Step 3: Extract environment variables from current container
 if [ -n "$CURRENT_CONTAINER" ]; then
   echo "--- Extracting env from ${CURRENT_CONTAINER} ---"
-  docker exec "$CURRENT_CONTAINER" env | \
-    grep -v "^HOSTNAME=" | grep -v "^KAMAL_" | grep -v "^PATH=" | \
-    grep -v "^HOME=" | grep -v "^RUBY_DOWNLOAD" | grep -v "^BUNDLE_" | \
-    grep -v "^GEM_HOME=" | grep -v "^LANG=" | grep -v "^LD_PRELOAD=" \
-    > "$ENV_FILE"
+
+  # Check if container is running or stopped
+  CONTAINER_STATUS=$(docker inspect "$CURRENT_CONTAINER" --format '{{.State.Status}}' 2>/dev/null || echo "unknown")
+  echo "Container status: ${CONTAINER_STATUS}"
+
+  if [ "$CONTAINER_STATUS" = "running" ]; then
+    # Running container: use docker exec
+    docker exec "$CURRENT_CONTAINER" env | \
+      grep -v "^HOSTNAME=" | grep -v "^KAMAL_" | grep -v "^PATH=" | \
+      grep -v "^HOME=" | grep -v "^RUBY_DOWNLOAD" | grep -v "^BUNDLE_" | \
+      grep -v "^GEM_HOME=" | grep -v "^LANG=" | grep -v "^LD_PRELOAD=" \
+      > "$ENV_FILE"
+  else
+    # Stopped container: use docker inspect to read env config
+    echo "Container is stopped, using docker inspect for env extraction"
+    docker inspect "$CURRENT_CONTAINER" \
+      --format '{{range .Config.Env}}{{println .}}{{end}}' | \
+      grep -v "^HOSTNAME=" | grep -v "^KAMAL_" | grep -v "^PATH=" | \
+      grep -v "^HOME=" | grep -v "^RUBY_DOWNLOAD" | grep -v "^BUNDLE_" | \
+      grep -v "^GEM_HOME=" | grep -v "^LANG=" | grep -v "^LD_PRELOAD=" | \
+      grep -v "^$" \
+      > "$ENV_FILE" || true
+  fi
 
   # Update RAILS_MASTER_KEY to match repo
   if [ -f "$APP_DIR/config/master.key" ]; then

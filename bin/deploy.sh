@@ -27,32 +27,33 @@ git pull origin main
 # ============================================================
 echo "=== Phase 1: Docker Deployment ==="
 
-# Step 1: Find current active container via kamal-proxy
+# Step 1: Find current active container
 find_active_container() {
+  # Method 1: Find via kamal-proxy
   local proxy_output
   proxy_output=$(docker exec kamal-proxy kamal-proxy list 2>/dev/null || echo "")
 
-  if [ -z "$proxy_output" ]; then
-    echo ""
-    return
+  if [ -n "$proxy_output" ]; then
+    local target_ip
+    target_ip=$(echo "$proxy_output" | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1 || echo "")
+
+    if [ -n "$target_ip" ]; then
+      local container_name
+      container_name=$(docker network inspect kamal \
+        --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}' 2>/dev/null | \
+        grep "$target_ip" | awk '{print $1}' | head -1 || echo "")
+      if [ -n "$container_name" ]; then
+        echo "$container_name"
+        return
+      fi
+    fi
   fi
 
-  # Extract target IP from kamal-proxy list output
-  local target_ip
-  target_ip=$(echo "$proxy_output" | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1 || echo "")
-
-  if [ -z "$target_ip" ]; then
-    echo ""
-    return
-  fi
-
-  # Find container with that IP on the kamal network
-  # Note: grep may return exit 1 if no match, so use || true to avoid pipefail exit
-  local container_name
-  container_name=$(docker network inspect kamal \
-    --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}' 2>/dev/null | \
-    grep "$target_ip" | awk '{print $1}' | head -1 || echo "")
-  echo "$container_name"
+  # Method 2: Fallback - find any running psyfit-web container
+  local running_container
+  running_container=$(docker ps --filter "name=psyfit-web-" --filter "status=running" \
+    --format '{{.Names}}' | sort -r | head -1 || echo "")
+  echo "$running_container"
 }
 
 CURRENT_CONTAINER=$(find_active_container)
@@ -81,8 +82,17 @@ if [ -n "$CURRENT_CONTAINER" ]; then
     fi
   fi
 else
-  echo "WARNING: No active container found. Using .env file as fallback."
-  cp "$APP_DIR/.env" "$ENV_FILE"
+  echo "WARNING: No active container found."
+  echo "ERROR: Cannot deploy without a running container to inherit env from."
+  echo "To fix, manually start a container or set env vars. See 08-deployment-guide.md."
+  echo ""
+  echo "Running psyfit-web containers:"
+  docker ps -a --filter "name=psyfit-web-" --format '{{.Names}} {{.Status}}' || true
+  echo ""
+  echo "kamal-proxy status:"
+  docker exec kamal-proxy kamal-proxy list 2>/dev/null || echo "(kamal-proxy not responding)"
+  rm -f "$ENV_FILE"
+  exit 1
 fi
 
 # Step 4: Start new container

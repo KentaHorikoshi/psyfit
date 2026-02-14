@@ -92,28 +92,28 @@ if Rails.env.production?
 
   production_staff = [
     # マネージャー
-    { name: '西野智之', role: 'manager' },
-    { name: '稲葉樹生', role: 'manager' },
-    { name: '尾崎純', role: 'manager' },
-    { name: '黒木怜', role: 'manager' },
+    { staff_id: 'MGR001', name: '西野智之', role: 'manager' },
+    { staff_id: 'MGR002', name: '稲葉樹生', role: 'manager' },
+    { staff_id: 'MGR003', name: '尾崎純', role: 'manager' },
+    { staff_id: 'MGR004', name: '黒木怜', role: 'manager' },
     # スタッフ
-    { name: '大木宏輔', role: 'staff' },
-    { name: '鈴木亮陽', role: 'staff' },
-    { name: '田中涼乃', role: 'staff' },
-    { name: '藤崎彩矢', role: 'staff' },
-    { name: '中西健人', role: 'staff' },
-    { name: '山下大輝', role: 'staff' },
-    { name: '児島雄貴', role: 'staff' },
-    { name: '浅井菜々穂', role: 'staff' },
-    { name: '浅沼直樹', role: 'staff' },
-    { name: '山口桃佳', role: 'staff' },
-    { name: '吉川美希', role: 'staff' }
+    { staff_id: 'STF001', name: '大木宏輔', role: 'staff' },
+    { staff_id: 'STF002', name: '鈴木亮陽', role: 'staff' },
+    { staff_id: 'STF003', name: '田中涼乃', role: 'staff' },
+    { staff_id: 'STF004', name: '藤崎彩矢', role: 'staff' },
+    { staff_id: 'STF005', name: '中西健人', role: 'staff' },
+    { staff_id: 'STF006', name: '山下大輝', role: 'staff' },
+    { staff_id: 'STF007', name: '児島雄貴', role: 'staff' },
+    { staff_id: 'STF008', name: '浅井菜々穂', role: 'staff' },
+    { staff_id: 'STF009', name: '浅沼直樹', role: 'staff' },
+    { staff_id: 'STF010', name: '山口桃佳', role: 'staff' },
+    { staff_id: 'STF011', name: '吉川美希', role: 'staff' }
   ]
 
   created_staff = []
   production_staff.each do |data|
-    # staff_id はモデルの before_validation で自動生成（MGR001〜, STF001〜）
-    staff = Staff.find_or_initialize_by(name: data[:name]) do |s|
+    staff = Staff.find_or_initialize_by(staff_id: data[:staff_id]) do |s|
+      s.name = data[:name]
       s.role = data[:role]
       s.password = temp_password
     end

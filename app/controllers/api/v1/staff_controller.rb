@@ -42,7 +42,9 @@ module Api
       # GET /api/v1/staff/options
       # Returns minimal staff list for dropdown filters (accessible to all authenticated staff)
       def options
-        staff_members = Staff.active.order(:name)
+        staff_members = Staff.active.order(:staff_id)
+
+        log_audit("read", "success")
 
         render_success({
           staff_options: staff_members.map { |s| { id: s.id, name: s.name } }

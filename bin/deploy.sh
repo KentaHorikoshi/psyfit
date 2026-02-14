@@ -99,6 +99,20 @@ if [ -n "$CURRENT_CONTAINER" ]; then
       > "$ENV_FILE" || true
   fi
 
+  # Merge missing variables from .env (e.g., newly added SMTP vars)
+  if [ -f "$APP_DIR/.env" ]; then
+    echo "--- Merging missing vars from .env ---"
+    while IFS= read -r line; do
+      # Skip comments and empty lines
+      [[ -z "$line" || "$line" =~ ^# ]] && continue
+      var_name="${line%%=*}"
+      if ! grep -q "^${var_name}=" "$ENV_FILE" 2>/dev/null; then
+        echo "$line" >> "$ENV_FILE"
+        echo "  Added from .env: ${var_name}"
+      fi
+    done < "$APP_DIR/.env"
+  fi
+
   # Update RAILS_MASTER_KEY to match repo
   if [ -f "$APP_DIR/config/master.key" ]; then
     master_key=$(cat "$APP_DIR/config/master.key")

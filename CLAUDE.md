@@ -296,6 +296,90 @@ systemctl reload nginx  # リロード
 - `assets:precompile` 時にダミーの暗号化キーが必要
 - `.dockerignore` で `frontend_user/` と `frontend_admin/` を除外しないこと（マルチステージビルドで使用。`node_modules/` と `dist/` のみ除外）
 
+### DB バックアップ・リストア
+
+**バックアップ**: `bin/backup.sh` が毎日 2:00 に自動実行（crontab 登録済み）。
+バックアップ先: `/var/backups/psyfit/`、30日ローテーション。
+
+```bash
+# 手動バックアップ
+bin/backup.sh
+
+# バックアップ一覧確認
+ls -lh /var/backups/psyfit/
+
+# ログ確認
+tail -20 /var/log/psyfit-backup.log
+```
+
+**リストア手順**（テスト用一時 DB にリストアする場合）:
+
+```bash
+# 1. リストア先のデータベースを作成
+docker exec psyfit-db psql -U psyfit_prod -d psyfit_production \
+  -c "CREATE DATABASE psyfit_restore_test;"
+
+# 2. バックアップファイルをリストア
+gunzip -c /var/backups/psyfit/<バックアップファイル>.sql.gz \
+  | docker exec -i psyfit-db psql -U psyfit_prod -d psyfit_restore_test
+
+# 3. データ確認
+docker exec psyfit-db psql -U psyfit_prod -d psyfit_restore_test \
+  -c "SELECT count(*) FROM users; SELECT count(*) FROM audit_logs;"
+
+# 4. テスト用DBを削除
+docker exec psyfit-db psql -U psyfit_prod -d psyfit_production \
+  -c "DROP DATABASE psyfit_restore_test;"
+```
+
+**本番 DB を直接リストアする場合**（データ消失時のみ）:
+
+```bash
+# 1. アプリケーションを停止（接続を切断）
+docker stop <psyfit-webコンテナ名>
+
+# 2. 既存DBを削除して再作成
+docker exec psyfit-db psql -U psyfit_prod -d postgres \
+  -c "DROP DATABASE psyfit_production;"
+docker exec psyfit-db psql -U psyfit_prod -d postgres \
+  -c "CREATE DATABASE psyfit_production OWNER psyfit_prod;"
+
+# 3. バックアップからリストア
+gunzip -c /var/backups/psyfit/<バックアップファイル>.sql.gz \
+  | docker exec -i psyfit-db psql -U psyfit_prod -d psyfit_production
+
+# 4. アプリケーションを再起動
+docker start <psyfit-webコンテナ名>
+```
+
+### サーバー死活監視
+
+`bin/monitor.sh` が5分間隔で以下を監視:
+
+1. **HTTPヘルスチェック**: `https://psytech.jp/api/v1/health` への疎通
+2. **コンテナ稼働確認**: psyfit-web, psyfit-db, psyfit-redis
+3. **SSL証明書**: 残り14日以下で警告
+4. **ディスク使用量**: 80%以上で警告
+
+異常検知時は SendGrid Web API v3 経由でメール通知。
+同じアラートは1時間に1回まで（クールダウン機構: `/tmp/psyfit-monitor/`）。
+
+```bash
+# 手動実行
+bin/monitor.sh
+
+# ログ確認
+tail -30 /var/log/psyfit-monitor.log
+
+# crontab 登録（5分間隔）
+# */5 * * * * /var/www/psyfit/bin/monitor.sh >> /var/log/psyfit-monitor.log 2>&1
+```
+
+環境変数:
+- `MONITOR_ALERT_EMAIL` - 通知先メールアドレス（必須）
+- `SMTP_PASSWORD` - SendGrid API キー（既存の設定を共用）
+- `MAILER_FROM_ADDRESS` - 送信元アドレス（デフォルト: noreply@psytech.jp）
+
 ## File Structure
 
 ```
@@ -320,6 +404,7 @@ psyfit/
 ├── bin/docker-test        # Docker環境テスト
 ├── bin/deploy.sh          # デプロイスクリプト (systemd Puma用)
 ├── bin/cleanup-docker.sh  # Docker定期クリーンアップ (週次cron)
+├── bin/monitor.sh         # サーバー死活監視 (5分間隔cron)
 ├── .github/workflows/
 │   ├── ci.yml             # CI ワークフロー
 │   └── deploy.yml         # Deploy ワークフロー

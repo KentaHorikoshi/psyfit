@@ -55,7 +55,7 @@ describe('S-01 Staff Login', () => {
     it('should render hospital name and system title', () => {
       renderLogin()
 
-      expect(screen.getByText('サイテック病院')).toBeInTheDocument()
+      expect(screen.getByText('さとやま整形外科内科')).toBeInTheDocument()
       expect(screen.getByText('リハビリ支援システム - 職員ログイン')).toBeInTheDocument()
     })
 

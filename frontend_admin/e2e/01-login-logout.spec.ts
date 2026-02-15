@@ -16,7 +16,7 @@ test.describe('職員ログイン・ログアウトフロー', () => {
       await page.goto('/login')
 
       // ログインフォームの表示確認
-      await expect(page.getByRole('heading', { name: /サイテック病院/ })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /さとやま整形外科内科/ })).toBeVisible()
       await expect(page.getByLabel('職員ID')).toBeVisible()
       await expect(page.getByLabel('パスワード', { exact: true })).toBeVisible()
 

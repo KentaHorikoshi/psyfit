@@ -220,7 +220,7 @@ export interface StaffMember {
   name_kana: string
   email: string
   role: 'manager' | 'staff'
-  department: string
+  department?: string
   created_at: string
 }
 
@@ -240,7 +240,7 @@ export interface CreateStaffRequest {
   email: string
   password: string
   role: 'manager' | 'staff'
-  department: string
+  department?: string
 }
 
 export interface CreateStaffResponse {

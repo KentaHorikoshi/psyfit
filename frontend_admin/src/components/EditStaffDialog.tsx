@@ -10,7 +10,6 @@ interface FormErrors {
   name?: string
   name_kana?: string
   email?: string
-  department?: string
 }
 
 interface EditStaffDialogProps {
@@ -75,10 +74,6 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
       newErrors.email = 'メールアドレスを入力してください'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = '有効なメールアドレスを入力してください'
-    }
-
-    if (!formData.department?.trim()) {
-      newErrors.department = '部署を入力してください'
     }
 
     setErrors(newErrors)
@@ -305,7 +300,7 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
                 htmlFor="edit-department"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                部署 <span className="text-red-500">*</span>
+                部署
               </label>
               <input
                 id="edit-department"
@@ -313,14 +308,7 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
                 value={formData.department || ''}
                 onChange={(e) => handleChange('department', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-                aria-invalid={!!errors.department}
-                aria-describedby={errors.department ? 'edit-department-error' : undefined}
               />
-              {errors.department && (
-                <p id="edit-department-error" role="alert" className="mt-1 text-sm text-red-600">
-                  {errors.department}
-                </p>
-              )}
             </div>
 
             {/* Submit Error */}

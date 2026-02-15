@@ -108,7 +108,7 @@ export function Login() {
             </div>
 
             <h1 className="text-xl font-bold text-[#0B1220] mb-1">
-              サイテック病院
+              さとやま整形外科内科
             </h1>
             <p className="text-[#64748B] text-sm">
               リハビリ支援システム - 職員ログイン

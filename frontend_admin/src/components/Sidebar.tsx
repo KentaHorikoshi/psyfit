@@ -39,7 +39,7 @@ export function Sidebar({ staff, onLogout, currentPath }: SidebarProps) {
       <div className="p-6 border-b border-blue-800">
         <div className="flex items-center gap-2 mb-1">
           <Heart className="w-6 h-6" fill="currentColor" />
-          <h1 className="font-semibold text-sm">サイテック病院</h1>
+          <h1 className="font-semibold text-sm">さとやま整形外科内科</h1>
         </div>
         <p className="text-xs text-blue-200">リハビリ支援システム</p>
       </div>

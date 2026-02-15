@@ -25,7 +25,7 @@ export function PasswordReset({ onNavigateToLogin }: PasswordResetProps) {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Heart className="w-8 h-8 text-[#1E40AF]" fill="#1E40AF" />
-              <h1 className="text-xl font-bold text-gray-900">サイテック病院</h1>
+              <h1 className="text-xl font-bold text-gray-900">さとやま整形外科内科</h1>
             </div>
             <p className="text-gray-600 text-sm">リハビリ支援システム</p>
             <h2 className="text-[#1E40AF] font-semibold mt-3">パスワードリセット</h2>

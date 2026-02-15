@@ -24,6 +24,7 @@ import type {
   ChangePasswordResponse,
   StaffPasswordResetRequest,
   PasswordResetResponse,
+  PasswordResetExecuteRequest,
   CreatePatientRequest,
   CreatePatientResponse,
   ExerciseMasterListResponse,
@@ -283,6 +284,11 @@ class ApiClient {
   // Staff Password Reset Request (Forgot Password from login page)
   async requestStaffPasswordReset(data: StaffPasswordResetRequest): Promise<ApiResponse<PasswordResetResponse>> {
     return this.post<PasswordResetResponse>('/auth/password_reset_request', data)
+  }
+
+  // Password Reset Execute (set new password with token)
+  async resetPasswordWithToken(data: PasswordResetExecuteRequest): Promise<ApiResponse<PasswordResetResponse>> {
+    return this.post<PasswordResetResponse>('/auth/password_reset', data)
   }
 
   // Patient Create endpoint (S-03)

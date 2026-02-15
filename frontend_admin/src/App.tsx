@@ -25,6 +25,7 @@ import { StaffManagement } from './components/StaffManagement'
 import { ExerciseMenuManagement } from './components/ExerciseMenuManagement'
 import { PasswordReset } from './components/PasswordReset'
 import { ForgotPassword } from './components/ForgotPassword'
+import { ForgotPasswordReset } from './components/ForgotPasswordReset'
 import { Sidebar } from './components/Sidebar'
 
 /**
@@ -254,6 +255,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/password-reset/:token" element={<ForgotPasswordReset />} />
 
             {/* Authenticated routes with sidebar layout */}
             <Route element={<ProtectedRoute />}>

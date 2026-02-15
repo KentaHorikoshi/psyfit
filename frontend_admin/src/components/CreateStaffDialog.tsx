@@ -8,7 +8,6 @@ interface FormErrors {
   name_kana?: string
   email?: string
   password?: string
-  department?: string
 }
 
 interface PasswordStrengthProps {
@@ -91,10 +90,6 @@ export function CreateStaffDialog({ isOpen, onClose, onSuccess }: CreateStaffDia
 
     if (!hasMinLength || characterTypes < 2) {
       newErrors.password = 'パスワードは8文字以上、2種類以上の文字を含めてください'
-    }
-
-    if (!formData.department?.trim()) {
-      newErrors.department = '部署を入力してください'
     }
 
     setErrors(newErrors)
@@ -269,7 +264,7 @@ export function CreateStaffDialog({ isOpen, onClose, onSuccess }: CreateStaffDia
           {/* Department */}
           <div>
             <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
-              部署 <span className="text-red-500">*</span>
+              部署
             </label>
             <input
               id="department"
@@ -277,14 +272,7 @@ export function CreateStaffDialog({ isOpen, onClose, onSuccess }: CreateStaffDia
               value={formData.department || ''}
               onChange={(e) => handleChange('department', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
-              aria-invalid={!!errors.department}
-              aria-describedby={errors.department ? 'department-error' : undefined}
             />
-            {errors.department && (
-              <p id="department-error" role="alert" className="mt-1 text-sm text-red-600">
-                {errors.department}
-              </p>
-            )}
           </div>
 
           {/* Submit Error */}

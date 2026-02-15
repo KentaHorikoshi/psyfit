@@ -342,6 +342,12 @@ export interface PasswordResetResponse {
   message: string
 }
 
+export interface PasswordResetExecuteRequest {
+  token: string
+  new_password: string
+  new_password_confirmation: string
+}
+
 // Daily Condition Types (S-04 Patient Detail)
 export interface DailyCondition {
   id: string

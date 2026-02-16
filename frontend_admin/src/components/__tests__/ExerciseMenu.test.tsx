@@ -404,8 +404,7 @@ describe('S-06 ExerciseMenu', () => {
       renderExerciseMenu()
 
       await waitFor(() => {
-        const dateInput = screen.getByLabelText(/次回来院日/) as HTMLInputElement
-        expect(dateInput.value).toBe('2026-03-15')
+        expect(screen.getByText('2026年3月15日')).toBeInTheDocument()
       })
     })
 

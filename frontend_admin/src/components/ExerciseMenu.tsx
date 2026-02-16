@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, ChevronDown, ChevronRight } from 'lucide-react'
+import { DayPicker } from 'react-day-picker'
+import { ja } from 'react-day-picker/locale'
+import { format, parse } from 'date-fns'
+import 'react-day-picker/style.css'
 import { api } from '../lib/api'
 import type { ExerciseMaster, BatchExerciseAssignmentRequest } from '../lib/api-types'
 
@@ -446,26 +450,40 @@ export function ExerciseMenu() {
             {/* Next Visit Date */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="font-semibold text-gray-900 mb-4">次回来院日</h3>
-              <label htmlFor="next-visit-date" className="block text-sm font-medium text-gray-700 mb-2">
-                日付を選択
-              </label>
-              <input
-                id="next-visit-date"
-                type="date"
-                value={nextVisitDate}
-                onChange={(e) => setNextVisitDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-base min-h-[44px]"
-                aria-label="次回来院日"
-              />
               {nextVisitDate && (
-                <button
-                  type="button"
-                  onClick={() => setNextVisitDate('')}
-                  className="mt-2 text-sm text-gray-500 hover:text-gray-700 underline min-h-[44px] min-w-[44px] px-2"
-                >
-                  クリア
-                </button>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-base text-gray-900 font-medium">
+                    {format(parse(nextVisitDate, 'yyyy-MM-dd', new Date()), 'yyyy年M月d日')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setNextVisitDate('')}
+                    className="text-sm text-gray-500 hover:text-gray-700 underline min-h-[44px] min-w-[44px] px-2"
+                  >
+                    クリア
+                  </button>
+                </div>
               )}
+              <DayPicker
+                mode="single"
+                locale={ja}
+                selected={nextVisitDate ? parse(nextVisitDate, 'yyyy-MM-dd', new Date()) : undefined}
+                onSelect={(day) => {
+                  if (day) {
+                    setNextVisitDate(format(day, 'yyyy-MM-dd'))
+                  } else {
+                    setNextVisitDate('')
+                  }
+                }}
+                style={{
+                  '--rdp-accent-color': '#1E40AF',
+                  '--rdp-accent-background-color': '#DBEAFE',
+                  '--rdp-day-width': '48px',
+                  '--rdp-day-height': '48px',
+                  fontSize: '16px',
+                } as React.CSSProperties}
+                aria-label="次回来院日を選択"
+              />
             </div>
 
             {/* Submit Button */}

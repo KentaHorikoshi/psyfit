@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Check } from 'lucide-react'
+import { X, Check, Eye, EyeOff } from 'lucide-react'
 import { api } from '../lib/api'
 import type { CreatePatientRequest, PatientStatus, StaffOption } from '../lib/api-types'
 
@@ -55,6 +55,7 @@ export function PatientCreateDialog({
   const [savedPassword, setSavedPassword] = useState('')
   const [staffOptions, setStaffOptions] = useState<StaffOption[]>([])
   const [staffLoading, setStaffLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -63,6 +64,7 @@ export function PatientCreateDialog({
       setErrors({})
       setShowSuccess(false)
       setSavedPassword('')
+      setShowPassword(false)
     }
   }, [isOpen])
 
@@ -334,17 +336,27 @@ export function PatientCreateDialog({
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                   パスワード <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent text-base min-h-[44px] ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="8文字以上"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent text-base min-h-[44px] [&::-ms-reveal]:hidden [&::-ms-clear]:hidden ${
+                      errors.password ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="8文字以上"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    aria-label={showPassword ? 'パスワードを非表示' : 'パスワードを表示'}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-500">{errors.password}</p>
                 )}

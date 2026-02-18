@@ -229,6 +229,72 @@ describe('U-04 ExercisePlayer', () => {
       // Should now show pause button
       expect(screen.getByRole('button', { name: /一時停止/ })).toBeInTheDocument()
     })
+
+    it('should show overlay when video is paused', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const overlayButton = screen.getByRole('button', { name: /再生/ })
+      expect(overlayButton).toBeVisible()
+      expect(overlayButton).not.toHaveClass('opacity-0')
+    })
+
+    it('should hide overlay when video is playing', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // Overlay should become hidden (opacity-0, pointer-events-none)
+      const overlayButton = screen.getByRole('button', { name: /一時停止/ })
+      expect(overlayButton).toHaveClass('opacity-0')
+      expect(overlayButton).toHaveClass('pointer-events-none')
+    })
+
+    it('should show overlay again when video area is tapped during playback', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // Start playing
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // Verify overlay is hidden
+      const overlayButton = screen.getByRole('button', { name: /一時停止/ })
+      expect(overlayButton).toHaveClass('opacity-0')
+
+      // Click the video element to pause (overlay has pointer-events-none)
+      const video = screen.getByTestId('exercise-video')
+      await user.click(video)
+
+      // Should pause and show overlay again
+      const pausedOverlay = screen.getByRole('button', { name: /再生/ })
+      expect(pausedOverlay).not.toHaveClass('opacity-0')
+    })
+
+    it('should have CSS transition for smooth fade', async () => {
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const overlayButton = screen.getByRole('button', { name: /再生/ })
+      expect(overlayButton).toHaveClass('transition-opacity')
+      expect(overlayButton).toHaveClass('duration-300')
+    })
   })
 
   describe('completion flow', () => {

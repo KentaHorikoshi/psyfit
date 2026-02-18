@@ -227,9 +227,10 @@ export function ExercisePlayer() {
           data-testid="exercise-video"
           src={videoStreamUrl ?? undefined}
           poster={exercise.thumbnail_url}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain cursor-pointer"
           aria-label={`${exercise.name}の動画`}
           playsInline
+          onClick={handlePlayPause}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}
@@ -238,7 +239,15 @@ export function ExercisePlayer() {
         {/* Play/Pause overlay button */}
         <button
           onClick={handlePlayPause}
-          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset"
+          className={`
+            absolute inset-0 flex items-center justify-center
+            transition-opacity duration-300
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset
+            ${isPlaying
+              ? 'opacity-0 pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto'
+              : 'opacity-100 bg-black/20 hover:bg-black/30'
+            }
+          `}
           aria-label={isPlaying ? '一時停止' : '再生'}
         >
           <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">

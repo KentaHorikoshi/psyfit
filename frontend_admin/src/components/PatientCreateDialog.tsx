@@ -352,7 +352,7 @@ export function PatientCreateDialog({
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                    aria-label={showPassword ? 'パスワードを非表示' : 'パスワードを表示'}
+                    aria-label={showPassword ? '入力内容を隠す' : '入力内容を表示'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>

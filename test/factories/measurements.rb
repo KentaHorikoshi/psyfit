@@ -12,6 +12,7 @@ FactoryBot.define do
     single_leg_stance_seconds { 30.0 }
     nrs_pain_score { 2 }
     mmt_score { 4 }
+    percent_mv { 45.0 }
     notes { nil }
 
     trait :with_notes do

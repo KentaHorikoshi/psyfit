@@ -69,6 +69,7 @@ describe('S-05 MeasurementInput', () => {
       expect(screen.getByLabelText(/片脚立位.*秒/)).toBeInTheDocument()
       expect(screen.getByLabelText(/NRS痛み/)).toBeInTheDocument()
       expect(screen.getByLabelText(/MMT/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/％MV.*筋質量/)).toBeInTheDocument()
       expect(screen.getByLabelText(/備考/)).toBeInTheDocument()
     })
 
@@ -347,6 +348,37 @@ describe('S-05 MeasurementInput', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/0〜200の範囲で入力してください/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('percent_mv field', () => {
+    it('should render percent_mv input field', () => {
+      renderMeasurementInput()
+
+      const percentMvInput = screen.getByLabelText(/％MV.*筋質量/)
+      expect(percentMvInput).toBeInTheDocument()
+      expect(percentMvInput).toHaveAttribute('type', 'number')
+      expect(percentMvInput).toHaveAttribute('step', '0.1')
+      expect(percentMvInput).toHaveAttribute('min', '0')
+      expect(percentMvInput).toHaveAttribute('max', '100')
+    })
+
+    it('should submit percent_mv value', async () => {
+      const user = userEvent.setup()
+      renderMeasurementInput()
+
+      const percentMvInput = screen.getByLabelText(/％MV.*筋質量/)
+      await user.clear(percentMvInput)
+      await user.type(percentMvInput, '45.5')
+
+      const saveButton = screen.getByRole('button', { name: /保存/ })
+      await user.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockCreateMeasurement).toHaveBeenCalledWith(mockPatientId, expect.objectContaining({
+          percent_mv: 45.5,
+        }))
       })
     })
   })

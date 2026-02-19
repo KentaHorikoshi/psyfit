@@ -1369,6 +1369,7 @@ Cookie: _psyfit_session=<session_id>
 | single_leg_stance_seconds | Decimal | NO | 0 ≤ value < 1000 |
 | nrs_pain_score | Integer | NO | 0〜10 |
 | mmt_score | Integer | NO | 0〜5 |
+| percent_mv | Decimal | NO | 0〜100 (％MV 筋質量) |
 | notes | Text | NO | - |
 
 ※ DecimalフィールドはDB制約 `DECIMAL(5,2)` のため最大値999.99
@@ -1387,6 +1388,7 @@ Cookie: _psyfit_session=<session_id>
   "single_leg_stance_seconds": 15.2,
   "nrs_pain_score": 3,
   "mmt_score": 4,
+  "percent_mv": 45.0,
   "notes": "前回より改善傾向"
 }
 
@@ -1433,6 +1435,7 @@ Cookie: _psyfit_session=<session_id>
         "single_leg_stance_seconds": "15.2",
         "nrs_pain_score": 3,
         "mmt_score": 4,
+        "percent_mv": "45.0",
         "notes": "前回より改善傾向"
       }
     ]
@@ -1476,6 +1479,7 @@ Cookie: _psyfit_session=<session_id>
         "single_leg_stance_seconds": "15.2",
         "nrs_pain_score": 3,
         "mmt_score": 4,
+        "percent_mv": "45.0",
         "notes": "前回より改善傾向"
       }
     ]

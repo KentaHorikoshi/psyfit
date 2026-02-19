@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_14_165444) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_19_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -87,6 +87,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_165444) do
     t.integer "mmt_score"
     t.text "notes"
     t.integer "nrs_pain_score"
+    t.decimal "percent_mv", precision: 5, scale: 2
     t.decimal "single_leg_stance_seconds", precision: 5, scale: 2
     t.decimal "tug_seconds", precision: 5, scale: 2
     t.datetime "updated_at", null: false

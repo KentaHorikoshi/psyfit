@@ -91,15 +91,18 @@ class PatientReportService
       return
     end
 
-    header = [ "日付", "体重(kg)", "TUG(秒)", "片脚立位(秒)", "NRS", "MMT" ]
+    header = [ "日付", "体重(kg)", "WBI左", "WBI右", "TUG(秒)", "片脚立位(秒)", "NRS", "MMT", "％MV(%)" ]
     rows = measurements.map do |m|
       [
         m.measured_date.strftime("%m/%d"),
         m.weight_kg&.to_s || "-",
+        m.wbi_left&.to_s || "-",
+        m.wbi_right&.to_s || "-",
         m.tug_seconds&.to_s || "-",
         m.single_leg_stance_seconds&.to_s || "-",
         m.nrs_pain_score&.to_s || "-",
-        m.mmt_score&.to_s || "-"
+        m.mmt_score&.to_s || "-",
+        m.percent_mv&.to_s || "-"
       ]
     end
 

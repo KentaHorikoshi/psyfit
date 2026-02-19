@@ -14,6 +14,7 @@ interface FormErrors {
   single_leg_stance_seconds?: string
   nrs_pain_score?: string
   mmt_score?: string
+  percent_mv?: string
 }
 
 const calculateWBI = (strengthN: number | undefined, weightKg: number | undefined): number | undefined => {
@@ -74,6 +75,10 @@ export function MeasurementInput() {
 
     if (formData.mmt_score !== undefined && (formData.mmt_score < 0 || formData.mmt_score > 5)) {
       newErrors.mmt_score = '0〜5の範囲で入力してください'
+    }
+
+    if (formData.percent_mv !== undefined && (formData.percent_mv < 0 || formData.percent_mv > 100)) {
+      newErrors.percent_mv = '0〜100の範囲で入力してください'
     }
 
     setErrors(newErrors)
@@ -146,6 +151,7 @@ export function MeasurementInput() {
         dataToSubmit.single_leg_stance_seconds = formData.single_leg_stance_seconds
       if (formData.nrs_pain_score !== undefined) dataToSubmit.nrs_pain_score = formData.nrs_pain_score
       if (formData.mmt_score !== undefined) dataToSubmit.mmt_score = formData.mmt_score
+      if (formData.percent_mv !== undefined) dataToSubmit.percent_mv = formData.percent_mv
       if (formData.notes) dataToSubmit.notes = formData.notes
 
       await api.createMeasurement(id, dataToSubmit as MeasurementInputType)
@@ -403,6 +409,30 @@ export function MeasurementInput() {
             {errors.mmt_score && (
               <p id="mmt_score-error" role="alert" className="mt-1 text-sm text-red-600">
                 {errors.mmt_score}
+              </p>
+            )}
+          </div>
+
+          {/* Percent MV */}
+          <div>
+            <label htmlFor="percent_mv" className="block text-sm font-medium text-gray-700 mb-2">
+              ％MV 筋質量 (%)
+            </label>
+            <input
+              id="percent_mv"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              value={formData.percent_mv ?? ''}
+              onChange={e => handleChange('percent_mv', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
+              aria-invalid={!!errors.percent_mv}
+              aria-describedby={errors.percent_mv ? 'percent_mv-error' : undefined}
+            />
+            {errors.percent_mv && (
+              <p id="percent_mv-error" role="alert" className="mt-1 text-sm text-red-600">
+                {errors.percent_mv}
               </p>
             )}
           </div>

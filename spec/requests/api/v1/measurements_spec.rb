@@ -20,6 +20,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
         single_leg_stance_seconds: 15.2,
         nrs_pain_score: 3,
         mmt_score: 4,
+        percent_mv: 45.5,
         notes: '前回より改善傾向'
       }
     end
@@ -48,6 +49,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
           expect(json_response['data']['weight_kg']).to eq('65.5')
           expect(json_response['data']['nrs_pain_score']).to eq(3)
           expect(json_response['data']['mmt_score']).to eq(4)
+          expect(json_response['data']['percent_mv']).to eq('45.5')
         end
 
         it 'associates measurement with the current staff' do
@@ -165,6 +167,34 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
           }
 
           expect(response).to have_http_status(:unprocessable_content)
+        end
+
+        it 'returns error when percent_mv is negative' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            percent_mv: -1
+          }
+
+          expect(response).to have_http_status(:unprocessable_content)
+        end
+
+        it 'returns error when percent_mv exceeds 100' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            percent_mv: 101
+          }
+
+          expect(response).to have_http_status(:unprocessable_content)
+        end
+
+        it 'accepts valid percent_mv values' do
+          post "/api/v1/patients/#{patient.id}/measurements", params: {
+            measured_date: Date.current.to_s,
+            percent_mv: 45.5
+          }
+
+          expect(response).to have_http_status(:created)
+          expect(json_response['data']['percent_mv']).to eq('45.5')
         end
 
         it 'returns error when knee_extension_strength exceeds 500' do
@@ -304,7 +334,8 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             'tug_seconds',
             'single_leg_stance_seconds',
             'nrs_pain_score',
-            'mmt_score'
+            'mmt_score',
+            'percent_mv'
           )
         end
       end
@@ -485,7 +516,8 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
             'tug_seconds',
             'single_leg_stance_seconds',
             'nrs_pain_score',
-            'mmt_score'
+            'mmt_score',
+            'percent_mv'
           )
         end
       end

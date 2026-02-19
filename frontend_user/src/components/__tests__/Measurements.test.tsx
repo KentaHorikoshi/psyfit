@@ -49,6 +49,7 @@ const mockMeasurements = [
     body_fat_percentage: 18.5,
     muscle_mass_kg: 52.3,
     nrs_pain: 3,
+    percent_mv: 45.0,
     created_at: '2026-01-24T10:00:00Z',
   },
   {
@@ -59,6 +60,7 @@ const mockMeasurements = [
     body_fat_percentage: 19.0,
     muscle_mass_kg: 52.0,
     nrs_pain: 4,
+    percent_mv: 43.5,
     created_at: '2026-01-23T10:00:00Z',
   },
   {
@@ -69,6 +71,7 @@ const mockMeasurements = [
     body_fat_percentage: 19.5,
     muscle_mass_kg: 51.8,
     nrs_pain: 5,
+    percent_mv: 42.0,
     created_at: '2026-01-22T10:00:00Z',
   },
 ]

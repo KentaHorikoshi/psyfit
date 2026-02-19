@@ -33,6 +33,7 @@ export function Measurements() {
     { key: 'body_fat_percentage', label: '体脂肪率 (%)', color: '#EF4444', enabled: false },
     { key: 'muscle_mass_kg', label: '筋肉量 (kg)', color: '#16A34A', enabled: false },
     { key: 'nrs_pain', label: '痛み (NRS)', color: '#F59E0B', enabled: false },
+    { key: 'percent_mv', label: '％MV (%)', color: '#8B5CF6', enabled: false },
   ])
 
   useEffect(() => {
@@ -105,6 +106,7 @@ export function Measurements() {
       body_fat_percentage: m.body_fat_percentage,
       muscle_mass_kg: m.muscle_mass_kg,
       nrs_pain: m.nrs_pain,
+      percent_mv: m.percent_mv,
     }))
 
   return (

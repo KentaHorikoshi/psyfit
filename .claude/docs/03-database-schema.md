@@ -176,6 +176,7 @@ exercises (運動マスタ)
 | single_leg_stance_seconds | DECIMAL(5,2) | YES | 片脚立位 (秒), 0 ≤ value < 1000 |
 | nrs_pain_score | INTEGER | YES | NRS痛みスコア (0-10) |
 | mmt_score | INTEGER | YES | MMT筋力スコア (0-5) |
+| percent_mv | DECIMAL(5,2) | YES | ％MV 筋質量 (0-100%) |
 | notes | TEXT | YES | メモ |
 | created_at | TIMESTAMP | NO | 作成日時 |
 | updated_at | TIMESTAMP | NO | 更新日時 |

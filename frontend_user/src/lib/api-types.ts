@@ -110,6 +110,7 @@ export interface Measurement {
   wbi_right?: number
   tug_seconds?: number
   nrs_pain?: number
+  percent_mv?: number
   created_at: string
 }
 

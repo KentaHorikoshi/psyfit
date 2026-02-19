@@ -27,6 +27,7 @@ class Measurement < ApplicationRecord
     greater_than_or_equal_to: 0,
     less_than_or_equal_to: 5
   }, allow_nil: true
+  validates :percent_mv, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_nil: true
 
   # Default values
   attribute :measured_date, :date, default: -> { Date.current }
@@ -66,6 +67,6 @@ class Measurement < ApplicationRecord
   def has_measurements?
     [ weight_kg, knee_extension_strength_left, knee_extension_strength_right,
      wbi_left, wbi_right,
-     tug_seconds, single_leg_stance_seconds, nrs_pain_score, mmt_score ].any?(&:present?)
+     tug_seconds, single_leg_stance_seconds, nrs_pain_score, mmt_score, percent_mv ].any?(&:present?)
   end
 end

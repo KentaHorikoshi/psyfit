@@ -32,6 +32,7 @@ module Api
           single_leg_stance_seconds: measurement.single_leg_stance_seconds&.to_s,
           nrs_pain_score: measurement.nrs_pain_score,
           mmt_score: measurement.mmt_score,
+          percent_mv: measurement.percent_mv&.to_s,
           notes: measurement.notes
         }
       end

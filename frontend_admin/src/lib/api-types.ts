@@ -129,6 +129,7 @@ export interface Measurement {
   single_leg_stance_seconds?: number
   nrs_pain_score?: number
   mmt_score?: number
+  percent_mv?: number
   notes?: string
 }
 
@@ -143,6 +144,7 @@ export interface MeasurementInput {
   single_leg_stance_seconds?: number
   nrs_pain_score?: number
   mmt_score?: number
+  percent_mv?: number
   notes?: string
 }
 

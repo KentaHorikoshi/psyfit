@@ -65,29 +65,9 @@ PsyFit - リハビリ運動支援アプリ（利用者向け・職員向け 統�
 
 ## Development Server
 
-### 起動方法
+### 起動方法（Docker）
 
-```bash
-# 1. バックエンド (Rails API) - ポート4001
-bin/rails server -b 0.0.0.0 -p 4001
-
-# 2. フロントエンド (利用者向け) - ポート3000
-cd frontend_user && npm run dev -- --host 0.0.0.0 --port 3000
-
-# 3. フロントエンド (職員向け) - ポート3003
-cd frontend_admin && npm run dev -- --host 0.0.0.0 --port 3003
-```
-
-### アクセスURL
-
-| アプリ | URL |
-|--------|-----|
-| 利用者向けフロントエンド | http://localhost:3000 |
-| 職員向けフロントエンド | http://localhost:3003 |
-| バックエンドAPI | http://localhost:4001 |
-| APIヘルスチェック | http://localhost:4001/api/v1/health |
-
-### Docker環境での起動
+開発環境はDockerで動作する。API（ポート4001）はDockerコンテナが常時占有するため、直接 `bin/rails server` は使わない。
 
 ```bash
 # 初回セットアップ（.env作成、ビルド、DB作成）
@@ -110,6 +90,33 @@ bin/docker-start stop
 # Docker環境テスト（41項目）
 bin/docker-test
 ```
+
+フロントエンドはDockerに含まれない場合、別途起動:
+
+```bash
+# フロントエンド (利用者向け) - ポート3000
+cd frontend_user && npm run dev -- --host 0.0.0.0 --port 3000
+
+# フロントエンド (職員向け) - ポート3003
+cd frontend_admin && npm run dev -- --host 0.0.0.0 --port 3003
+```
+
+### マイグレーション
+
+マイグレーションはコンテナ内で実行:
+
+```bash
+docker exec psyfit-api-1 bin/rails db:migrate
+```
+
+### アクセスURL
+
+| アプリ | URL |
+|--------|-----|
+| 利用者向けフロントエンド | http://localhost:3000 |
+| 職員向けフロントエンド | http://localhost:3003 |
+| バックエンドAPI | http://localhost:4001 |
+| APIヘルスチェック | http://localhost:4001/api/v1/health |
 
 ### 開発用アカウント
 

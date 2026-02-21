@@ -514,6 +514,89 @@ describe('U-02 Home', () => {
     })
   })
 
+  describe('daily_frequency support', () => {
+    const mockExercisesWithFrequency: Exercise[] = [
+      {
+        id: '1',
+        name: 'スクワット',
+        description: '膝の筋力強化',
+        video_url: '/videos/squat.mp4',
+        sets: 3,
+        reps: 10,
+        daily_frequency: 3,
+        exercise_type: 'training',
+      },
+      {
+        id: '2',
+        name: '腕上げ運動',
+        description: '肩の可動域訓練',
+        video_url: '/videos/arm-raise.mp4',
+        sets: 2,
+        reps: 15,
+        daily_frequency: 1,
+        exercise_type: 'training',
+      },
+    ]
+
+    it('should not count exercise as completed when count < daily_frequency', async () => {
+      mockGetUserExercises.mockResolvedValue({
+        status: 'success',
+        data: { exercises: mockExercisesWithFrequency },
+      })
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            {
+              id: 'record-1',
+              exercise_id: '1',
+              user_id: '1',
+              completed_at: new Date().toISOString(),
+              completed_sets: 3,
+              completed_reps: 10,
+              exercise_name: 'スクワット',
+              exercise_category: 'training',
+            },
+          ],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        // Exercise 1: 1/3 done (not complete), Exercise 2: 0/1 done (not complete)
+        // So remainingCount = 2
+        expect(screen.getByText(/残り.*2.*件/)).toBeInTheDocument()
+      })
+    })
+
+    it('should count exercise as completed when count >= daily_frequency', async () => {
+      mockGetUserExercises.mockResolvedValue({
+        status: 'success',
+        data: { exercises: mockExercisesWithFrequency },
+      })
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            { id: 'r1', exercise_id: '1', user_id: '1', completed_at: new Date().toISOString(), completed_sets: 3, completed_reps: 10, exercise_name: 'スクワット', exercise_category: 'training' },
+            { id: 'r2', exercise_id: '1', user_id: '1', completed_at: new Date().toISOString(), completed_sets: 3, completed_reps: 10, exercise_name: 'スクワット', exercise_category: 'training' },
+            { id: 'r3', exercise_id: '1', user_id: '1', completed_at: new Date().toISOString(), completed_sets: 3, completed_reps: 10, exercise_name: 'スクワット', exercise_category: 'training' },
+            { id: 'r4', exercise_id: '2', user_id: '1', completed_at: new Date().toISOString(), completed_sets: 2, completed_reps: 15, exercise_name: '腕上げ運動', exercise_category: 'training' },
+          ],
+        },
+      })
+
+      renderHome()
+
+      await waitFor(() => {
+        // Exercise 1: 3/3 done, Exercise 2: 1/1 done → all completed
+        expect(screen.getByRole('button', { name: /すべて完了/ })).toBeInTheDocument()
+        expect(screen.getByText('完了！')).toBeInTheDocument()
+      })
+    })
+  })
+
   describe('next visit date display', () => {
     it('should display next visit date when set', async () => {
       mockUseAuth.mockReturnValue({

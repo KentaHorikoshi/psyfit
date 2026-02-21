@@ -72,6 +72,32 @@ RSpec.describe 'Api::V1::Exercises', type: :request do
           )
         end
 
+        it 'returns daily_frequency from patient_exercise' do
+          get "/api/v1/exercises/#{exercise.id}"
+
+          expect(response).to have_http_status(:ok)
+          expect(json_response['data']['daily_frequency']).to eq(patient_exercise.daily_frequency)
+        end
+
+        context 'with custom daily_frequency' do
+          let!(:patient_exercise) do
+            create(:patient_exercise,
+              user: user,
+              exercise: exercise,
+              assigned_by_staff: staff,
+              is_active: true,
+              daily_frequency: 3
+            )
+          end
+
+          it 'returns the custom daily_frequency value' do
+            get "/api/v1/exercises/#{exercise.id}"
+
+            expect(response).to have_http_status(:ok)
+            expect(json_response['data']['daily_frequency']).to eq(3)
+          end
+        end
+
         it 'creates audit log entry' do
           expect {
             get "/api/v1/exercises/#{exercise.id}"

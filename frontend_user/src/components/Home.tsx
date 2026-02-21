@@ -97,16 +97,24 @@ export function Home() {
   const greeting = useMemo(() => getGreeting(), [])
   const GreetingIcon = greeting.Icon
 
-  // Calculate completed exercise IDs from today's records
-  const completedExerciseIds = useMemo(() => {
-    return new Set(todayRecords.map(record => record.exercise_id))
+  // Count today's records per exercise
+  const completedCountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    todayRecords.forEach(record => {
+      map.set(record.exercise_id, (map.get(record.exercise_id) ?? 0) + 1)
+    })
+    return map
   }, [todayRecords])
 
-  // Calculate remaining exercises count
+  // Calculate remaining exercises count considering daily_frequency
   const remainingCount = useMemo(() => {
     if (!Array.isArray(exercises)) return 0
-    return exercises.filter(ex => !completedExerciseIds.has(ex.id)).length
-  }, [exercises, completedExerciseIds])
+    return exercises.filter(ex => {
+      const count = completedCountMap.get(ex.id) ?? 0
+      const freq = ex.daily_frequency ?? 1
+      return count < freq
+    }).length
+  }, [exercises, completedCountMap])
 
   // Show loading state
   if (isLoading) {

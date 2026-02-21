@@ -43,6 +43,7 @@ const mockExercises: Exercise[] = [
     video_url: '/videos/squat.mp4',
     sets: 3,
     reps: 10,
+    daily_frequency: 1,
     exercise_type: 'training',
   },
   {
@@ -52,6 +53,7 @@ const mockExercises: Exercise[] = [
     video_url: '/videos/arm-raise.mp4',
     sets: 2,
     reps: 15,
+    daily_frequency: 1,
     exercise_type: 'training',
   },
 ]

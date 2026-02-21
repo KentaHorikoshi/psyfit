@@ -31,46 +31,70 @@ interface ExerciseCardItemProps {
   exercise: Exercise
   onClick: () => void
   isCompleted: boolean
+  completedCount: number
 }
 
-function ExerciseCardItem({ exercise, onClick, isCompleted }: ExerciseCardItemProps) {
+function ExerciseCardItem({ exercise, onClick, isCompleted, completedCount }: ExerciseCardItemProps) {
+  const dailyFrequency = exercise.daily_frequency ?? 1
+  const allCompleted = completedCount >= dailyFrequency
+  const showProgress = dailyFrequency > 1
+
   return (
     <li>
       <button
         onClick={onClick}
         className={`w-full flex items-center p-4 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[72px] border ${
-          isCompleted
+          (isCompleted || allCompleted)
             ? 'bg-green-50 border-green-200'
-            : 'bg-white border-gray-200 hover:border-[#1E40AF]'
+            : completedCount > 0
+              ? 'bg-blue-50 border-blue-200'
+              : 'bg-white border-gray-200 hover:border-[#1E40AF]'
         }`}
-        aria-label={`${exercise.name}${isCompleted ? '（実施済み）' : 'を開始'} ${exercise.sets}セット${exercise.reps}回`}
+        aria-label={`${exercise.name}${showProgress ? ` ${completedCount}/${dailyFrequency}回実施` : isCompleted ? '（実施済み）' : 'を開始'} ${exercise.sets}セット${exercise.reps}回`}
       >
         <div className={`w-16 h-16 rounded-lg flex items-center justify-center mr-4 shrink-0 overflow-hidden ${
-          isCompleted && !exercise.thumbnail_url ? 'bg-green-100' : 'bg-gray-100'
+          (isCompleted || allCompleted) && !exercise.thumbnail_url ? 'bg-green-100' : 'bg-gray-100'
         }`}>
           {exercise.thumbnail_url ? (
             <img
               src={exercise.thumbnail_url}
               alt=""
-              className={`w-full h-full object-cover ${isCompleted ? 'opacity-60' : ''}`}
+              className={`w-full h-full object-cover ${(isCompleted || allCompleted) ? 'opacity-60' : ''}`}
             />
           ) : (
-            <Play size={24} className={isCompleted ? 'text-green-600' : 'text-[#1E40AF]'} />
+            <Play size={24} className={(isCompleted || allCompleted) ? 'text-green-600' : 'text-[#1E40AF]'} />
           )}
         </div>
         <div className="flex-1 text-left">
-          <p className={`text-lg font-medium ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+          <p className={`text-lg font-medium ${(isCompleted || allCompleted) ? 'text-green-700' : 'text-gray-900'}`}>
             {exercise.name}
           </p>
           <p className="text-gray-500 text-sm">
             {exercise.sets}セット × {exercise.reps}回
             {exercise.duration_seconds && ` (${exercise.duration_seconds}秒)`}
           </p>
+          {showProgress && (
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                <div
+                  className={`h-1.5 rounded-full transition-all ${allCompleted ? 'bg-green-500' : 'bg-blue-500'}`}
+                  style={{ width: `${Math.min(100, Math.round((completedCount / dailyFrequency) * 100))}%` }}
+                />
+              </div>
+              <span className={`text-xs font-medium ${allCompleted ? 'text-green-600' : 'text-blue-600'}`}>
+                {completedCount}/{dailyFrequency}
+              </span>
+            </div>
+          )}
         </div>
-        {isCompleted ? (
+        {(isCompleted || allCompleted) ? (
           <div className="flex flex-col items-center shrink-0">
             <CheckCircle2 size={24} className="text-green-600" />
-            <span className="text-xs text-green-600 font-medium mt-1">実施済み</span>
+            <span className="text-xs text-green-600 font-medium mt-1">{showProgress ? '達成' : '実施済み'}</span>
+          </div>
+        ) : completedCount > 0 ? (
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shrink-0">
+            <Play size={20} className="text-white ml-0.5" />
           </div>
         ) : (
           <div className="w-10 h-10 bg-[#1E40AF] rounded-full flex items-center justify-center shrink-0">
@@ -128,13 +152,21 @@ export function ExerciseMenu() {
     fetchExercisesAndRecords()
   }, [isAuthenticated])
 
-  const completedExerciseIds = useMemo(() => {
-    return new Set(todayRecords.map(record => record.exercise_id))
+  const completedCountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    todayRecords.forEach(record => {
+      map.set(record.exercise_id, (map.get(record.exercise_id) ?? 0) + 1)
+    })
+    return map
   }, [todayRecords])
 
   const remainingCount = useMemo(() => {
-    return exercises.filter(ex => !completedExerciseIds.has(ex.id)).length
-  }, [exercises, completedExerciseIds])
+    return exercises.filter(ex => {
+      const count = completedCountMap.get(ex.id) ?? 0
+      const freq = ex.daily_frequency ?? 1
+      return count < freq
+    }).length
+  }, [exercises, completedCountMap])
 
   const groupedExercises = useMemo(() => {
     const groups: Record<ExerciseType, Exercise[]> = {
@@ -238,14 +270,19 @@ export function ExerciseMenu() {
                   {group.label}
                 </h2>
                 <ul className="space-y-3">
-                  {group.exercises.map(exercise => (
-                    <ExerciseCardItem
-                      key={exercise.id}
-                      exercise={exercise}
-                      isCompleted={completedExerciseIds.has(exercise.id)}
-                      onClick={() => navigate(`/exercise/${exercise.id}`)}
-                    />
-                  ))}
+                  {group.exercises.map(exercise => {
+                    const count = completedCountMap.get(exercise.id) ?? 0
+                    const freq = exercise.daily_frequency ?? 1
+                    return (
+                      <ExerciseCardItem
+                        key={exercise.id}
+                        exercise={exercise}
+                        isCompleted={count >= freq}
+                        completedCount={count}
+                        onClick={() => navigate(`/exercise/${exercise.id}`)}
+                      />
+                    )
+                  })}
                 </ul>
               </li>
             ))}

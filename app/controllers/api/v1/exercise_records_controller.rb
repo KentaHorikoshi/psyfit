@@ -49,12 +49,18 @@ module Api
       end
 
       def record_response(record)
+        today_count = current_user.exercise_records
+          .where(exercise_id: record.exercise_id)
+          .where(completed_at: Time.current.beginning_of_day..Time.current.end_of_day)
+          .count
+
         {
           id: record.id,
           exercise_id: record.exercise_id,
           completed_reps: record.completed_reps,
           completed_sets: record.completed_sets,
-          completed_at: record.completed_at.iso8601
+          completed_at: record.completed_at.iso8601,
+          today_count: today_count
         }
       end
 

@@ -177,6 +177,7 @@ export interface ExerciseAssignment {
   exercise_id: string
   sets: number
   reps: number
+  daily_frequency: number
   pain_flag: boolean
   reason: string
   assigned_at: string
@@ -187,6 +188,7 @@ export interface CreateExerciseAssignmentRequest {
   exercise_id: string
   sets: number
   reps: number
+  daily_frequency: number
 }
 
 export interface BatchExerciseAssignmentRequest {

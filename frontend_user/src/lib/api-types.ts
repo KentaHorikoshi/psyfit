@@ -44,6 +44,7 @@ export interface Exercise {
   thumbnail_url?: string
   sets: number
   reps: number
+  daily_frequency: number
   duration_seconds?: number
   exercise_type: ExerciseType
   body_part_major?: string | null
@@ -68,6 +69,15 @@ export interface CreateExerciseRecordRequest {
   pain_level?: number
   notes?: string
   completed_at?: string
+}
+
+export interface CreateExerciseRecordResponse {
+  id: string
+  exercise_id: string
+  completed_reps: number
+  completed_sets: number
+  completed_at: string
+  today_count: number
 }
 
 export interface ExercisesResponse {

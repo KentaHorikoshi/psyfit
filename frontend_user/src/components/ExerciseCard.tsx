@@ -19,9 +19,13 @@ interface ExerciseCardProps {
   exercise: Exercise
   onStart: (exercise: Exercise) => void
   isCompleted?: boolean
+  completedCount?: number
 }
 
-export function ExerciseCard({ exercise, onStart, isCompleted = false }: ExerciseCardProps) {
+export function ExerciseCard({ exercise, onStart, isCompleted = false, completedCount = 0 }: ExerciseCardProps) {
+  const dailyFrequency = exercise.daily_frequency ?? 1
+  const allCompleted = completedCount >= dailyFrequency
+  const progressPercent = dailyFrequency > 1 ? Math.min(100, Math.round((completedCount / dailyFrequency) * 100)) : 0
   const handleClick = () => {
     onStart(exercise)
   }
@@ -33,9 +37,13 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false }: Exercis
     }
   }
 
+  const completionLabel = dailyFrequency > 1
+    ? `${completedCount}/${dailyFrequency}回実施${allCompleted ? ' 達成' : ''}`
+    : isCompleted ? ' 完了' : ''
+
   const ariaLabel = `${exercise.name} ${exercise.sets}セット${exercise.reps}回${
     exercise.duration_seconds ? ` ${exercise.duration_seconds}秒` : ''
-  }${isCompleted ? ' 完了' : ''}`
+  }${completionLabel}`
 
   return (
     <article
@@ -47,9 +55,11 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false }: Exercis
       className={`
         relative rounded-xl border transition-all cursor-pointer
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2
-        ${isCompleted
+        ${(isCompleted || allCompleted)
           ? 'bg-green-50 border-green-200 hover:border-green-300'
-          : 'bg-white border-gray-200 hover:border-[#1E40AF] hover:shadow-md'
+          : completedCount > 0
+            ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
+            : 'bg-white border-gray-200 hover:border-[#1E40AF] hover:shadow-md'
         }
       `}
     >
@@ -80,9 +90,16 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false }: Exercis
         </span>
 
         {/* Completed badge */}
-        {isCompleted && (
+        {(isCompleted || allCompleted) && (
           <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
             <Check size={20} className="text-white" />
+          </div>
+        )}
+
+        {/* Progress badge for multi-frequency */}
+        {dailyFrequency > 1 && completedCount > 0 && !allCompleted && (
+          <div className="absolute top-3 right-3 px-2 py-1 bg-blue-500 rounded-full text-xs font-bold text-white">
+            {completedCount}/{dailyFrequency}
           </div>
         )}
       </div>
@@ -91,10 +108,24 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false }: Exercis
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">{exercise.name}</h3>
-          {isCompleted && (
+          {dailyFrequency > 1 ? (
+            <span className={`text-sm font-medium ml-2 ${allCompleted ? 'text-green-600' : 'text-blue-600'}`}>
+              {completedCount}/{dailyFrequency}回
+            </span>
+          ) : isCompleted ? (
             <span className="text-green-600 text-sm font-medium ml-2">完了</span>
-          )}
+          ) : null}
         </div>
+
+        {/* Progress bar for multi-frequency */}
+        {dailyFrequency > 1 && (
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-3" role="progressbar" aria-valuenow={completedCount} aria-valuemin={0} aria-valuemax={dailyFrequency} aria-label={`${completedCount}/${dailyFrequency}回完了`}>
+            <div
+              className={`h-2 rounded-full transition-all ${allCompleted ? 'bg-green-500' : 'bg-blue-500'}`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        )}
 
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
           {exercise.description}
@@ -122,7 +153,7 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false }: Exercis
             className="min-w-[88px] min-h-[44px] px-4 py-2 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2"
             aria-label={`${exercise.name}を開始`}
           >
-            {isCompleted ? 'もう一度' : '始める'}
+            {completedCount > 0 ? 'もう一度' : '始める'}
           </button>
         </div>
       </div>

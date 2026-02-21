@@ -110,12 +110,25 @@ export function DayDetailPanel({ date, records, exercises, isNextVisit, isPrevio
                     {exercise.name}
                   </h3>
                   {isCompleted && exerciseRecords ? (
-                    <p className="text-sm text-green-600 mt-1">
-                      {exerciseRecords[0]!.completed_sets}セット × {exerciseRecords[0]!.completed_reps}回
-                      <span className="ml-2 text-gray-400">
-                        {formatTime(exerciseRecords[0]!.completed_at)}
-                      </span>
-                    </p>
+                    exerciseRecords.length > 1 ? (
+                      <div className="mt-1 space-y-0.5">
+                        {exerciseRecords.map((rec, idx) => (
+                          <p key={idx} className="text-sm text-green-600">
+                            {idx + 1}回目: {rec.completed_sets}セット × {rec.completed_reps}回
+                            <span className="ml-2 text-gray-400">
+                              {formatTime(rec.completed_at)}
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-green-600 mt-1">
+                        {exerciseRecords[0]!.completed_sets}セット × {exerciseRecords[0]!.completed_reps}回
+                        <span className="ml-2 text-gray-400">
+                          {formatTime(exerciseRecords[0]!.completed_at)}
+                        </span>
+                      </p>
+                    )
                   ) : (
                     <p className="text-sm text-gray-400 mt-1">未実施</p>
                   )}

@@ -40,6 +40,7 @@ const mockExercises: Exercise[] = [
     thumbnail_url: '/thumbnails/knee-extension.jpg',
     sets: 3,
     reps: 10,
+    daily_frequency: 1,
     exercise_type: 'training',
   },
   {
@@ -50,6 +51,7 @@ const mockExercises: Exercise[] = [
     thumbnail_url: '/thumbnails/arm-raise.jpg',
     sets: 2,
     reps: 15,
+    daily_frequency: 1,
     exercise_type: 'training',
   },
   {
@@ -59,6 +61,7 @@ const mockExercises: Exercise[] = [
     video_url: '/videos/stretch.mp4',
     sets: 1,
     reps: 5,
+    daily_frequency: 1,
     duration_seconds: 30,
     exercise_type: 'stretch',
   },
@@ -280,6 +283,7 @@ describe('U-03 ExerciseMenu', () => {
           video_url: '/videos/chair-squat.mp4',
           sets: 3,
           reps: 10,
+          daily_frequency: 1,
           exercise_type: 'トレーニング' as Exercise['exercise_type'],
         },
         {
@@ -289,6 +293,7 @@ describe('U-03 ExerciseMenu', () => {
           video_url: '/videos/elbow.mp4',
           sets: 2,
           reps: 5,
+          daily_frequency: 1,
           exercise_type: 'ストレッチ' as Exercise['exercise_type'],
         },
       ]

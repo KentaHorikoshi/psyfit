@@ -13,6 +13,7 @@ const makeExercise = (id: string, name: string): Exercise => ({
   video_url: '/videos/test.mp4',
   sets: 3,
   reps: 10,
+  daily_frequency: 1,
   exercise_type: 'training',
 })
 

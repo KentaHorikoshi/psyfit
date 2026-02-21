@@ -13,7 +13,7 @@ export function ExerciseMenu() {
   const navigate = useNavigate()
   const [exercises, setExercises] = useState<ExerciseMaster[]>([])
   const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set())
-  const [exerciseSettings, setExerciseSettings] = useState<Record<string, { sets: number; reps: number }>>({})
+  const [exerciseSettings, setExerciseSettings] = useState<Record<string, { sets: number; reps: number; daily_frequency: number }>>({})
   const [painFlag, setPainFlag] = useState(false)
   const [reason, setReason] = useState('')
   const [nextVisitDate, setNextVisitDate] = useState('')
@@ -60,11 +60,12 @@ export function ExerciseMenu() {
         setExpandedMinors(assignedMinors)
 
         // Initialize exercise settings from assigned exercises
-        const initialSettings: Record<string, { sets: number; reps: number }> = {}
+        const initialSettings: Record<string, { sets: number; reps: number; daily_frequency: number }> = {}
         assignments.forEach(assignment => {
           initialSettings[assignment.exercise_id] = {
             sets: assignment.sets,
             reps: assignment.reps,
+            daily_frequency: assignment.daily_frequency ?? 1,
           }
         })
         setExerciseSettings(initialSettings)
@@ -129,6 +130,7 @@ export function ExerciseMenu() {
           [exerciseId]: {
             sets: exercise.recommended_sets,
             reps: exercise.recommended_reps,
+            daily_frequency: 1,
           },
         }))
       }
@@ -154,6 +156,7 @@ export function ExerciseMenu() {
           exercise_id: exerciseId,
           sets: settings?.sets || 1,
           reps: settings?.reps || 1,
+          daily_frequency: settings?.daily_frequency || 1,
         }
       })
 
@@ -360,7 +363,7 @@ export function ExerciseMenu() {
                     return (
                       <div key={exerciseId} className="border border-gray-200 rounded-lg p-4">
                         <p className="font-medium text-gray-900 mb-3 text-sm">{exercise.name}</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                           <div>
                             <label htmlFor={`sets-${exerciseId}`} className="block text-xs text-gray-700 mb-1">
                               セット数
@@ -376,7 +379,7 @@ export function ExerciseMenu() {
                                 const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(10, raw))
                                 setExerciseSettings(prev => ({
                                   ...prev,
-                                  [exerciseId]: { sets: value, reps: prev[exerciseId]?.reps ?? 1 }
+                                  [exerciseId]: { sets: value, reps: prev[exerciseId]?.reps ?? 1, daily_frequency: prev[exerciseId]?.daily_frequency ?? 1 }
                                 }))
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-sm"
@@ -398,11 +401,33 @@ export function ExerciseMenu() {
                                 const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(50, raw))
                                 setExerciseSettings(prev => ({
                                   ...prev,
-                                  [exerciseId]: { sets: prev[exerciseId]?.sets ?? 1, reps: value }
+                                  [exerciseId]: { sets: prev[exerciseId]?.sets ?? 1, reps: value, daily_frequency: prev[exerciseId]?.daily_frequency ?? 1 }
                                 }))
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-sm"
                               aria-label={`${exercise.name}の回数`}
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor={`freq-${exerciseId}`} className="block text-xs text-gray-700 mb-1">
+                              1日目標回数
+                            </label>
+                            <input
+                              id={`freq-${exerciseId}`}
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={settings.daily_frequency}
+                              onChange={(e) => {
+                                const raw = parseInt(e.target.value)
+                                const value = Number.isNaN(raw) ? 1 : Math.max(1, Math.min(10, raw))
+                                setExerciseSettings(prev => ({
+                                  ...prev,
+                                  [exerciseId]: { sets: prev[exerciseId]?.sets ?? 1, reps: prev[exerciseId]?.reps ?? 1, daily_frequency: value }
+                                }))
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-sm"
+                              aria-label={`${exercise.name}の1日目標回数`}
                             />
                           </div>
                         </div>

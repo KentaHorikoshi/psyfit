@@ -66,6 +66,7 @@ describe('U-15 BatchRecord', () => {
             video_url: 'https://example.com/video1.mp4',
             sets: 3,
             reps: 10,
+            daily_frequency: 1,
             exercise_type: 'training' as const,
           },
           {
@@ -75,6 +76,7 @@ describe('U-15 BatchRecord', () => {
             video_url: 'https://example.com/video2.mp4',
             sets: 3,
             reps: 15,
+            daily_frequency: 3,
             exercise_type: 'training' as const,
           },
           {
@@ -84,6 +86,7 @@ describe('U-15 BatchRecord', () => {
             video_url: 'https://example.com/video3.mp4',
             sets: 3,
             reps: 10,
+            daily_frequency: 1,
             exercise_type: 'training' as const,
           },
         ],
@@ -568,6 +571,75 @@ describe('U-15 BatchRecord', () => {
       renderBatchRecord()
 
       expect(screen.getByRole('status')).toBeInTheDocument()
+    })
+  })
+
+  describe('multi-frequency exercises', () => {
+    it('should show exercise as uncompleted when daily_frequency not reached', async () => {
+      // スクワット has daily_frequency: 3, provide 1 record
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            {
+              id: 'r1',
+              exercise_id: '2',
+              exercise_name: 'スクワット',
+              exercise_category: 'training',
+              completed_at: new Date().toISOString(),
+              sets_completed: 3,
+              reps_completed: 15,
+              completed_sets: 3,
+              completed_reps: 15,
+            },
+          ],
+        },
+      })
+
+      renderBatchRecord()
+
+      await waitFor(() => {
+        // スクワット should still be selectable (uncompleted) since 1/3
+        expect(screen.getByLabelText(/スクワット/)).toBeInTheDocument()
+      })
+    })
+
+    it('should show exercise as completed when daily_frequency reached', async () => {
+      // スクワット has daily_frequency: 3, provide 3 records
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            { id: 'r1', exercise_id: '2', exercise_name: 'スクワット', exercise_category: 'training', completed_at: new Date().toISOString(), sets_completed: 3, reps_completed: 15, completed_sets: 3, completed_reps: 15 },
+            { id: 'r2', exercise_id: '2', exercise_name: 'スクワット', exercise_category: 'training', completed_at: new Date().toISOString(), sets_completed: 3, reps_completed: 15, completed_sets: 3, completed_reps: 15 },
+            { id: 'r3', exercise_id: '2', exercise_name: 'スクワット', exercise_category: 'training', completed_at: new Date().toISOString(), sets_completed: 3, reps_completed: 15, completed_sets: 3, completed_reps: 15 },
+          ],
+        },
+      })
+
+      renderBatchRecord()
+
+      await waitFor(() => {
+        // スクワット should be shown in completed section
+        expect(screen.getByText(/達成済み/)).toBeInTheDocument()
+      })
+    })
+
+    it('should show progress indicator for multi-frequency exercises', async () => {
+      mockGetExerciseRecords.mockResolvedValue({
+        status: 'success',
+        data: {
+          records: [
+            { id: 'r1', exercise_id: '2', exercise_name: 'スクワット', exercise_category: 'training', completed_at: new Date().toISOString(), sets_completed: 3, reps_completed: 15, completed_sets: 3, completed_reps: 15 },
+          ],
+        },
+      })
+
+      renderBatchRecord()
+
+      await waitFor(() => {
+        expect(screen.getByText('1/3')).toBeInTheDocument()
+      })
     })
   })
 

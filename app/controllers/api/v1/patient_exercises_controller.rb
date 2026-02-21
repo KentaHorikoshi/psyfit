@@ -18,6 +18,7 @@ module Api
             exercise_id: pe.exercise_id,
             sets: pe.target_sets || pe.exercise.recommended_sets || 3,
             reps: pe.target_reps || pe.exercise.recommended_reps || 10,
+            daily_frequency: pe.daily_frequency,
             pain_flag: false,
             reason: "",
             assigned_at: pe.assigned_at.iso8601,
@@ -51,6 +52,8 @@ module Api
             exercise_id = assignment["exercise_id"] || assignment[:exercise_id]
             exercise = Exercise.find(exercise_id)
 
+            daily_freq = assignment["daily_frequency"] || assignment[:daily_frequency] || 1
+
             patient_exercise = PatientExercise.new(
               user: @patient,
               exercise: exercise,
@@ -58,6 +61,7 @@ module Api
               assigned_at: Time.current,
               target_sets: assignment["sets"] || assignment[:sets],
               target_reps: assignment["reps"] || assignment[:reps],
+              daily_frequency: daily_freq.to_i,
               is_active: true
             )
 
@@ -114,6 +118,7 @@ module Api
           exercise_id: patient_exercise.exercise_id,
           target_reps: patient_exercise.target_reps,
           target_sets: patient_exercise.target_sets,
+          daily_frequency: patient_exercise.daily_frequency,
           assigned_at: patient_exercise.assigned_at.iso8601
         }
       end

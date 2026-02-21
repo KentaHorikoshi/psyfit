@@ -78,6 +78,39 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
           expect(record.user_id).to eq(user.id)
         end
 
+        it 'returns today_count in response' do
+          post '/api/v1/exercise_records', params: valid_params
+
+          expect(json_response['data']['today_count']).to eq(1)
+        end
+
+        it 'increments today_count for multiple records of same exercise' do
+          post '/api/v1/exercise_records', params: valid_params
+          expect(json_response['data']['today_count']).to eq(1)
+
+          post '/api/v1/exercise_records', params: valid_params
+          expect(json_response['data']['today_count']).to eq(2)
+
+          post '/api/v1/exercise_records', params: valid_params
+          expect(json_response['data']['today_count']).to eq(3)
+        end
+
+        it 'counts only today records for today_count' do
+          # Create a record from yesterday using time travel
+          Timecop.travel(1.day.ago) do
+            post '/api/v1/exercise_records', params: valid_params
+          end
+
+          # Re-login since session might have changed
+          post '/api/v1/auth/login', params: {
+            email: user.email,
+            password: user_password
+          }
+
+          post '/api/v1/exercise_records', params: valid_params
+          expect(json_response['data']['today_count']).to eq(1)
+        end
+
         context 'with custom completed_at (yesterday)' do
           let(:yesterday_time) { 1.day.ago.in_time_zone('Tokyo').change(hour: 10, min: 30).iso8601 }
           let(:params_with_time) { valid_params.merge(completed_at: yesterday_time) }

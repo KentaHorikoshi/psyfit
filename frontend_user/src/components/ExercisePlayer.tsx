@@ -19,6 +19,7 @@ export function ExercisePlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
+  const [todayCount, setTodayCount] = useState(0)
   const [completionError, setCompletionError] = useState<string | null>(null)
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
@@ -103,12 +104,14 @@ export function ExercisePlayer() {
       setIsCompleting(true)
       setCompletionError(null)
 
-      await apiClient.createExerciseRecord({
+      const response = await apiClient.createExerciseRecord({
         exercise_id: exercise.id,
         completed_sets: currentSet,
         completed_reps: exercise.reps,
       })
 
+      const count = (response.data as { today_count?: number })?.today_count
+      setTodayCount(count ?? 1)
       setIsCompleted(true)
 
       // Navigate to celebration after short delay
@@ -300,6 +303,11 @@ export function ExercisePlayer() {
             </div>
             <p className="text-xl font-bold text-gray-900">お疲れ様でした！</p>
             <p className="text-gray-500 mt-2">記録を保存しました</p>
+            {exercise && (exercise.daily_frequency ?? 1) > 1 && (
+              <p className="text-blue-600 font-medium mt-2">
+                本日 {todayCount}/{exercise.daily_frequency}回 完了
+              </p>
+            )}
           </div>
         )}
 

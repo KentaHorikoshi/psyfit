@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_19_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_21_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -120,6 +120,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_100000) do
     t.datetime "assigned_at", null: false
     t.uuid "assigned_by_staff_id", null: false
     t.datetime "created_at", null: false
+    t.integer "daily_frequency", default: 1, null: false
     t.uuid "exercise_id", null: false
     t.boolean "is_active", default: true, null: false
     t.integer "target_reps"

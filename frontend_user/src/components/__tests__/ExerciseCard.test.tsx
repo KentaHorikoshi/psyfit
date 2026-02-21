@@ -12,6 +12,7 @@ const mockExercise: Exercise = {
   thumbnail_url: '/thumbnails/knee-extension.jpg',
   sets: 3,
   reps: 10,
+  daily_frequency: 1,
   exercise_type: 'training',
 }
 
@@ -21,6 +22,13 @@ const mockExerciseWithDuration: Exercise = {
   name: 'ストレッチ',
   duration_seconds: 30,
   exercise_type: 'stretch',
+}
+
+const mockExerciseMultiFreq: Exercise = {
+  ...mockExercise,
+  id: '3',
+  name: '肩回し運動',
+  daily_frequency: 3,
 }
 
 describe('U-11 ExerciseCard', () => {
@@ -167,6 +175,41 @@ describe('U-11 ExerciseCard', () => {
       expect(label).toContain('膝伸展運動')
       expect(label).toContain('3セット')
       expect(label).toContain('10回')
+    })
+  })
+
+  describe('multi-frequency progress', () => {
+    it('should show progress bar when daily_frequency > 1', () => {
+      render(<ExerciseCard exercise={mockExerciseMultiFreq} onStart={vi.fn()} completedCount={1} />)
+
+      expect(screen.getByRole('progressbar')).toBeInTheDocument()
+      expect(screen.getByText('1/3回')).toBeInTheDocument()
+    })
+
+    it('should not show progress bar when daily_frequency is 1', () => {
+      render(<ExerciseCard exercise={mockExercise} onStart={vi.fn()} completedCount={0} />)
+
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    })
+
+    it('should show partial progress styling', () => {
+      render(<ExerciseCard exercise={mockExerciseMultiFreq} onStart={vi.fn()} completedCount={1} />)
+
+      const card = screen.getByRole('article')
+      expect(card).toHaveClass('bg-blue-50')
+    })
+
+    it('should show completed styling when all daily_frequency reached', () => {
+      render(<ExerciseCard exercise={mockExerciseMultiFreq} onStart={vi.fn()} completedCount={3} />)
+
+      const card = screen.getByRole('article')
+      expect(card).toHaveClass('bg-green-50')
+    })
+
+    it('should show もう一度 button text when completedCount > 0', () => {
+      render(<ExerciseCard exercise={mockExerciseMultiFreq} onStart={vi.fn()} completedCount={1} />)
+
+      expect(screen.getByRole('button', { name: /開始/ })).toHaveTextContent('もう一度')
     })
   })
 

@@ -30,7 +30,22 @@ export function DayDetailPanel({ date, records, exercises, isNextVisit, isPrevio
     completedMap.set(record.exercise_id, [...existing, record])
   }
 
-  const completedCount = completedMap.size
+  const completedCount = (() => {
+    const exerciseIds = new Set(exercises.map(ex => ex.id))
+    // Count current exercises that meet their daily_frequency target
+    let count = exercises.filter(ex => {
+      const recs = completedMap.get(ex.id)
+      return recs != null && recs.length >= (ex.daily_frequency ?? 1)
+    }).length
+    // Also count records for exercises no longer in the current list
+    // (removed exercises — no daily_frequency available, treat any record as completed)
+    for (const exerciseId of completedMap.keys()) {
+      if (!exerciseIds.has(exerciseId)) {
+        count++
+      }
+    }
+    return count
+  })()
   const snapshotCount = records.length > 0 ? getSnapshotAssignedCount(records) : null
   const totalCount = snapshotCount ?? exercises.length
 
@@ -89,33 +104,62 @@ export function DayDetailPanel({ date, records, exercises, isNextVisit, isPrevio
         <div className="space-y-3">
           {exercisesToShow.map((exercise) => {
             const exerciseRecords = completedMap.get(exercise.id)
-            const isCompleted = !!exerciseRecords && exerciseRecords.length > 0
+            const recordCount = exerciseRecords?.length ?? 0
+            const freq = exercise.daily_frequency ?? 1
+            const isCompleted = recordCount >= freq
+            const isPartial = recordCount > 0 && !isCompleted
 
             return (
               <div
                 key={exercise.id}
                 className={`flex items-start gap-3 p-3 rounded-lg border ${
-                  isCompleted ? 'border-green-200 bg-green-50' : 'border-gray-200'
+                  isCompleted
+                    ? 'border-green-200 bg-green-50'
+                    : isPartial
+                      ? 'border-blue-200 bg-blue-50'
+                      : 'border-gray-200'
                 }`}
               >
                 <div className="mt-0.5">
                   {isCompleted ? (
                     <CheckCircle2 size={20} className="text-green-600" />
+                  ) : isPartial ? (
+                    <CheckCircle2 size={20} className="text-blue-500" />
                   ) : (
                     <Circle size={20} className="text-gray-300" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                  <h3 className={`font-medium ${isCompleted ? 'text-green-700' : isPartial ? 'text-blue-700' : 'text-gray-900'}`}>
                     {exercise.name}
                   </h3>
-                  {isCompleted && exerciseRecords ? (
-                    <p className="text-sm text-green-600 mt-1">
-                      {exerciseRecords[0]!.completed_sets}セット × {exerciseRecords[0]!.completed_reps}回
-                      <span className="ml-2 text-gray-400">
-                        {formatTime(exerciseRecords[0]!.completed_at)}
-                      </span>
-                    </p>
+                  {exerciseRecords && exerciseRecords.length > 0 ? (
+                    <>
+                      {exerciseRecords.length > 1 ? (
+                        <div className="mt-1 space-y-0.5">
+                          {exerciseRecords.map((rec, idx) => (
+                            <p key={idx} className={`text-sm ${isCompleted ? 'text-green-600' : 'text-blue-600'}`}>
+                              {idx + 1}回目: {rec.completed_sets}セット × {rec.completed_reps}回
+                              <span className="ml-2 text-gray-400">
+                                {formatTime(rec.completed_at)}
+                              </span>
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className={`text-sm mt-1 ${isCompleted ? 'text-green-600' : 'text-blue-600'}`}>
+                          {exerciseRecords[0]!.completed_sets}セット × {exerciseRecords[0]!.completed_reps}回
+                          <span className="ml-2 text-gray-400">
+                            {formatTime(exerciseRecords[0]!.completed_at)}
+                          </span>
+                        </p>
+                      )}
+                      {freq > 1 && (
+                        <p className={`text-xs font-medium mt-1 ${isCompleted ? 'text-green-600' : 'text-blue-600'}`}>
+                          {recordCount}/{freq}回{isCompleted ? ' 達成' : ''}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <p className="text-sm text-gray-400 mt-1">未実施</p>
                   )}

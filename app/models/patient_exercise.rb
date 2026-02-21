@@ -14,6 +14,7 @@ class PatientExercise < ApplicationRecord
   validates :assigned_at, presence: true
   validates :target_reps, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :target_sets, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :daily_frequency, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 10 }
 
   # Prevent duplicate active assignments
   validates :exercise_id, uniqueness: {

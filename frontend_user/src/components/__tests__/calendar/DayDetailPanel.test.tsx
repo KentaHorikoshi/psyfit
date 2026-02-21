@@ -13,6 +13,7 @@ const makeExercise = (id: string, name: string): Exercise => ({
   video_url: '/videos/test.mp4',
   sets: 3,
   reps: 10,
+  daily_frequency: 1,
   exercise_type: 'training',
 })
 
@@ -157,5 +158,67 @@ describe('DayDetailPanel - スナップショット割当数による表示制�
     render(<DayDetailPanel date={date} records={[]} exercises={[]} />)
 
     expect(screen.getByText('この日の記録はありません')).toBeInTheDocument()
+  })
+})
+
+describe('DayDetailPanel - daily_frequency対応', () => {
+  const date = new Date(2026, 1, 5)
+
+  const makeMultiFreqExercise = (id: string, name: string, freq: number): Exercise => ({
+    id,
+    name,
+    description: '',
+    video_url: '/videos/test.mp4',
+    sets: 3,
+    reps: 10,
+    daily_frequency: freq,
+    exercise_type: 'training',
+  })
+
+  it('daily_frequency=3の運動が1回実施で完了扱いにならない', () => {
+    const exercises = [
+      makeMultiFreqExercise('ex1', '3回運動', 3),
+      makeExercise('ex2', '1回運動'),
+    ]
+    const records = [
+      makeRecord('ex1', '3回運動'),
+      makeRecord('ex2', '1回運動'),
+    ]
+
+    render(<DayDetailPanel date={date} records={records} exercises={exercises} />)
+
+    // ex1: 1/3 (not completed), ex2: 1/1 (completed) → 1/2 完了
+    expect(screen.getByText('1/2 完了')).toBeInTheDocument()
+    // Show progress for multi-frequency exercise
+    expect(screen.getByText('1/3回')).toBeInTheDocument()
+  })
+
+  it('daily_frequency=3の運動が3回実施で完了扱いになる', () => {
+    const exercises = [
+      makeMultiFreqExercise('ex1', '3回運動', 3),
+    ]
+    const records = [
+      makeRecord('ex1', '3回運動'),
+      makeRecord('ex1', '3回運動'),
+      makeRecord('ex1', '3回運動'),
+    ]
+
+    render(<DayDetailPanel date={date} records={records} exercises={exercises} />)
+
+    expect(screen.getByText('1/1 完了')).toBeInTheDocument()
+    expect(screen.getByText('3/3回 達成')).toBeInTheDocument()
+  })
+
+  it('daily_frequency=1の運動は従来通り1回で完了', () => {
+    const exercises = [
+      makeExercise('ex1', '通常運動'),
+    ]
+    const records = [
+      makeRecord('ex1', '通常運動'),
+    ]
+
+    render(<DayDetailPanel date={date} records={records} exercises={exercises} />)
+
+    expect(screen.getByText('1/1 完了')).toBeInTheDocument()
   })
 })

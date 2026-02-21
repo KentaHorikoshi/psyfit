@@ -33,7 +33,8 @@ module Api
             duration_seconds: ex.duration_seconds,
             exercise_type: EXERCISE_TYPE_MAP[ex.exercise_type] || "training",
             sets: pe.target_sets || ex.recommended_sets,
-            reps: pe.target_reps || ex.recommended_reps
+            reps: pe.target_reps || ex.recommended_reps,
+            daily_frequency: pe.daily_frequency
           }
         end
 

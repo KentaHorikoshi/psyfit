@@ -125,6 +125,70 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
           end
         end
 
+        context 'with daily_frequency' do
+          let(:params_with_frequency) do
+            {
+              assignments: [
+                { exercise_id: exercise.id, sets: 3, reps: 10, daily_frequency: 3 }
+              ],
+              pain_flag: false,
+              reason: ""
+            }
+          end
+
+          it 'saves daily_frequency when provided' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_frequency, as: :json
+
+            expect(response).to have_http_status(:created)
+            assignment = PatientExercise.last
+            expect(assignment.daily_frequency).to eq(3)
+          end
+
+          it 'returns daily_frequency in response' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_frequency, as: :json
+
+            data = json_response['data']['assignments'].first
+            expect(data['daily_frequency']).to eq(3)
+          end
+
+          it 'defaults daily_frequency to 1 when not provided' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
+
+            assignment = PatientExercise.last
+            expect(assignment.daily_frequency).to eq(1)
+          end
+
+          it 'returns daily_frequency in index response' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_frequency, as: :json
+
+            get "/api/v1/patients/#{patient.id}/exercises"
+
+            expect(response).to have_http_status(:ok)
+            data = json_response['data']['assignments'].first
+            expect(data['daily_frequency']).to eq(3)
+          end
+
+          it 'rejects daily_frequency of 0' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: {
+              assignments: [
+                { exercise_id: exercise.id, sets: 3, reps: 10, daily_frequency: 0 }
+              ]
+            }, as: :json
+
+            expect(response).to have_http_status(:unprocessable_content)
+          end
+
+          it 'rejects daily_frequency greater than 10' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: {
+              assignments: [
+                { exercise_id: exercise.id, sets: 3, reps: 10, daily_frequency: 11 }
+              ]
+            }, as: :json
+
+            expect(response).to have_http_status(:unprocessable_content)
+          end
+        end
+
         context 'with optional parameters' do
           it 'allows target_reps to be nil' do
             post "/api/v1/patients/#{patient.id}/exercises", params: {

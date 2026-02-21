@@ -113,6 +113,7 @@ exercises (運動マスタ)
 | assigned_by_staff_id | UUID | NO | 割当職員ID (FK: staff.id) |
 | target_reps | INTEGER | YES | 目標回数 |
 | target_sets | INTEGER | YES | 目標セット数 |
+| daily_frequency | INTEGER | NO | 1日の目標実施回数 (default: 1, max: 10) |
 | is_active | BOOLEAN | NO | 有効フラグ |
 | assigned_at | TIMESTAMP | NO | 割当日時 |
 | created_at | TIMESTAMP | NO | 作成日時 |

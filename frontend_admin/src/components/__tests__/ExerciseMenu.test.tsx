@@ -76,6 +76,7 @@ const mockAssignedExercises: ExerciseAssignment[] = [
     exercise_id: 'e1',
     sets: 3,
     reps: 10,
+    daily_frequency: 2,
     pain_flag: false,
     reason: '',
     assigned_at: '2026-01-24T10:00:00Z',
@@ -268,6 +269,82 @@ describe('S-06 ExerciseMenu', () => {
       await waitFor(() => {
         expect(screen.getAllByLabelText(/セット数/).length).toBeGreaterThan(0)
         expect(screen.getAllByLabelText(/回数/).length).toBeGreaterThan(0)
+      })
+    })
+  })
+
+  describe('daily frequency', () => {
+    it('should show daily frequency input for selected exercises', async () => {
+      const user = userEvent.setup()
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getAllByText('スクワット（浅め）').length).toBeGreaterThan(0)
+      })
+
+      const checkbox = screen.getByRole('checkbox', { name: /スクワット/ })
+      await user.click(checkbox)
+
+      await waitFor(() => {
+        expect(screen.getAllByLabelText(/1日目標回数/).length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should pre-populate daily_frequency from assigned exercises', async () => {
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        const freqInput = screen.getByLabelText(/膝伸展運動（椅子座位）の1日目標回数/)
+        expect(freqInput).toHaveValue(2)
+      })
+    })
+
+    it('should include daily_frequency in submission', async () => {
+      const user = userEvent.setup()
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getAllByText('膝伸展運動（椅子座位）').length).toBeGreaterThan(0)
+      })
+
+      const saveButton = screen.getByRole('button', { name: /保存/ })
+      await user.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockAssignExercises).toHaveBeenCalledWith(
+          mockPatientId,
+          expect.objectContaining({
+            assignments: expect.arrayContaining([
+              expect.objectContaining({ daily_frequency: 2 })
+            ]),
+          })
+        )
+      })
+    })
+
+    it('should default daily_frequency to 1 for newly selected exercises', async () => {
+      const user = userEvent.setup()
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getAllByText('スクワット（浅め）').length).toBeGreaterThan(0)
+      })
+
+      const checkbox = screen.getByRole('checkbox', { name: /スクワット/ })
+      await user.click(checkbox)
+
+      const saveButton = screen.getByRole('button', { name: /保存/ })
+      await user.click(saveButton)
+
+      await waitFor(() => {
+        expect(mockAssignExercises).toHaveBeenCalledWith(
+          mockPatientId,
+          expect.objectContaining({
+            assignments: expect.arrayContaining([
+              expect.objectContaining({ exercise_id: 'e2', daily_frequency: 1 })
+            ]),
+          })
+        )
       })
     })
   })

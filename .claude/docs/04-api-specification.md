@@ -552,6 +552,7 @@ Cookie: _psyfit_session=<session_id>
 | exercise.thumbnail_url | String | サムネイルURL |
 | target_reps | Integer | 目標回数 |
 | target_sets | Integer | 目標セット数 |
+| daily_frequency | Integer | 1日の目標実施回数 (default: 1) |
 | completed_today | Boolean | 本日実施済みかどうか |
 
 ---
@@ -648,10 +649,16 @@ Cookie: _psyfit_session=<session_id>
     "exercise_id": "uuid",
     "completed_reps": 10,
     "completed_sets": 3,
-    "completed_at": "2026-01-21T19:30:00Z"
+    "completed_at": "2026-01-21T19:30:00Z",
+    "today_count": 2
   }
 }
 ```
+
+**レスポンスフィールド**:
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| today_count | Integer | 当日の同一運動の実施回数 |
 
 **副作用**:
 - 継続日数 (continue_days) が自動更新される

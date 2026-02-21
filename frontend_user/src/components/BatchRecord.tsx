@@ -81,17 +81,29 @@ export function BatchRecord() {
     }
   }
 
-  const completedExerciseIds = useMemo(() => {
-    return new Set(dateRecords.map(record => record.exercise_id))
+  const completedCountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    dateRecords.forEach(record => {
+      map.set(record.exercise_id, (map.get(record.exercise_id) ?? 0) + 1)
+    })
+    return map
   }, [dateRecords])
 
   const uncompletedExercises = useMemo(() => {
-    return exercises.filter(ex => !completedExerciseIds.has(ex.id))
-  }, [exercises, completedExerciseIds])
+    return exercises.filter(ex => {
+      const count = completedCountMap.get(ex.id) ?? 0
+      const freq = ex.daily_frequency ?? 1
+      return count < freq
+    })
+  }, [exercises, completedCountMap])
 
   const completedExercises = useMemo(() => {
-    return exercises.filter(ex => completedExerciseIds.has(ex.id))
-  }, [exercises, completedExerciseIds])
+    return exercises.filter(ex => {
+      const count = completedCountMap.get(ex.id) ?? 0
+      const freq = ex.daily_frequency ?? 1
+      return count >= freq
+    })
+  }, [exercises, completedCountMap])
 
   const remainingCount = uncompletedExercises.length
 
@@ -253,13 +265,18 @@ export function BatchRecord() {
             {/* Uncompleted exercises */}
             {uncompletedExercises.map(exercise => {
               const isSelected = selectedExercises.has(exercise.id)
+              const count = completedCountMap.get(exercise.id) ?? 0
+              const freq = exercise.daily_frequency ?? 1
+              const showProgress = freq > 1
               return (
                 <label
                   key={exercise.id}
                   className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${
                     isSelected
                       ? 'border-[#1E40AF] bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : count > 0
+                        ? 'border-blue-200 bg-blue-50/50 hover:border-blue-300'
+                        : 'border-gray-200 hover:border-gray-300'
                   } min-h-[72px]`}
                 >
                   <div className="flex items-start">
@@ -284,6 +301,17 @@ export function BatchRecord() {
                       <p className="text-sm text-gray-500">
                         {exercise.sets}セット × {exercise.reps}回
                       </p>
+                      {showProgress && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                            <div
+                              className="h-1.5 rounded-full bg-blue-500 transition-all"
+                              style={{ width: `${Math.min(100, Math.round((count / freq) * 100))}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-blue-600">{count}/{freq}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </label>
@@ -294,29 +322,41 @@ export function BatchRecord() {
             {completedExercises.length > 0 && (
               <>
                 <div className="pt-2 pb-1">
-                  <p className="text-sm font-medium text-green-700">実施済み</p>
+                  <p className="text-sm font-medium text-green-700">達成済み</p>
                 </div>
-                {completedExercises.map(exercise => (
-                  <div
-                    key={exercise.id}
-                    className="block p-4 border-2 border-green-200 bg-green-50 rounded-xl min-h-[72px]"
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mr-3">
-                        <div className="w-6 h-6 flex items-center justify-center">
-                          <CheckCircle2 size={24} className="text-green-600" />
+                {completedExercises.map(exercise => {
+                  const count = completedCountMap.get(exercise.id) ?? 0
+                  const freq = exercise.daily_frequency ?? 1
+                  const showProgress = freq > 1
+                  return (
+                    <div
+                      key={exercise.id}
+                      className="block p-4 border-2 border-green-200 bg-green-50 rounded-xl min-h-[72px]"
+                    >
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 mr-3">
+                          <div className="w-6 h-6 flex items-center justify-center">
+                            <CheckCircle2 size={24} className="text-green-600" />
+                          </div>
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-green-700 mb-1">{exercise.name}</h3>
+                          <p className="text-sm text-green-600">
+                            {exercise.sets}セット × {exercise.reps}回
+                          </p>
+                          {showProgress && (
+                            <p className="text-xs text-green-600 font-medium mt-1">
+                              {count}/{freq}回 達成
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-green-600 font-medium shrink-0">
+                          {showProgress ? `${count}/${freq}` : '実施済み'}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-green-700 mb-1">{exercise.name}</h3>
-                        <p className="text-sm text-green-600">
-                          {exercise.sets}セット × {exercise.reps}回
-                        </p>
-                      </div>
-                      <span className="text-xs text-green-600 font-medium shrink-0">実施済み</span>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </>
             )}
           </div>

@@ -243,6 +243,10 @@ echo "=== Phase 2: Systemd Puma Update (fallback) ==="
   echo "--- Running database migrations ---"
   bundle exec rails db:migrate
 
+  # Run data tasks (idempotent)
+  echo "--- Running data tasks ---"
+  bundle exec rails data:update_exercise_descriptions
+
   # Precompile assets
   echo "--- Precompiling assets ---"
   bundle exec rails assets:precompile 2>/dev/null || true

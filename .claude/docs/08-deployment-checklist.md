@@ -270,12 +270,16 @@ https://psytech.jp/api/v1/    → Rails API
 | チェック | 内容 | 備考 |
 |----------|------|------|
 | [ ] SMTP設定 | SMTP情報取得後、`.kamal/secrets` に追加 | デプロイ前に必須 |
-| [ ] GitHub PAT発行 | packages:write スコープのトークンを発行 | KAMAL_REGISTRY_PASSWORD |
-| [ ] セキュリティキー生成 | `bin/rails secret` で2つ、`openssl rand -base64 32` で1つ | サーバーで実行 |
+| [ ] GitHub PAT（registry）発行 | packages:write スコープのトークンを発行 | KAMAL_REGISTRY_PASSWORD |
+| [ ] GitHub PAT（CI チェック）発行 | repo read スコープのトークンを発行 | GITHUB_TOKEN（pre-deploy フック用） |
+| [ ] セキュリティキー生成 | `openssl rand -hex 32` で ATTR_ENCRYPTED_KEY と BLIND_INDEX_KEY を生成 | サーバーで実行 |
 | [ ] DNS設定 | `psytech.jp` → `160.251.230.38` のAレコード設定 | ドメインレジストラ |
-| [ ] SSL証明書 | Let's Encrypt（Kamal proxy自動設定） | kamal deploy で自動 |
-| [ ] バックアップ | PostgreSQLの定期バックアップ設定（cron等） | サーバー設定 |
-| [ ] 監視 | ヘルスチェック `/api/v1/health` の外部監視 | UptimeRobot等 |
+| [ ] SSL証明書 | Let's Encrypt（Kamal proxy自動設定） | kamal setup で自動発行 |
+| [ ] バックアップ crontab 設定 | `bin/backup.sh` を cron に登録（毎日 2:00） | サーバーで実行 |
+| [ ] 監視 crontab 設定 | `bin/monitor.sh` を cron に登録（5分間隔） | サーバーで実行 |
+| [ ] 外部監視設定 | UptimeRobot 等で `/api/v1/health` を監視 | MONITOR_ALERT_EMAIL 設定 |
+| [ ] 初回 `kamal setup` 実行 | アクセサリ起動・Kamal proxy 設定 | ローカルから実行 |
+| [ ] 初回デプロイ確認 | `kamal deploy` → ヘルスチェック確認 | |
 
 ---
 

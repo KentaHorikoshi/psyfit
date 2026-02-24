@@ -27,6 +27,7 @@ env:
     - RAILS_MASTER_KEY
     - SECRET_KEY_BASE
     - ATTR_ENCRYPTED_KEY
+    - BLIND_INDEX_KEY
     - POSTGRES_PASSWORD
     - REDIS_PASSWORD
     - SMTP_USERNAME
@@ -96,7 +97,7 @@ accessories:
     image: redis:7
     host: 160.251.230.38
     port: "127.0.0.1:6379:6379"
-    cmd: "redis-server --requirepass ${REDIS_PASSWORD}"
+    cmd: "redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --appendfsync everysec"
     env:
       secret:
         - REDIS_PASSWORD

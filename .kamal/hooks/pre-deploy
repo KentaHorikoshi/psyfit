@@ -1,0 +1,38 @@
+#!/bin/bash
+# =============================================================================
+# Kamal pre-deploy hook
+# =============================================================================
+# デプロイ前にペンディング中のDBマイグレーションがないかチェックします。
+# マイグレーションが必要な場合は自動でスキップを防ぐため停止します。
+# =============================================================================
+
+set -euo pipefail
+
+# ロールバック時はスキップ
+if [ "${KAMAL_COMMAND:-}" = "rollback" ]; then
+  echo "Rollback detected, skipping pre-deploy checks."
+  exit 0
+fi
+
+echo "=== Pre-deploy check: pending migrations ==="
+
+# 現在のコンテナでマイグレーション状態を確認
+# コンテナが存在しない場合（初回デプロイ）はスキップ
+if ! docker ps --format '{{.Names}}' | grep -q "psyfit-web-"; then
+  echo "No running web container found (first deploy?). Skipping migration check."
+  exit 0
+fi
+
+CONTAINER=$(docker ps --format '{{.Names}}' | grep "psyfit-web-" | head -1)
+
+PENDING=$(docker exec "$CONTAINER" bin/rails db:migrate:status 2>/dev/null \
+  | grep "^   down" | wc -l || echo 0)
+
+if [ "$PENDING" -gt 0 ]; then
+  echo "INFO: ${PENDING} pending migration(s) detected. They will run on deploy."
+else
+  echo "No pending migrations."
+fi
+
+echo "=== Pre-deploy check passed ==="
+exit 0

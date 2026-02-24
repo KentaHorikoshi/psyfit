@@ -5,6 +5,10 @@
 # 用途: PostgreSQL データベースの日次バックアップ
 # 実行: bin/backup.sh
 # crontab: 0 2 * * * /var/www/psyfit/bin/backup.sh >> /var/log/psyfit-backup.log 2>&1
+#
+# オプション環境変数:
+#   BACKUP_ENCRYPT_KEY  - GPGで暗号化する場合の受信者メールアドレスまたはキーID
+#   BACKUP_S3_BUCKET    - S3バケット名（aws cliが設定済みの場合にオフサイトアップロード）
 # =============================================================================
 
 set -euo pipefail
@@ -20,6 +24,10 @@ LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
 DB_CONTAINER="psyfit-db"
 DB_USER="psyfit_prod"
 DB_NAME="psyfit_production"
+
+# オプション設定
+BACKUP_ENCRYPT_KEY="${BACKUP_ENCRYPT_KEY:-}"
+BACKUP_S3_BUCKET="${BACKUP_S3_BUCKET:-}"
 
 # --- 関数 ---
 log_info() {
@@ -60,15 +68,51 @@ else
   exit 1
 fi
 
-# 5. 古いバックアップの削除（ローテーション）
-DELETED=$(find "$BACKUP_DIR" -name "psyfit_production_*.sql.gz" -mtime +${RETENTION_DAYS} -print -delete | wc -l)
+# 5. GPG暗号化（BACKUP_ENCRYPT_KEY が設定されている場合）
+FINAL_BACKUP_FILE="$BACKUP_FILE"
+if [ -n "$BACKUP_ENCRYPT_KEY" ]; then
+  if command -v gpg &>/dev/null; then
+    ENCRYPTED_FILE="${BACKUP_FILE}.gpg"
+    if gpg --batch --yes --trust-model always \
+        --recipient "$BACKUP_ENCRYPT_KEY" \
+        --output "$ENCRYPTED_FILE" \
+        --encrypt "$BACKUP_FILE"; then
+      rm -f "$BACKUP_FILE"
+      FINAL_BACKUP_FILE="$ENCRYPTED_FILE"
+      log_info "Backup encrypted: ${FINAL_BACKUP_FILE}"
+    else
+      log_error "GPG encryption failed. Keeping unencrypted backup."
+    fi
+  else
+    log_error "gpg not found. Skipping encryption."
+  fi
+fi
+
+# 6. S3アップロード（BACKUP_S3_BUCKET が設定されている場合）
+if [ -n "$BACKUP_S3_BUCKET" ]; then
+  if command -v aws &>/dev/null; then
+    S3_KEY="backups/psyfit/$(basename "${FINAL_BACKUP_FILE}")"
+    if aws s3 cp "$FINAL_BACKUP_FILE" "s3://${BACKUP_S3_BUCKET}/${S3_KEY}" \
+        --storage-class STANDARD_IA 2>/dev/null; then
+      log_info "Backup uploaded to S3: s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
+    else
+      log_error "S3 upload failed for ${FINAL_BACKUP_FILE}."
+    fi
+  else
+    log_error "aws cli not found. Skipping S3 upload."
+  fi
+fi
+
+# 7. 古いバックアップの削除（ローテーション）
+DELETED=$(find "$BACKUP_DIR" \( -name "psyfit_production_*.sql.gz" -o -name "psyfit_production_*.sql.gz.gpg" \) -mtime +${RETENTION_DAYS} -print -delete | wc -l)
 if [ "$DELETED" -gt 0 ]; then
   log_info "Rotated: deleted ${DELETED} backup(s) older than ${RETENTION_DAYS} days."
 fi
 
-# 6. ディスク使用量レポート
+# 8. ディスク使用量レポート
 TOTAL_SIZE=$(du -sh "$BACKUP_DIR" | cut -f1)
-BACKUP_COUNT=$(find "$BACKUP_DIR" -name "psyfit_production_*.sql.gz" | wc -l)
+BACKUP_COUNT=$(find "$BACKUP_DIR" \( -name "psyfit_production_*.sql.gz" -o -name "psyfit_production_*.sql.gz.gpg" \) | wc -l)
 log_info "Backup directory: ${BACKUP_DIR} (${TOTAL_SIZE}, ${BACKUP_COUNT} files)"
 
 log_info "Backup completed successfully."
+

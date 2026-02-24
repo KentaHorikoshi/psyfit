@@ -232,7 +232,6 @@ check_ssl() {
 
 # 4. ディスク使用量チェック
 check_disk() {
-  local disk_pct
   disk_pct=$(df / | awk 'NR==2 {print $5}' | tr -d '%')
   local disk_free
   disk_free=$(df -h / | awk 'NR==2 {print $4}')
@@ -258,6 +257,61 @@ check_disk() {
   fi
 }
 
+# 5. バックアップ鮮度チェック（最新バックアップが25時間以内に作成されているか確認）
+check_backup_age() {
+  local backup_dir="/var/backups/psyfit"
+  local max_age_hours=25
+
+  if [ ! -d "$backup_dir" ]; then
+    log_warn "Backup check: backup directory not found (${backup_dir})"
+    return 0
+  fi
+
+  local latest_backup
+  latest_backup=$(find "$backup_dir" \( -name "psyfit_production_*.sql.gz" -o -name "psyfit_production_*.sql.gz.gpg" \) -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | awk '{print $2}')
+
+  if [ -z "$latest_backup" ]; then
+    log_warn "Backup check: no backup files found in ${backup_dir}"
+    send_alert \
+      "[PsyFit ALERT] バックアップが見つかりません" \
+      "バックアップファイルが見つかりません。
+
+バックアップディレクトリ: ${backup_dir}
+時刻: $(date '+%Y-%m-%d %H:%M:%S')
+
+対処: bin/backup.sh を手動実行してください。crontab の設定を確認してください。" \
+      "backup_missing"
+    return 1
+  fi
+
+  local file_mtime
+  file_mtime=$(stat -c %Y "$latest_backup" 2>/dev/null)
+  local now
+  now=$(date +%s)
+  local age_hours=$(( (now - file_mtime) / 3600 ))
+
+  if [ "$age_hours" -ge "$max_age_hours" ]; then
+    log_warn "Backup check: latest backup is ${age_hours}h old (${latest_backup})"
+    send_alert \
+      "[PsyFit ALERT] バックアップが古い (${age_hours}h)" \
+      "最新バックアップが${age_hours}時間前のものです。
+
+最新バックアップ: ${latest_backup}
+経過時間: ${age_hours}時間
+しきい値: ${max_age_hours}時間
+時刻: $(date '+%Y-%m-%d %H:%M:%S')
+
+対処: bin/backup.sh を手動実行してください。crontab の設定を確認してください。" \
+      "backup_stale"
+    return 1
+  else
+    log_info "Backup check: OK (latest backup is ${age_hours}h old)"
+    clear_cooldown "backup_missing"
+    clear_cooldown "backup_stale"
+    return 0
+  fi
+}
+
 # --- メイン処理 ---
 ERRORS=0
 
@@ -276,6 +330,9 @@ check_ssl || ERRORS=$((ERRORS + 1))
 
 # 4. ディスク使用量チェック
 check_disk || ERRORS=$((ERRORS + 1))
+
+# 5. バックアップ鮮度チェック
+check_backup_age || ERRORS=$((ERRORS + 1))
 
 if [ "$ERRORS" -gt 0 ]; then
   log_warn "=== Monitor check completed with ${ERRORS} issue(s) ==="

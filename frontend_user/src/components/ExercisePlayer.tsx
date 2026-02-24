@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
 import type { Exercise } from '../lib/api-types'
 import { ArrowLeft, Play, Pause, Check, ChevronRight } from 'lucide-react'
+import { ExerciseNoteSlider } from './ExerciseNoteSlider'
 
 export function ExercisePlayer() {
   const navigate = useNavigate()
@@ -283,10 +284,12 @@ export function ExercisePlayer() {
           </p>
         </div>
 
-        {/* Description */}
-        <div className="px-4 py-4">
-          <p className="text-gray-600">{exercise.description}</p>
-        </div>
+        {/* Exercise Notes */}
+        {exercise.description && (
+          <div className="px-4 py-4">
+            <ExerciseNoteSlider description={exercise.description} />
+          </div>
+        )}
 
         {/* Video error */}
         {videoError && (

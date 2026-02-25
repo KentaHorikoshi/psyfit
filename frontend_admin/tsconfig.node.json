@@ -5,6 +5,9 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "composite": true,
+    "outDir": "./node_modules/.tsc-node",
+    "declaration": true,
+    "declarationMap": true,
 
     "moduleResolution": "bundler",
     "isolatedModules": true,

@@ -26,6 +26,7 @@ RESTful APIとして設計。JSON形式でデータをやり取り。
 | GET /api/v1/patients/:id | ✅ 実装済み | ✅ |
 | POST /api/v1/patients | ✅ 実装済み | ✅ |
 | PATCH /api/v1/patients/:id | ✅ 実装済み | ✅ |
+| DELETE /api/v1/patients/:id | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/exercises | ✅ 実装済み | ✅ |
 | POST /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
 | GET /api/v1/patients/:patient_id/measurements | ✅ 実装済み | ✅ |
@@ -1326,6 +1327,38 @@ Cookie: _psyfit_session=<session_id>
   }
 }
 ```
+
+---
+
+#### DELETE /api/v1/patients/:id (職員用) ✅
+
+患者をソフト削除（論理削除）する。アカウントは無効化されるが、運動記録・測定データは保持される。
+
+**認証**: 職員セッション必須
+
+**パスパラメータ**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | UUID | 患者ID |
+
+```json
+// Response (200 OK)
+{
+  "status": "success",
+  "data": {
+    "message": "患者を削除しました"
+  }
+}
+```
+
+**セキュリティ**:
+- `deleted_at` カラムに現在時刻を設定（ソフト削除）
+- 監査ログに記録（action: 'delete', resource_type: 'Patient', resource_id: patient.id）
+
+**エラー**:
+- `401 Unauthorized`: 職員セッションがない場合
+- `401 Unauthorized`: セッション期限切れの場合（15分）
+- `404 Not Found`: 患者が存在しない、または既に論理削除されている場合
 
 ---
 

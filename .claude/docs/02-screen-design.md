@@ -215,6 +215,15 @@
   - Loading / Empty / Error 各状態対応
   - バックエンドAPI: `GET /api/v1/patients/:patient_id/daily_conditions` ✅
   - 実装: `frontend_admin/src/components/PatientConditionChart.tsx` ✅
+- 編集ボタン: ヘッダーに配置、クリックで PatientEditDialog を表示
+  - 編集可能フィールド: 氏名、フリガナ、メール、生年月日、性別、電話、ステータス、疾患
+  - バックエンドAPI: `PATCH /api/v1/patients/:id` ✅
+  - 実装: `frontend_admin/src/components/PatientEditDialog.tsx` ✅
+- 削除ボタン: ヘッダーに赤系で配置、クリックで DeletePatientConfirmDialog を表示
+  - ソフト削除（deleted_at設定）、確認ダイアログ表示
+  - 削除後は患者一覧（S-03）へ遷移
+  - バックエンドAPI: `DELETE /api/v1/patients/:id` ✅
+  - 実装: `frontend_admin/src/components/DeletePatientConfirmDialog.tsx` ✅
 - 実装: `frontend_admin/src/components/PatientDetail.tsx` ✅
 - テスト: PatientDetail 20件 + PatientConditionChart 8件
 

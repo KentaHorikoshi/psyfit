@@ -4,8 +4,8 @@ module Api
   module V1
     class PatientsController < BaseController
       before_action :authenticate_staff!
-      before_action :set_patient, only: [ :show, :update ]
-      before_action :authorize_patient_access!, only: [ :show, :update ]
+      before_action :set_patient, only: [ :show, :update, :destroy ]
+      before_action :authorize_patient_access!, only: [ :show, :update, :destroy ]
 
       # GET /api/v1/patients
       def index
@@ -89,6 +89,13 @@ module Api
             status: :unprocessable_content
           )
         end
+      end
+
+      # DELETE /api/v1/patients/:id
+      def destroy
+        @patient.soft_delete
+        log_audit("delete", "success", resource_id: @patient.id)
+        render_success({ message: "患者を削除しました" })
       end
 
       private

@@ -751,6 +751,99 @@ RSpec.describe 'Api::V1::Patients', type: :request do
     end
   end
 
+  describe 'DELETE /api/v1/patients/:id' do
+    context 'when authenticated as manager' do
+      before { staff_login(manager) }
+
+      it 'soft deletes the patient' do
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['status']).to eq('success')
+        expect(json_response['data']['message']).to eq('患者を削除しました')
+
+        patient_acute.reload
+        expect(patient_acute.deleted_at).not_to be_nil
+      end
+
+      it 'excludes deleted patient from list' do
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        get '/api/v1/patients'
+        patient_ids = json_response['data']['patients'].map { |p| p['id'] }
+        expect(patient_ids).not_to include(patient_acute.id)
+      end
+
+      it 'returns 404 for deleted patient detail' do
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        get "/api/v1/patients/#{patient_acute.id}"
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'returns 404 for non-existent patient' do
+        delete '/api/v1/patients/00000000-0000-0000-0000-000000000000'
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'returns 404 for already deleted patient' do
+        patient_acute.soft_delete
+
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'creates an audit log' do
+        expect {
+          delete "/api/v1/patients/#{patient_acute.id}"
+        }.to change(AuditLog, :count).by(1)
+
+        audit = AuditLog.order(:created_at).last
+        expect(audit.action).to eq('delete')
+        expect(audit.status).to eq('success')
+        expect(audit.staff_id).to eq(manager.id)
+        info = JSON.parse(audit.additional_info)
+        expect(info['resource_type']).to eq('Patient')
+        expect(info['resource_id']).to eq(patient_acute.id)
+      end
+    end
+
+    context 'when authenticated as regular staff' do
+      before { staff_login(staff_member) }
+
+      it 'soft deletes the patient' do
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        expect(response).to have_http_status(:ok)
+        patient_acute.reload
+        expect(patient_acute.deleted_at).not_to be_nil
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns 401 Unauthorized' do
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when session is expired' do
+      before do
+        staff_login(manager)
+        Timecop.travel(16.minutes.from_now)
+      end
+
+      it 'returns 401 Unauthorized' do
+        delete "/api/v1/patients/#{patient_acute.id}"
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   private
 
   def staff_login(staff)

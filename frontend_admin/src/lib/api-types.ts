@@ -379,6 +379,18 @@ export interface CreatePatientRequest {
   assigned_staff_ids?: string[]
 }
 
+// Patient Update Types (S-04)
+export interface UpdatePatientRequest {
+  name?: string
+  name_kana?: string
+  email?: string
+  birth_date?: string
+  gender?: string
+  phone?: string
+  status?: PatientStatus
+  condition?: string
+}
+
 export interface CreatePatientResponse {
   id: string
   user_code: string

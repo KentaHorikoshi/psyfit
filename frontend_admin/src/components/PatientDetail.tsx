@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Dumbbell, FileText } from 'lucide-react'
+import { ArrowLeft, Plus, Dumbbell, FileText, Pencil, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import type { PatientDetail as PatientDetailType, PatientStatus } from '../lib/api-types'
 import { PatientConditionChart } from './PatientConditionChart'
+import { PatientEditDialog } from './PatientEditDialog'
+import { DeletePatientConfirmDialog } from './DeletePatientConfirmDialog'
 
 function StatusBadge({ status }: { status: PatientStatus }) {
   const statusStyles = {
@@ -27,27 +29,29 @@ export function PatientDetail() {
   const [patient, setPatient] = useState<PatientDetailType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
+  const fetchPatientDetail = async () => {
+    if (!id) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+      const response = await api.getPatientDetail(id)
+      setPatient(response.data!)
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'status' in err && err.status === 403) {
+        setError('この患者の情報にアクセスする権限がありません')
+      } else {
+        setError('患者情報の取得に失敗しました')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchPatientDetail = async () => {
-      if (!id) return
-
-      try {
-        setIsLoading(true)
-        setError(null)
-        const response = await api.getPatientDetail(id)
-        setPatient(response.data!)
-      } catch (err: unknown) {
-        if (err && typeof err === 'object' && 'status' in err && err.status === 403) {
-          setError('この患者の情報にアクセスする権限がありません')
-        } else {
-          setError('患者情報の取得に失敗しました')
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchPatientDetail()
   }, [id])
 
@@ -114,6 +118,22 @@ export function PatientDetail() {
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold text-gray-900">患者詳細</h1>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
+              aria-label="患者情報を編集"
+            >
+              <Pencil size={20} />
+              編集
+            </button>
+            <button
+              onClick={() => setIsDeleteOpen(true)}
+              className="flex items-center gap-2 bg-white text-red-600 border border-red-300 px-6 py-3 rounded-lg font-medium hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 min-h-[44px]"
+              aria-label="患者を削除"
+            >
+              <Trash2 size={20} />
+              削除
+            </button>
             <button
               onClick={handleExerciseMenu}
               className="flex items-center gap-2 bg-white text-[#1E40AF] border border-[#1E40AF] px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] focus-visible:ring-offset-2 min-h-[44px]"
@@ -253,6 +273,24 @@ export function PatientDetail() {
 
       {/* Condition Chart */}
       <PatientConditionChart patientId={patient.id} />
+
+      {/* Edit Dialog */}
+      <PatientEditDialog
+        isOpen={isEditOpen}
+        patient={patient}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={() => {
+          fetchPatientDetail()
+        }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeletePatientConfirmDialog
+        isOpen={isDeleteOpen}
+        patient={patient}
+        onClose={() => setIsDeleteOpen(false)}
+        onSuccess={() => navigate('/patients')}
+      />
     </div>
   )
 }

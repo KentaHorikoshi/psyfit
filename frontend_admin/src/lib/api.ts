@@ -27,6 +27,7 @@ import type {
   PasswordResetExecuteRequest,
   CreatePatientRequest,
   CreatePatientResponse,
+  UpdatePatientRequest,
   ExerciseMasterListResponse,
   CreateExerciseMasterRequest,
   CreateExerciseMasterResponse,
@@ -294,6 +295,19 @@ class ApiClient {
   // Patient Create endpoint (S-03)
   async createPatient(data: CreatePatientRequest): Promise<ApiResponse<CreatePatientResponse>> {
     return this.post<CreatePatientResponse>('/patients', data)
+  }
+
+  // Patient Update endpoint (S-04)
+  async updatePatient(
+    patientId: string,
+    data: UpdatePatientRequest
+  ): Promise<ApiResponse<PatientDetail>> {
+    return this.patch<PatientDetail>(`/patients/${patientId}`, data)
+  }
+
+  // Patient Delete endpoint (S-04)
+  async deletePatient(patientId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.delete<{ message: string }>(`/patients/${patientId}`)
   }
 
   // Patient Daily Conditions endpoint (S-04)

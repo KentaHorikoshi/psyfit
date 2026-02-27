@@ -102,7 +102,7 @@ export function PatientConditionChart({ patientId }: PatientConditionChartProps)
   }
 
   return (
-    <section className="bg-white rounded-xl p-6 shadow-sm" aria-label="体調の推移">
+    <div aria-label="体調の推移">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -350,6 +350,6 @@ export function PatientConditionChart({ patientId }: PatientConditionChartProps)
         }}
         onSuccess={handleCrudSuccess}
       />
-    </section>
+    </div>
   )
 }

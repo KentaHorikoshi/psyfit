@@ -37,6 +37,7 @@ import type {
   DailyConditionResponse,
   CreateDailyConditionRequest,
   UpdateDailyConditionRequest,
+  PatientExerciseRecordsResponse,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -356,6 +357,20 @@ class ApiClient {
     return this.delete<{ message: string }>(
       `/patients/${patientId}/daily_conditions/${conditionId}`
     )
+  }
+
+  // Patient Exercise Records endpoint (S-04)
+  async getPatientExerciseRecords(
+    patientId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<PatientExerciseRecordsResponse>> {
+    const params = new URLSearchParams()
+    if (startDate) params.append('start_date', startDate)
+    if (endDate) params.append('end_date', endDate)
+    const query = params.toString()
+    const endpoint = `/patients/${patientId}/exercise_records${query ? `?${query}` : ''}`
+    return this.get<PatientExerciseRecordsResponse>(endpoint)
   }
 }
 

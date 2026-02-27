@@ -383,6 +383,25 @@ export interface UpdateDailyConditionRequest {
   notes?: string
 }
 
+// Patient Exercise Record Types (S-04 Patient Detail)
+export interface PatientExerciseRecord {
+  id: string
+  exercise_name: string
+  exercise_type: string
+  completed_at: string
+  completed_reps: number | null
+  completed_sets: number | null
+  duration_seconds: number | null
+}
+
+export interface PatientExerciseRecordsResponse {
+  records: PatientExerciseRecord[]
+  summary: {
+    total_records: number
+    total_minutes: number
+  }
+}
+
 // Patient Create Types (S-03)
 export interface CreatePatientRequest {
   name: string

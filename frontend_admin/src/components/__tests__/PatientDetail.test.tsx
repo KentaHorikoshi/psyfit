@@ -31,6 +31,7 @@ vi.mock('recharts', () => ({
 const mockGetPatientDetail = vi.fn()
 const mockGetPatientMeasurements = vi.fn()
 const mockGetPatientDailyConditions = vi.fn()
+const mockGetPatientExerciseRecords = vi.fn()
 
 vi.mock('../../lib/api', () => ({
   api: {
@@ -38,6 +39,7 @@ vi.mock('../../lib/api', () => ({
     getPatientMeasurements: (id: string, startDate?: string, endDate?: string) =>
       mockGetPatientMeasurements(id, startDate, endDate),
     getPatientDailyConditions: (...args: unknown[]) => mockGetPatientDailyConditions(...args),
+    getPatientExerciseRecords: (...args: unknown[]) => mockGetPatientExerciseRecords(...args),
   },
 }))
 
@@ -92,6 +94,13 @@ describe('S-04 PatientDetail', () => {
       status: 'success',
       data: {
         conditions: [],
+      },
+    })
+    mockGetPatientExerciseRecords.mockResolvedValue({
+      status: 'success',
+      data: {
+        records: [],
+        summary: { total_records: 0, total_minutes: 0 },
       },
     })
   })

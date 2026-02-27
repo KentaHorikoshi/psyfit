@@ -365,6 +365,24 @@ export interface DailyConditionsResponse {
   conditions: DailyCondition[]
 }
 
+export interface DailyConditionResponse {
+  condition: DailyCondition
+}
+
+export interface CreateDailyConditionRequest {
+  recorded_date: string
+  pain_level: number
+  body_condition: number
+  notes?: string
+}
+
+export interface UpdateDailyConditionRequest {
+  recorded_date?: string
+  pain_level?: number
+  body_condition?: number
+  notes?: string
+}
+
 // Patient Create Types (S-03)
 export interface CreatePatientRequest {
   name: string

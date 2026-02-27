@@ -34,6 +34,9 @@ import type {
   DashboardStatsResponse,
   TodayAppointmentsResponse,
   DailyConditionsResponse,
+  DailyConditionResponse,
+  CreateDailyConditionRequest,
+  UpdateDailyConditionRequest,
 } from './api-types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -322,6 +325,37 @@ class ApiClient {
     const query = params.toString()
     const endpoint = `/patients/${patientId}/daily_conditions${query ? `?${query}` : ''}`
     return this.get<DailyConditionsResponse>(endpoint)
+  }
+
+  // Patient Daily Condition CRUD endpoints (S-04)
+  async createPatientDailyCondition(
+    patientId: string,
+    data: CreateDailyConditionRequest
+  ): Promise<ApiResponse<DailyConditionResponse>> {
+    return this.post<DailyConditionResponse>(
+      `/patients/${patientId}/daily_conditions`,
+      data
+    )
+  }
+
+  async updatePatientDailyCondition(
+    patientId: string,
+    conditionId: string,
+    data: UpdateDailyConditionRequest
+  ): Promise<ApiResponse<DailyConditionResponse>> {
+    return this.patch<DailyConditionResponse>(
+      `/patients/${patientId}/daily_conditions/${conditionId}`,
+      data
+    )
+  }
+
+  async deletePatientDailyCondition(
+    patientId: string,
+    conditionId: string
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.delete<{ message: string }>(
+      `/patients/${patientId}/daily_conditions/${conditionId}`
+    )
   }
 }
 

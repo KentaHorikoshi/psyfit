@@ -64,7 +64,8 @@ export function PatientMeasurementsTab({ patientId }: PatientMeasurementsTabProp
   const formatValue = (measurement: Measurement, col: MeasurementColumn): string => {
     const val = measurement[col.key]
     if (val == null) return '-'
-    const num = val as number
+    const num = Number(val)
+    if (Number.isNaN(num)) return '-'
     if (col.format) return `${col.format(num)}${col.unit}`
     return `${num}${col.unit}`
   }

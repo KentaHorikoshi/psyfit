@@ -121,6 +121,32 @@ describe('PatientMeasurementsTab', () => {
     expect(screen.getByLabelText('終了日')).toBeInTheDocument()
   })
 
+  it('handles string values from API without toFixed error', async () => {
+    mockGetPatientMeasurements.mockResolvedValue({
+      status: 'success',
+      data: {
+        measurements: [{
+          id: 'm-str',
+          measured_date: '2026-02-25',
+          weight_kg: 65.5,
+          tug_seconds: '8.5' as unknown as number,
+          single_leg_stance_seconds: '15.2' as unknown as number,
+          nrs_pain_score: '3' as unknown as number,
+        }],
+      },
+    })
+
+    render(<PatientMeasurementsTab patientId="patient-123" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('2026-02-25')).toBeInTheDocument()
+      // tug_seconds and single_leg_stance_seconds use toFixed(1) format
+      expect(screen.getByText('8.5秒')).toBeInTheDocument()
+      expect(screen.getByText('15.2秒')).toBeInTheDocument()
+      expect(screen.getByText('3/10')).toBeInTheDocument()
+    })
+  })
+
   it('formats missing values as dash', async () => {
     mockGetPatientMeasurements.mockResolvedValue({
       status: 'success',

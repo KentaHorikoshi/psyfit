@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../lib/api'
-import { Dumbbell, Clock } from 'lucide-react'
+import { Dumbbell } from 'lucide-react'
 import type { PatientExerciseRecord } from '../lib/api-types'
 
 interface PatientExerciseRecordsTabProps {
@@ -26,14 +26,6 @@ function exerciseTypeBadgeColor(type: string): string {
   }
 }
 
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return '-'
-  if (seconds < 60) return `${seconds}秒`
-  const minutes = Math.floor(seconds / 60)
-  const remaining = seconds % 60
-  return remaining > 0 ? `${minutes}分${remaining}秒` : `${minutes}分`
-}
-
 function formatCompletedAt(isoString: string): string {
   const date = new Date(isoString)
   return date.toLocaleDateString('ja-JP', {
@@ -48,7 +40,6 @@ function formatCompletedAt(isoString: string): string {
 export function PatientExerciseRecordsTab({ patientId }: PatientExerciseRecordsTabProps) {
   const [records, setRecords] = useState<PatientExerciseRecord[]>([])
   const [totalRecords, setTotalRecords] = useState(0)
-  const [totalMinutes, setTotalMinutes] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -68,7 +59,6 @@ export function PatientExerciseRecordsTab({ patientId }: PatientExerciseRecordsT
       const data = response.data
       setRecords(data?.records ?? [])
       setTotalRecords(data?.summary?.total_records ?? 0)
-      setTotalMinutes(data?.summary?.total_minutes ?? 0)
     } catch {
       setError('運動記録の取得に失敗しました')
     } finally {
@@ -155,17 +145,12 @@ export function PatientExerciseRecordsTab({ patientId }: PatientExerciseRecordsT
       {/* Summary + Table */}
       {!isLoading && !error && records.length > 0 && (
         <>
-          {/* Summary Cards */}
+          {/* Summary Card */}
           <div className="flex gap-4 mb-4">
             <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg">
               <Dumbbell size={16} className="text-[#1E40AF]" />
               <span className="text-sm text-gray-600">実施回数</span>
               <span className="text-lg font-bold text-[#1E40AF]">{totalRecords}回</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
-              <Clock size={16} className="text-[#10B981]" />
-              <span className="text-sm text-gray-600">合計時間</span>
-              <span className="text-lg font-bold text-[#10B981]">{totalMinutes}分</span>
             </div>
           </div>
 
@@ -179,7 +164,6 @@ export function PatientExerciseRecordsTab({ patientId }: PatientExerciseRecordsT
                   <th scope="col" className="text-center py-3 px-2 font-medium text-gray-700">種類</th>
                   <th scope="col" className="text-center py-3 px-2 font-medium text-gray-700">回数</th>
                   <th scope="col" className="text-center py-3 px-2 font-medium text-gray-700">セット</th>
-                  <th scope="col" className="text-center py-3 px-2 font-medium text-gray-700">所要時間</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,9 +185,6 @@ export function PatientExerciseRecordsTab({ patientId }: PatientExerciseRecordsT
                     </td>
                     <td className="py-3 px-2 text-center text-gray-700">
                       {record.completed_sets != null ? `${record.completed_sets}セット` : '-'}
-                    </td>
-                    <td className="py-3 px-2 text-center text-gray-700">
-                      {formatDuration(record.duration_seconds)}
                     </td>
                   </tr>
                 ))}

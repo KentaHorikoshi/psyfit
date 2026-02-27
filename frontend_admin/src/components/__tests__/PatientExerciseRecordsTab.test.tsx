@@ -19,7 +19,6 @@ const mockRecords: PatientExerciseRecord[] = [
     completed_at: '2026-02-25T14:30:00+09:00',
     completed_reps: 10,
     completed_sets: 3,
-    duration_seconds: 300,
   },
   {
     id: 'r2',
@@ -28,7 +27,6 @@ const mockRecords: PatientExerciseRecord[] = [
     completed_at: '2026-02-25T10:00:00+09:00',
     completed_reps: null,
     completed_sets: null,
-    duration_seconds: 180,
   },
 ]
 
@@ -39,7 +37,7 @@ describe('PatientExerciseRecordsTab', () => {
       status: 'success',
       data: {
         records: mockRecords,
-        summary: { total_records: 2, total_minutes: 8 },
+        summary: { total_records: 2 },
       },
     })
   })
@@ -60,12 +58,11 @@ describe('PatientExerciseRecordsTab', () => {
     })
   })
 
-  it('renders summary cards', async () => {
+  it('renders summary card with total records', async () => {
     render(<PatientExerciseRecordsTab patientId="patient-123" />)
 
     await waitFor(() => {
       expect(screen.getByText('2回')).toBeInTheDocument()
-      expect(screen.getByText('8分')).toBeInTheDocument()
     })
   })
 
@@ -87,19 +84,10 @@ describe('PatientExerciseRecordsTab', () => {
     })
   })
 
-  it('renders duration correctly', async () => {
-    render(<PatientExerciseRecordsTab patientId="patient-123" />)
-
-    await waitFor(() => {
-      expect(screen.getByText('5分')).toBeInTheDocument()
-      expect(screen.getByText('3分')).toBeInTheDocument()
-    })
-  })
-
   it('shows empty state when no records exist', async () => {
     mockGetPatientExerciseRecords.mockResolvedValue({
       status: 'success',
-      data: { records: [], summary: { total_records: 0, total_minutes: 0 } },
+      data: { records: [], summary: { total_records: 0 } },
     })
 
     render(<PatientExerciseRecordsTab patientId="patient-123" />)
@@ -155,7 +143,17 @@ describe('PatientExerciseRecordsTab', () => {
       expect(screen.getByText('実施日時')).toBeInTheDocument()
       expect(screen.getByText('運動名')).toBeInTheDocument()
       expect(screen.getByText('種類')).toBeInTheDocument()
-      expect(screen.getByText('所要時間')).toBeInTheDocument()
     })
+  })
+
+  it('does not render duration column', async () => {
+    render(<PatientExerciseRecordsTab patientId="patient-123" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('スクワット')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText('所要時間')).not.toBeInTheDocument()
+    expect(screen.queryByText('合計時間')).not.toBeInTheDocument()
   })
 })

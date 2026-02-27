@@ -203,6 +203,22 @@ else
     puts "  Created patient: #{patient.user_code}"
   end
 
+  # Assign staff to patients
+  puts "Assigning staff to patients..."
+
+  PatientStaffAssignment.delete_all
+  patients.each_with_index do |patient, index|
+    # Primary staff assignment (alternate between staff1 and staff2)
+    primary_staff = index.even? ? staff1 : staff2
+    PatientStaffAssignment.find_or_create_by!(user: patient, staff: primary_staff) do |psa|
+      psa.is_primary = true
+      psa.assigned_at = 30.days.ago
+    end
+    puts "  Assigned #{primary_staff.staff_id} (primary) to #{patient.user_code}"
+
+    # Manager also has access (via manager? check, no assignment needed)
+  end
+
   # Assign exercises to patients
   puts "Assigning exercises to patients..."
 

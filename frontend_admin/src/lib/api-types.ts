@@ -391,14 +391,12 @@ export interface PatientExerciseRecord {
   completed_at: string
   completed_reps: number | null
   completed_sets: number | null
-  duration_seconds: number | null
 }
 
 export interface PatientExerciseRecordsResponse {
   records: PatientExerciseRecord[]
   summary: {
     total_records: number
-    total_minutes: number
   }
 }
 

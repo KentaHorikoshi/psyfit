@@ -50,15 +50,15 @@ RSpec.describe 'Api::V1::PatientExerciseRecords', type: :request do
           expect(record).to have_key('completed_at')
           expect(record).to have_key('completed_reps')
           expect(record).to have_key('completed_sets')
-          expect(record).to have_key('duration_seconds')
+          expect(record).not_to have_key('duration_seconds')
         end
 
-        it 'returns summary data' do
+        it 'returns summary with total_records only' do
           get "/api/v1/patients/#{patient.id}/exercise_records"
 
           summary = json_response['data']['summary']
           expect(summary['total_records']).to eq(2)
-          expect(summary['total_minutes']).to eq(9) # (300 + 240) / 60 = 9
+          expect(summary).not_to have_key('total_minutes')
         end
       end
 
@@ -147,6 +147,60 @@ RSpec.describe 'Api::V1::PatientExerciseRecords', type: :request do
         get '/api/v1/patients/non-existent-id/exercise_records'
 
         expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context 'integration: patient-created records visible to staff' do
+      let(:user_patient) { create(:user) }
+      let(:user_exercise) { create(:exercise, name: '膝伸ばし', exercise_type: 'トレーニング') }
+
+      it 'returns records created by patient via user API' do
+        # Step 1: Patient creates an exercise record (simulating POST /api/v1/exercise_records)
+        record = ExerciseRecord.new(
+          user: user_patient,
+          exercise: user_exercise,
+          completed_at: Time.current,
+          completed_reps: 10,
+          completed_sets: 3,
+          duration_seconds: 180
+        )
+        record.save!
+
+        # Step 2: Staff (manager) fetches patient exercise records
+        sign_in_as_staff(manager)
+        get "/api/v1/patients/#{user_patient.id}/exercise_records"
+
+        expect(response).to have_http_status(:ok)
+        records = json_response['data']['records']
+        expect(records.length).to eq(1)
+        expect(records.first['exercise_name']).to eq('膝伸ばし')
+        expect(records.first['completed_reps']).to eq(10)
+        expect(records.first['completed_sets']).to eq(3)
+      end
+
+      it 'returns records created by patient to assigned staff' do
+        # Create assignment
+        create(:patient_staff_assignment, user: user_patient, staff: staff_member, is_primary: true)
+
+        # Patient creates a record
+        record = ExerciseRecord.new(
+          user: user_patient,
+          exercise: user_exercise,
+          completed_at: Time.current,
+          completed_reps: 8,
+          completed_sets: 2,
+          duration_seconds: 120
+        )
+        record.save!
+
+        # Staff fetches
+        sign_in_as_staff(staff_member)
+        get "/api/v1/patients/#{user_patient.id}/exercise_records"
+
+        expect(response).to have_http_status(:ok)
+        records = json_response['data']['records']
+        expect(records.length).to eq(1)
+        expect(records.first['exercise_name']).to eq('膝伸ばし')
       end
     end
   end

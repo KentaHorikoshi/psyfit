@@ -27,13 +27,10 @@ module Api
           }.to_json
         )
 
-        total_seconds = records.sum(:duration_seconds) || 0
-
         render_success({
           records: records.map { |r| record_response(r) },
           summary: {
-            total_records: records.count,
-            total_minutes: total_seconds / 60
+            total_records: records.count
           }
         })
       rescue Date::Error, ArgumentError
@@ -70,8 +67,7 @@ module Api
           exercise_type: record.exercise.exercise_type,
           completed_at: record.completed_at.iso8601,
           completed_reps: record.completed_reps,
-          completed_sets: record.completed_sets,
-          duration_seconds: record.duration_seconds
+          completed_sets: record.completed_sets
         }
       end
     end

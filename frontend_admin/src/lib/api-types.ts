@@ -365,6 +365,41 @@ export interface DailyConditionsResponse {
   conditions: DailyCondition[]
 }
 
+export interface DailyConditionResponse {
+  condition: DailyCondition
+}
+
+export interface CreateDailyConditionRequest {
+  recorded_date: string
+  pain_level: number
+  body_condition: number
+  notes?: string
+}
+
+export interface UpdateDailyConditionRequest {
+  recorded_date?: string
+  pain_level?: number
+  body_condition?: number
+  notes?: string
+}
+
+// Patient Exercise Record Types (S-04 Patient Detail)
+export interface PatientExerciseRecord {
+  id: string
+  exercise_name: string
+  exercise_type: string
+  completed_at: string
+  completed_reps: number | null
+  completed_sets: number | null
+}
+
+export interface PatientExerciseRecordsResponse {
+  records: PatientExerciseRecord[]
+  summary: {
+    total_records: number
+  }
+}
+
 // Patient Create Types (S-03)
 export interface CreatePatientRequest {
   name: string

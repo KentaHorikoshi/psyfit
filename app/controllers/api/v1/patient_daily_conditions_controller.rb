@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
-# Staff-facing API for viewing patient daily condition records
-# Provides read-only access with proper authorization and audit logging
+# Staff-facing API for managing patient daily condition records
+# Provides CRUD access with proper authorization and audit logging
 module Api
   module V1
     class PatientDailyConditionsController < BaseController
       before_action :authenticate_staff!
       before_action :set_patient
       before_action :authorize_patient_access!
+      before_action :set_condition, only: [ :show, :update, :destroy ]
 
       # GET /api/v1/patients/:patient_id/daily_conditions
       def index
@@ -20,17 +21,7 @@ module Api
           )
         end
 
-        AuditLog.log_action(
-          action: "read",
-          status: "success",
-          staff: current_staff,
-          ip_address: client_ip,
-          user_agent: user_agent,
-          additional_info: {
-            resource_type: "DailyCondition",
-            patient_id: @patient.id
-          }.to_json
-        )
+        log_audit("read")
 
         render_success({
           conditions: conditions.map { |c| condition_response(c) }
@@ -39,10 +30,51 @@ module Api
         render_error("日付の形式が正しくありません", status: :unprocessable_content)
       end
 
+      # GET /api/v1/patients/:patient_id/daily_conditions/:id
+      def show
+        log_audit("read", @condition.id)
+
+        render_success({ condition: condition_response(@condition) })
+      end
+
+      # POST /api/v1/patients/:patient_id/daily_conditions
+      def create
+        @condition = @patient.daily_conditions.build(condition_params)
+
+        if @condition.save
+          log_audit("create", @condition.id)
+          render_success({ condition: condition_response(@condition) }, status: :created)
+        else
+          render_error("バリデーションエラー", errors: @condition.errors.to_hash, status: :unprocessable_content)
+        end
+      end
+
+      # PATCH /api/v1/patients/:patient_id/daily_conditions/:id
+      def update
+        if @condition.update(condition_params)
+          log_audit("update", @condition.id)
+          render_success({ condition: condition_response(@condition) })
+        else
+          render_error("バリデーションエラー", errors: @condition.errors.to_hash, status: :unprocessable_content)
+        end
+      end
+
+      # DELETE /api/v1/patients/:patient_id/daily_conditions/:id
+      def destroy
+        @condition.destroy!
+        log_audit("delete", @condition.id)
+
+        render_success({ message: "体調データを削除しました" })
+      end
+
       private
 
       def set_patient
         @patient = User.active.find(params[:patient_id])
+      end
+
+      def set_condition
+        @condition = @patient.daily_conditions.find(params[:id])
       end
 
       def authorize_patient_access!
@@ -56,6 +88,10 @@ module Api
         params[:start_date].present? && params[:end_date].present?
       end
 
+      def condition_params
+        params.permit(:recorded_date, :pain_level, :body_condition, :notes)
+      end
+
       def condition_response(condition)
         {
           id: condition.id,
@@ -64,6 +100,21 @@ module Api
           body_condition: condition.body_condition,
           notes: condition.notes
         }
+      end
+
+      def log_audit(action, resource_id = nil)
+        AuditLog.log_action(
+          action: action,
+          status: "success",
+          staff: current_staff,
+          ip_address: client_ip,
+          user_agent: user_agent,
+          additional_info: {
+            resource_type: "DailyCondition",
+            resource_id: resource_id,
+            patient_id: @patient.id
+          }.to_json
+        )
       end
     end
   end

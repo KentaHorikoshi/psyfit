@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Dumbbell, FileText, Pencil, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import type { PatientDetail as PatientDetailType, PatientStatus } from '../lib/api-types'
-import { PatientConditionChart } from './PatientConditionChart'
+import { PatientDataTabs } from './PatientDataTabs'
 import { PatientEditDialog } from './PatientEditDialog'
 import { DeletePatientConfirmDialog } from './DeletePatientConfirmDialog'
 
@@ -271,8 +271,8 @@ export function PatientDetail() {
         </div>
       </div>
 
-      {/* Condition Chart */}
-      <PatientConditionChart patientId={patient.id} />
+      {/* Patient Data Tabs (Conditions / Measurements / Exercise Records) */}
+      <PatientDataTabs patientId={patient.id} />
 
       {/* Edit Dialog */}
       <PatientEditDialog

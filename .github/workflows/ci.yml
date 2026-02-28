@@ -161,7 +161,7 @@ jobs:
           fi
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage
@@ -169,7 +169,7 @@ jobs:
           retention-days: 7
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-test-results
@@ -223,7 +223,7 @@ jobs:
           fi
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-user-coverage
@@ -277,7 +277,7 @@ jobs:
           fi
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-admin-coverage
@@ -315,7 +315,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.app }}-build
           path: ${{ matrix.app }}/dist/
@@ -445,7 +445,7 @@ jobs:
         run: npx playwright test --project=chromium
 
       - name: Upload E2E report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: e2e-report-${{ matrix.app.name }}
@@ -453,7 +453,7 @@ jobs:
           retention-days: 14
 
       - name: Upload E2E screenshots on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: e2e-screenshots-${{ matrix.app.name }}

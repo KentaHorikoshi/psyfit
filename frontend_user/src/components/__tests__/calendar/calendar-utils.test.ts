@@ -9,7 +9,7 @@ import {
   getCompletionStatus,
   getSnapshotAssignedCount,
 } from '../../calendar/calendar-utils'
-import type { ExerciseRecordWithExercise } from '../../../lib/api-types'
+import type { Exercise, ExerciseRecordWithExercise } from '../../../lib/api-types'
 
 describe('calendar-utils', () => {
   describe('getCalendarDays', () => {
@@ -198,70 +198,154 @@ describe('calendar-utils', () => {
       assigned_count: assignedCount,
     })
 
+    const makeExercise = (id: string, dailyFrequency = 1): Exercise => ({
+      id,
+      name: `Exercise ${id}`,
+      description: '',
+      video_url: '',
+      sets: 3,
+      reps: 10,
+      daily_frequency: dailyFrequency,
+      exercise_type: 'training',
+    })
+
     it('should return "none" when no records', () => {
       expect(getCompletionStatus(undefined, 3)).toBe('none')
       expect(getCompletionStatus([], 3)).toBe('none')
     })
 
-    it('should return "full" when all exercises completed (no snapshot)', () => {
+    // --- Without exercises (legacy fallback) ---
+
+    it('should return "full" when all exercises completed (no exercises list)', () => {
       const records = [makeRecord('ex1'), makeRecord('ex2'), makeRecord('ex3')]
       expect(getCompletionStatus(records, 3)).toBe('full')
     })
 
-    it('should return "full" when more exercises than assigned (no snapshot)', () => {
+    it('should return "full" when more exercises than assigned (no exercises list)', () => {
       const records = [makeRecord('ex1'), makeRecord('ex2'), makeRecord('ex3'), makeRecord('ex4')]
       expect(getCompletionStatus(records, 3)).toBe('full')
     })
 
-    it('should return "partial" when some exercises completed (no snapshot)', () => {
+    it('should return "partial" when some exercises completed (no exercises list)', () => {
       const records = [makeRecord('ex1')]
       expect(getCompletionStatus(records, 3)).toBe('partial')
     })
 
-    it('should count unique exercise IDs', () => {
+    it('should count unique exercise IDs (no exercises list)', () => {
       // Same exercise done twice should count as 1
       const records = [makeRecord('ex1'), makeRecord('ex1')]
       expect(getCompletionStatus(records, 2)).toBe('partial')
     })
 
-    it('should return "full" when assignedCount is 0 and there are records (no snapshot)', () => {
+    it('should return "full" when assignedCount is 0 and there are records (no exercises list)', () => {
       const records = [makeRecord('ex1')]
       expect(getCompletionStatus(records, 0)).toBe('full')
     })
 
-    // assigned_count スナップショット使用のテスト
+    // --- With exercises and daily_frequency ---
+
+    it('should return "full" when all exercises meet daily_frequency', () => {
+      const exercises = [makeExercise('ex1', 1), makeExercise('ex2', 1)]
+      const records = [makeRecord('ex1'), makeRecord('ex2')]
+      expect(getCompletionStatus(records, 2, exercises)).toBe('full')
+    })
+
+    it('should return "partial" when daily_frequency not met', () => {
+      const exercises = [makeExercise('ex1', 2), makeExercise('ex2', 1)]
+      // ex1 requires 2 records but only has 1
+      const records = [makeRecord('ex1'), makeRecord('ex2')]
+      expect(getCompletionStatus(records, 2, exercises)).toBe('partial')
+    })
+
+    it('should return "full" when daily_frequency met with multiple records', () => {
+      const exercises = [makeExercise('ex1', 2), makeExercise('ex2', 1)]
+      const records = [makeRecord('ex1'), makeRecord('ex1'), makeRecord('ex2')]
+      expect(getCompletionStatus(records, 2, exercises)).toBe('full')
+    })
+
+    it('should return "partial" when only some exercises meet daily_frequency', () => {
+      const exercises = [makeExercise('ex1', 3), makeExercise('ex2', 1), makeExercise('ex3', 1)]
+      // ex1 needs 3 records but only has 1
+      const records = [makeRecord('ex1'), makeRecord('ex2'), makeRecord('ex3')]
+      expect(getCompletionStatus(records, 3, exercises)).toBe('partial')
+    })
+
+    it('should count past exercises not in current list', () => {
+      const exercises = [makeExercise('ex1', 1)]
+      // ex2 is no longer assigned but was recorded
+      const records = [makeRecord('ex1'), makeRecord('ex2')]
+      // 1 current completed + 1 past = 2, effectiveCount = 1 → full
+      expect(getCompletionStatus(records, 1, exercises)).toBe('full')
+    })
+
+    // --- Snapshot (assigned_count) tests with exercises ---
+
+    it('should use snapshot assigned_count when available (with exercises)', () => {
+      const exercises = [makeExercise('ex1', 1), makeExercise('ex2', 1), makeExercise('ex3', 1), makeExercise('ex4', 1), makeExercise('ex5', 1)]
+      // Records from when only 3 exercises were assigned
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 3)]
+      // snapshot=3, completed=3 → full (even though current has 5 exercises)
+      expect(getCompletionStatus(records, 5, exercises)).toBe('full')
+    })
+
+    it('should use snapshot assigned_count (partial case with exercises)', () => {
+      const exercises = [makeExercise('ex1', 1), makeExercise('ex2', 1), makeExercise('ex3', 1)]
+      const records = [makeRecord('ex1', 3), makeRecord('ex2', 3)]
+      // snapshot=3, completed=2 → partial
+      expect(getCompletionStatus(records, 5, exercises)).toBe('partial')
+    })
+
+    it('should preserve past all-clear when new menus added (with exercises)', () => {
+      const exercises = [makeExercise('ex1', 1), makeExercise('ex2', 1), makeExercise('ex3', 1), makeExercise('ex4', 1), makeExercise('ex5', 1)]
+      const pastRecords = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 3)]
+      expect(getCompletionStatus(pastRecords, 5, exercises)).toBe('full')
+    })
+
+    // --- Legacy snapshot tests (without exercises) ---
+
     it('should use snapshot assigned_count when available', () => {
-      // 記録時は3つ割当、現在は5つ割当 → 3つ完了で "full"
       const records = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 3)]
       expect(getCompletionStatus(records, 5)).toBe('full')
     })
 
     it('should use snapshot assigned_count (partial case)', () => {
-      // 記録時は3つ割当、2つしか完了していない → "partial"
       const records = [makeRecord('ex1', 3), makeRecord('ex2', 3)]
       expect(getCompletionStatus(records, 5)).toBe('partial')
     })
 
     it('should use max snapshot when records have different assigned_count', () => {
-      // 朝: assigned_count=3, 午後: assigned_count=4（新メニュー追加）
       const records = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 4)]
       // 3 unique exercises, max snapshot = 4 → 3 < 4 → partial
       expect(getCompletionStatus(records, 5)).toBe('partial')
     })
 
     it('should fallback to currentAssignedCount when no snapshot', () => {
-      // assigned_count なし → currentAssignedCount=2 を使用
       const records = [makeRecord('ex1'), makeRecord('ex2')]
       expect(getCompletionStatus(records, 2)).toBe('full')
     })
 
     it('should preserve past all-clear when new menus added', () => {
-      // メインの不具合修正テスト:
-      // 過去: 3メニュー割当で3つ全完了（assigned_count=3）
-      // 現在: 5メニュー割当に増加
-      // → 過去の日は "full" のまま
       const pastRecords = [makeRecord('ex1', 3), makeRecord('ex2', 3), makeRecord('ex3', 3)]
       expect(getCompletionStatus(pastRecords, 5)).toBe('full')
+    })
+
+    // --- daily_frequency edge cases ---
+
+    it('should handle daily_frequency=0 as 1', () => {
+      const exercises = [makeExercise('ex1', 0)]
+      // daily_frequency ?? 1 → treat 0 as falsy, so default to 1
+      // Actually 0 is falsy in ?? only for null/undefined. 0 ?? 1 = 0
+      // But the code uses (ex.daily_frequency ?? 1), and 0 is not null/undefined
+      // So daily_frequency=0 means 0 records needed → always completed
+      const records = [makeRecord('ex1')]
+      expect(getCompletionStatus(records, 1, exercises)).toBe('full')
+    })
+
+    it('should handle exercise with no records when daily_frequency > 1', () => {
+      const exercises = [makeExercise('ex1', 2), makeExercise('ex2', 1)]
+      // Only ex2 has a record, ex1 has none
+      const records = [makeRecord('ex2')]
+      expect(getCompletionStatus(records, 2, exercises)).toBe('partial')
     })
   })
 })

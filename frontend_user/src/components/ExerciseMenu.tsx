@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
 import type { Exercise, ExerciseType, ExerciseRecordWithExercise } from '../lib/api-types'
@@ -108,6 +108,7 @@ function ExerciseCardItem({ exercise, onClick, isCompleted, completedCount }: Ex
 
 export function ExerciseMenu() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [todayRecords, setTodayRecords] = useState<ExerciseRecordWithExercise[]>([])
@@ -150,7 +151,7 @@ export function ExerciseMenu() {
     }
 
     fetchExercisesAndRecords()
-  }, [isAuthenticated])
+  }, [isAuthenticated, location.key])
 
   const completedCountMap = useMemo(() => {
     const map = new Map<string, number>()

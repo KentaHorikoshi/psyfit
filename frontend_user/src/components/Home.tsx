@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
 import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
@@ -43,6 +43,7 @@ function MenuCard({ icon, label, onClick, badge }: MenuCardProps) {
 
 export function Home() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, isAuthenticated, isLoading } = useAuth()
 
   const [exercises, setExercises] = useState<Exercise[]>([])
@@ -92,7 +93,7 @@ export function Home() {
     }
 
     fetchTodayData()
-  }, [isAuthenticated])
+  }, [isAuthenticated, location.key])
 
   const greeting = useMemo(() => getGreeting(), [])
   const GreetingIcon = greeting.Icon

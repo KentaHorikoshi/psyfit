@@ -71,8 +71,8 @@ module Api
           exercise_name: record.exercise.name,
           exercise_category: record.exercise.exercise_type,
           completed_at: record.completed_at.iso8601,
-          sets_completed: record.completed_sets,
-          reps_completed: record.completed_reps,
+          completed_sets: record.completed_sets,
+          completed_reps: record.completed_reps,
           assigned_count: record.assigned_count
         }
       end

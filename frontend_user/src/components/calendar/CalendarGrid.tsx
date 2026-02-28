@@ -1,4 +1,4 @@
-import type { ExerciseRecordWithExercise } from '../../lib/api-types'
+import type { Exercise, ExerciseRecordWithExercise } from '../../lib/api-types'
 import type { CalendarDay } from './calendar-utils'
 import { getCalendarDays, getCompletionStatus, formatDateKey } from './calendar-utils'
 import { CalendarDayCell } from './CalendarDayCell'
@@ -10,6 +10,7 @@ interface CalendarGridProps {
   month: number
   recordsByDate: Record<string, ExerciseRecordWithExercise[]>
   assignedCount: number
+  exercises: Exercise[]
   selectedDate: Date | null
   onSelectDate: (date: Date) => void
   nextVisitDate?: string
@@ -21,6 +22,7 @@ export function CalendarGrid({
   month,
   recordsByDate,
   assignedCount,
+  exercises,
   selectedDate,
   onSelectDate,
   nextVisitDate,
@@ -53,7 +55,7 @@ export function CalendarGrid({
           {days.map((day) => {
             const key = formatDateKey(day.date)
             const status = day.isCurrentMonth
-              ? getCompletionStatus(recordsByDate[key], assignedCount)
+              ? getCompletionStatus(recordsByDate[key], assignedCount, exercises)
               : 'outside'
             const isSelected = key === selectedKey
 

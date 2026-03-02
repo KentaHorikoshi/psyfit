@@ -1,4 +1,4 @@
-import type { ExerciseRecordWithExercise } from '../../lib/api-types'
+import type { Exercise, ExerciseRecordWithExercise } from '../../lib/api-types'
 
 export type CompletionStatus = 'full' | 'partial' | 'none' | 'outside'
 
@@ -106,20 +106,54 @@ export function getSnapshotAssignedCount(
 
 /**
  * 完了ステータス判定
+ * 各運動について「その運動のレコード数 >= daily_frequency」を満たすかで完了判定。
  * レコードに assigned_count（記録時点のスナップショット）がある場合はそれを優先し、
- * ない場合は currentAssignedCount（現在の割当数）にフォールバック
+ * ない場合は currentAssignedCount（現在の割当数）にフォールバック。
+ * exercisesリストにない過去の運動記録も考慮する。
  */
 export function getCompletionStatus(
   dateRecords: ExerciseRecordWithExercise[] | undefined,
-  currentAssignedCount: number
+  currentAssignedCount: number,
+  exercises?: Exercise[]
 ): CompletionStatus {
   if (!dateRecords || dateRecords.length === 0) {
     return 'none'
   }
-  const uniqueExerciseIds = new Set(dateRecords.map((r) => r.exercise_id))
+
   const snapshotCount = getSnapshotAssignedCount(dateRecords)
   const effectiveCount = snapshotCount ?? currentAssignedCount
-  if (uniqueExerciseIds.size >= effectiveCount) {
+
+  // exercises が渡されない場合はユニーク種目数ベースの従来ロジック
+  if (!exercises || exercises.length === 0) {
+    const uniqueExerciseIds = new Set(dateRecords.map((r) => r.exercise_id))
+    if (uniqueExerciseIds.size >= effectiveCount) {
+      return 'full'
+    }
+    return 'partial'
+  }
+
+  // レコードを exercise_id でグループ化
+  const recordsByExercise = new Map<string, number>()
+  for (const record of dateRecords) {
+    recordsByExercise.set(record.exercise_id, (recordsByExercise.get(record.exercise_id) ?? 0) + 1)
+  }
+
+  const exerciseIds = new Set(exercises.map((ex) => ex.id))
+
+  // 現在の割当運動で daily_frequency を満たしたものをカウント
+  let completedCount = exercises.filter((ex) => {
+    const count = recordsByExercise.get(ex.id) ?? 0
+    return count >= (ex.daily_frequency ?? 1)
+  }).length
+
+  // 割当外の記録（過去の運動）もカウント
+  for (const exerciseId of recordsByExercise.keys()) {
+    if (!exerciseIds.has(exerciseId)) {
+      completedCount++
+    }
+  }
+
+  if (completedCount >= effectiveCount) {
     return 'full'
   }
   return 'partial'

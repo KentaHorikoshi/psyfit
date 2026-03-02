@@ -138,6 +138,7 @@ export function ExerciseHistory() {
               month={currentMonth}
               recordsByDate={recordsByDate}
               assignedCount={assignedCount}
+              exercises={exercises}
               selectedDate={selectedDate}
               onSelectDate={handleSelectDate}
               nextVisitDate={user.next_visit_date}

@@ -414,12 +414,12 @@ RSpec.describe 'Api::V1::ExerciseRecords', type: :request do
             'exercise_id' => exercise2.id,
             'exercise_name' => '片足立ち',
             'exercise_category' => exercise2.exercise_type,
-            'sets_completed' => 2,
-            'reps_completed' => 15
+            'completed_sets' => 2,
+            'completed_reps' => 15
           )
           expect(first_record).not_to have_key('exercise')
-          expect(first_record).not_to have_key('completed_reps')
-          expect(first_record).not_to have_key('completed_sets')
+          expect(first_record).not_to have_key('sets_completed')
+          expect(first_record).not_to have_key('reps_completed')
         end
 
         it 'includes summary with total_exercises and continue_days' do

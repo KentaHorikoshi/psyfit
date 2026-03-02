@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
@@ -111,6 +111,8 @@ function renderExerciseHistory() {
 describe('U-07 ExerciseHistory (Calendar)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date(2026, 1, 15)) // 2026年2月15日に固定
     mockUseAuth.mockReturnValue({
       user: {
         id: '1',
@@ -129,6 +131,10 @@ describe('U-07 ExerciseHistory (Calendar)', () => {
       status: 'success',
       data: { exercises: mockExercises },
     })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   describe('rendering', () => {
@@ -233,10 +239,7 @@ describe('U-07 ExerciseHistory (Calendar)', () => {
 
       await user.click(screen.getByRole('button', { name: /今月に移動/ }))
 
-      // Should show current month label
-      const now = new Date()
-      const monthLabel = `${now.getFullYear()}年${now.getMonth() + 1}月`
-      expect(screen.getByText(monthLabel)).toBeInTheDocument()
+      expect(screen.getByText('2026年2月')).toBeInTheDocument()
     })
   })
 
@@ -418,11 +421,8 @@ describe('U-07 ExerciseHistory (Calendar)', () => {
     it('should display current month label', async () => {
       renderExerciseHistory()
 
-      const now = new Date()
-      const monthLabel = `${now.getFullYear()}年${now.getMonth() + 1}月`
-
       await waitFor(() => {
-        expect(screen.getByText(monthLabel)).toBeInTheDocument()
+        expect(screen.getByText('2026年2月')).toBeInTheDocument()
       })
     })
 

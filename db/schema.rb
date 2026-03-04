@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_21_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_04_153943) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -98,6 +98,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_100000) do
     t.index ["measured_by_staff_id"], name: "index_measurements_on_measured_by_staff_id"
     t.index ["user_id", "measured_date"], name: "index_measurements_on_user_id_and_measured_date"
     t.index ["user_id"], name: "index_measurements_on_user_id"
+  end
+
+  create_table "next_visit_dates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "user_id", null: false
+    t.date "visit_date", null: false
+    t.index ["user_id", "visit_date"], name: "index_next_visit_dates_on_user_id_and_visit_date", unique: true
+    t.index ["user_id"], name: "index_next_visit_dates_on_user_id"
   end
 
   create_table "password_reset_tokens", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -241,6 +250,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_100000) do
   add_foreign_key "exercise_records", "users"
   add_foreign_key "measurements", "staff", column: "measured_by_staff_id"
   add_foreign_key "measurements", "users"
+  add_foreign_key "next_visit_dates", "users"
   add_foreign_key "password_reset_tokens", "staff", on_delete: :cascade
   add_foreign_key "password_reset_tokens", "users", on_delete: :cascade
   add_foreign_key "patient_exercises", "exercises"

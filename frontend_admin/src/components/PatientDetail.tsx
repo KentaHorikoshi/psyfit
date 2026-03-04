@@ -223,7 +223,20 @@ export function PatientDetail() {
                 <dd className="text-2xl font-bold text-[#10B981]">{patient.continue_days}日</dd>
               </div>
 
-              {patient.next_visit_date && (
+              {(patient.next_visit_dates && patient.next_visit_dates.length > 0) ? (
+                <div>
+                  <dt className="text-sm text-gray-500 mb-1">次回来院日</dt>
+                  <dd className="space-y-1">
+                    {patient.next_visit_dates.map((date) => (
+                      <p key={date} className="text-base font-medium text-[#1E40AF]">
+                        {new Date(date + 'T00:00:00').toLocaleDateString('ja-JP', {
+                          year: 'numeric', month: 'long', day: 'numeric',
+                        })}
+                      </p>
+                    ))}
+                  </dd>
+                </div>
+              ) : patient.next_visit_date ? (
                 <div>
                   <dt className="text-sm text-gray-500 mb-1">次回来院日</dt>
                   <dd className="text-base font-medium text-[#1E40AF]">
@@ -232,7 +245,7 @@ export function PatientDetail() {
                     })}
                   </dd>
                 </div>
-              )}
+              ) : null}
 
               {patient.previous_visit_date && (
                 <div>

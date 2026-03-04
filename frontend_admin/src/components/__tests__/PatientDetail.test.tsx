@@ -265,7 +265,22 @@ describe('S-04 PatientDetail', () => {
   })
 
   describe('visit dates', () => {
-    it('should render next visit date when set', async () => {
+    it('should render next visit dates list when next_visit_dates array is set', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { ...mockPatientData, next_visit_dates: ['2026-03-15', '2026-03-22'] },
+      })
+
+      renderPatientDetail()
+
+      await waitFor(() => {
+        expect(screen.getByText(/次回来院日/)).toBeInTheDocument()
+        expect(screen.getByText(/2026年3月15日/)).toBeInTheDocument()
+        expect(screen.getByText(/2026年3月22日/)).toBeInTheDocument()
+      })
+    })
+
+    it('should render next visit date from legacy next_visit_date (singular) when next_visit_dates is absent', async () => {
       mockGetPatientDetail.mockResolvedValue({
         status: 'success',
         data: { ...mockPatientData, next_visit_date: '2026-03-15' },
@@ -275,6 +290,7 @@ describe('S-04 PatientDetail', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/次回来院日/)).toBeInTheDocument()
+        expect(screen.getByText(/2026年3月15日/)).toBeInTheDocument()
       })
     })
 
@@ -299,6 +315,20 @@ describe('S-04 PatientDetail', () => {
       })
       expect(screen.queryByText(/次回来院日/)).not.toBeInTheDocument()
       expect(screen.queryByText(/前回来院日/)).not.toBeInTheDocument()
+    })
+
+    it('should not render next visit date section when next_visit_dates is an empty array', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { ...mockPatientData, next_visit_dates: [] },
+      })
+
+      renderPatientDetail()
+
+      await waitFor(() => {
+        expect(screen.getByText('田中太郎')).toBeInTheDocument()
+      })
+      expect(screen.queryByText(/次回来院日/)).not.toBeInTheDocument()
     })
   })
 

@@ -214,6 +214,7 @@ module Api
           status: patient.status,
           continue_days: patient.continue_days,
           next_visit_date: patient.next_visit_date&.iso8601,
+          next_visit_dates: patient.next_visit_dates.ordered.map { |nvd| nvd.visit_date.iso8601 },
           previous_visit_date: patient.previous_visit_date&.iso8601,
           assigned_staff: serialize_assigned_staff(patient)
         }

@@ -33,6 +33,7 @@ class User < ApplicationRecord
   has_many :audit_logs, dependent: :nullify
   has_many :patient_staff_assignments, dependent: :destroy
   has_many :assigned_staff, through: :patient_staff_assignments, source: :staff
+  has_many :next_visit_dates, dependent: :destroy
 
   # Auto-generate user_code on create
   before_validation :generate_user_code, on: :create
@@ -117,6 +118,25 @@ class User < ApplicationRecord
       previous_visit_date: next_visit_date,
       next_visit_date: parsed_date
     )
+  end
+
+  def update_next_visit_dates!(dates)
+    parsed_dates = Array(dates).map { |d| d.is_a?(String) ? Date.parse(d) : d }.uniq.sort
+
+    transaction do
+      # Save current earliest next_visit_date as previous
+      update!(previous_visit_date: next_visit_date) if next_visit_date.present?
+
+      # Replace all next_visit_dates
+      next_visit_dates.destroy_all
+      parsed_dates.each do |date|
+        next_visit_dates.create!(visit_date: date)
+      end
+
+      # Sync legacy column with earliest future date (backward compat)
+      earliest_future = parsed_dates.select { |d| d >= Date.current }.min
+      update!(next_visit_date: earliest_future)
+    end
   end
 
   # Continue Days Methods

@@ -70,8 +70,10 @@ module Api
           end
         end
 
-        # Update next visit date if provided
-        if params[:next_visit_date].present?
+        # Update next visit dates if provided (supports multiple dates)
+        if params[:next_visit_dates].present?
+          @patient.update_next_visit_dates!(params[:next_visit_dates])
+        elsif params[:next_visit_date].present?
           @patient.update_next_visit_date!(params[:next_visit_date])
         end
 

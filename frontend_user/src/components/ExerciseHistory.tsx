@@ -141,7 +141,7 @@ export function ExerciseHistory() {
               exercises={exercises}
               selectedDate={selectedDate}
               onSelectDate={handleSelectDate}
-              nextVisitDate={user.next_visit_date}
+              nextVisitDates={user.next_visit_dates && user.next_visit_dates.length > 0 ? user.next_visit_dates : user.next_visit_date ? [user.next_visit_date] : undefined}
               previousVisitDate={user.previous_visit_date}
             />
 
@@ -157,7 +157,7 @@ export function ExerciseHistory() {
                   date={selectedDate}
                   records={selectedRecords}
                   exercises={exercises}
-                  isNextVisit={selectedKey === user.next_visit_date}
+                  isNextVisit={selectedKey != null && (user.next_visit_dates?.includes(selectedKey) ?? selectedKey === user.next_visit_date)}
                   isPreviousVisit={selectedKey === user.previous_visit_date}
                 />
               </div>

@@ -13,7 +13,7 @@ interface CalendarGridProps {
   exercises: Exercise[]
   selectedDate: Date | null
   onSelectDate: (date: Date) => void
-  nextVisitDate?: string
+  nextVisitDates?: string[]
   previousVisitDate?: string
 }
 
@@ -25,7 +25,7 @@ export function CalendarGrid({
   exercises,
   selectedDate,
   onSelectDate,
-  nextVisitDate,
+  nextVisitDates,
   previousVisitDate,
 }: CalendarGridProps) {
   const days: CalendarDay[] = getCalendarDays(year, month)
@@ -65,7 +65,7 @@ export function CalendarGrid({
                 day={day}
                 status={status}
                 isSelected={isSelected}
-                isNextVisit={nextVisitDate === key}
+                isNextVisit={nextVisitDates?.includes(key) ?? false}
                 isPreviousVisit={previousVisitDate === key}
                 onClick={onSelectDate}
               />
@@ -88,7 +88,7 @@ export function CalendarGrid({
           <span className="inline-block w-3 h-3 rounded bg-white border border-gray-300" />
           <span>未実施</span>
         </div>
-        {(nextVisitDate || previousVisitDate) && (
+        {((nextVisitDates && nextVisitDates.length > 0) || previousVisitDate) && (
           <>
             <div className="flex items-center gap-1">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#1E40AF]" />

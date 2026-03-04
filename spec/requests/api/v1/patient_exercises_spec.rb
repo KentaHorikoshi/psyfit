@@ -133,7 +133,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
               ],
               pain_flag: false,
               reason: "",
-              next_visit_dates: ["2026-04-01", "2026-04-15"]
+              next_visit_dates: [ "2026-04-01", "2026-04-15" ]
             }
           end
 
@@ -145,7 +145,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
             expect(response).to have_http_status(:created)
 
             saved_dates = patient.next_visit_dates.ordered.pluck(:visit_date)
-            expect(saved_dates).to eq([Date.parse('2026-04-01'), Date.parse('2026-04-15')])
+            expect(saved_dates).to eq([ Date.parse('2026-04-01'), Date.parse('2026-04-15') ])
           end
 
           it 'sets the legacy next_visit_date column to the earliest future date' do
@@ -163,7 +163,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
             expect(response).to have_http_status(:created)
             expect(patient.next_visit_dates.count).to eq(2)
             expect(patient.next_visit_dates.ordered.pluck(:visit_date)).to eq(
-              [Date.parse('2026-04-01'), Date.parse('2026-04-15')]
+              [ Date.parse('2026-04-01'), Date.parse('2026-04-15') ]
             )
           end
 
@@ -177,8 +177,8 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
           it 'deduplicates dates that appear more than once' do
             params_with_duplicate = {
-              assignments: [{ exercise_id: exercise.id, sets: 3, reps: 10 }],
-              next_visit_dates: ["2026-04-01", "2026-04-01", "2026-04-15"]
+              assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
+              next_visit_dates: [ "2026-04-01", "2026-04-01", "2026-04-15" ]
             }
 
             expect {
@@ -191,7 +191,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         context 'backward compatibility: singular next_visit_date still works alongside plural' do
           it 'accepts next_visit_date (singular) and does not create NextVisitDate records' do
             params = {
-              assignments: [{ exercise_id: exercise.id, sets: 3, reps: 10 }],
+              assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
               next_visit_date: "2026-05-01"
             }
 
@@ -205,9 +205,9 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
 
           it 'prefers next_visit_dates (plural) when both parameters are sent' do
             params = {
-              assignments: [{ exercise_id: exercise.id, sets: 3, reps: 10 }],
+              assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
               next_visit_date: "2026-05-01",
-              next_visit_dates: ["2026-06-01", "2026-06-15"]
+              next_visit_dates: [ "2026-06-01", "2026-06-15" ]
             }
 
             post "/api/v1/patients/#{patient.id}/exercises", params: params, as: :json

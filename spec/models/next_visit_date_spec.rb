@@ -98,14 +98,14 @@ RSpec.describe NextVisitDate, type: :model do
     describe '.ordered' do
       it 'orders records by visit_date ascending' do
         ordered = NextVisitDate.where(user: user).ordered
-        expect(ordered.to_a).to eq([past_date, today_date, future_date1, future_date2])
+        expect(ordered.to_a).to eq([ past_date, today_date, future_date1, future_date2 ])
       end
     end
 
     describe '.future.ordered (combined)' do
       it 'returns future dates in ascending order' do
         result = NextVisitDate.where(user: user).future.ordered
-        expect(result.to_a).to eq([today_date, future_date1, future_date2])
+        expect(result.to_a).to eq([ today_date, future_date1, future_date2 ])
       end
     end
   end

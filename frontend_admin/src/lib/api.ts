@@ -359,6 +359,27 @@ class ApiClient {
     )
   }
 
+  // Patient Measurement CRUD endpoints (S-04)
+  async updateMeasurement(
+    patientId: string,
+    measurementId: string,
+    data: MeasurementInput
+  ): Promise<ApiResponse<Measurement>> {
+    return this.patch<Measurement>(
+      `/patients/${patientId}/measurements/${measurementId}`,
+      data
+    )
+  }
+
+  async deleteMeasurement(
+    patientId: string,
+    measurementId: string
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.delete<{ message: string }>(
+      `/patients/${patientId}/measurements/${measurementId}`
+    )
+  }
+
   // Patient Exercise Records endpoint (S-04)
   async getPatientExerciseRecords(
     patientId: string,

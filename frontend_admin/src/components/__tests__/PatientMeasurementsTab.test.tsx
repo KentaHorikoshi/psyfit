@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { PatientMeasurementsTab } from '../PatientMeasurementsTab'
 import type { Measurement } from '../../lib/api-types'
 
 const mockGetPatientMeasurements = vi.fn()
+const mockUpdateMeasurement = vi.fn()
+const mockDeleteMeasurement = vi.fn()
 
 vi.mock('../../lib/api', () => ({
   api: {
     getPatientMeasurements: (...args: unknown[]) => mockGetPatientMeasurements(...args),
+    updateMeasurement: (...args: unknown[]) => mockUpdateMeasurement(...args),
+    deleteMeasurement: (...args: unknown[]) => mockDeleteMeasurement(...args),
   },
 }))
 
@@ -42,6 +47,8 @@ describe('PatientMeasurementsTab', () => {
       status: 'success',
       data: { measurements: mockMeasurements },
     })
+    mockUpdateMeasurement.mockResolvedValue({ status: 'success', data: {} })
+    mockDeleteMeasurement.mockResolvedValue({ status: 'success', data: {} })
   })
 
   it('renders loading state initially', () => {
@@ -144,6 +151,48 @@ describe('PatientMeasurementsTab', () => {
       expect(screen.getByText('8.5秒')).toBeInTheDocument()
       expect(screen.getByText('15.2秒')).toBeInTheDocument()
       expect(screen.getByText('3/10')).toBeInTheDocument()
+    })
+  })
+
+  it('renders edit and delete buttons for each measurement', async () => {
+    render(<PatientMeasurementsTab patientId="patient-123" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('操作')).toBeInTheDocument()
+      expect(screen.getByLabelText('2026-02-20の測定値を編集')).toBeInTheDocument()
+      expect(screen.getByLabelText('2026-02-20の測定値を削除')).toBeInTheDocument()
+      expect(screen.getByLabelText('2026-02-10の測定値を編集')).toBeInTheDocument()
+      expect(screen.getByLabelText('2026-02-10の測定値を削除')).toBeInTheDocument()
+    })
+  })
+
+  it('opens edit dialog when edit button is clicked', async () => {
+    const user = userEvent.setup()
+    render(<PatientMeasurementsTab patientId="patient-123" />)
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('2026-02-20の測定値を編集')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByLabelText('2026-02-20の測定値を編集'))
+
+    await waitFor(() => {
+      expect(screen.getByText('測定値編集')).toBeInTheDocument()
+    })
+  })
+
+  it('opens delete dialog when delete button is clicked', async () => {
+    const user = userEvent.setup()
+    render(<PatientMeasurementsTab patientId="patient-123" />)
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('2026-02-20の測定値を削除')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByLabelText('2026-02-20の測定値を削除'))
+
+    await waitFor(() => {
+      expect(screen.getByText('測定値データ削除の確認')).toBeInTheDocument()
     })
   })
 

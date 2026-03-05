@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Save, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
 import { ja } from 'react-day-picker/locale'
 import { format, parse } from 'date-fns'
@@ -16,7 +16,7 @@ export function ExerciseMenu() {
   const [exerciseSettings, setExerciseSettings] = useState<Record<string, { sets: number; reps: number; daily_frequency: number }>>({})
   const [painFlag, setPainFlag] = useState(false)
   const [reason, setReason] = useState('')
-  const [nextVisitDate, setNextVisitDate] = useState('')
+  const [nextVisitDates, setNextVisitDates] = useState<string[]>([])
   const [expandedMajors, setExpandedMajors] = useState<Set<string>>(new Set())
   const [expandedMinors, setExpandedMinors] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
@@ -70,9 +70,11 @@ export function ExerciseMenu() {
         })
         setExerciseSettings(initialSettings)
 
-        // Pre-populate next visit date
-        if (patientResponse.data?.next_visit_date) {
-          setNextVisitDate(patientResponse.data.next_visit_date)
+        // Pre-populate next visit dates
+        if (patientResponse.data?.next_visit_dates && patientResponse.data.next_visit_dates.length > 0) {
+          setNextVisitDates(patientResponse.data.next_visit_dates)
+        } else if (patientResponse.data?.next_visit_date) {
+          setNextVisitDates([patientResponse.data.next_visit_date])
         }
       } catch {
         setFetchError('運動マスタの取得に失敗しました')
@@ -164,7 +166,7 @@ export function ExerciseMenu() {
         assignments,
         pain_flag: painFlag,
         reason,
-        next_visit_date: nextVisitDate || undefined,
+        next_visit_dates: nextVisitDates.length > 0 ? nextVisitDates : undefined,
       }
 
       await api.assignExercises(patientId!, data)
@@ -472,34 +474,51 @@ export function ExerciseMenu() {
               )}
             </div>
 
-            {/* Next Visit Date */}
+            {/* Next Visit Dates */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">次回来院日</h3>
-              {nextVisitDate && (
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-base text-gray-900 font-medium">
-                    {format(parse(nextVisitDate, 'yyyy-MM-dd', new Date()), 'yyyy年M月d日')}
-                  </p>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">次回来院日</h3>
+                {nextVisitDates.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setNextVisitDate('')}
+                    onClick={() => setNextVisitDates([])}
                     className="text-sm text-gray-500 hover:text-gray-700 underline min-h-[44px] min-w-[44px] px-2"
                   >
-                    クリア
+                    全てクリア
                   </button>
+                )}
+              </div>
+              {nextVisitDates.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {[...nextVisitDates].sort().map((date) => (
+                    <div key={date} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+                      <p className="text-base text-gray-900 font-medium">
+                        {format(parse(date, 'yyyy-MM-dd', new Date()), 'yyyy年M月d日')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setNextVisitDates(prev => prev.filter(d => d !== date))}
+                        className="text-gray-400 hover:text-red-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        aria-label={`${format(parse(date, 'yyyy-MM-dd', new Date()), 'yyyy年M月d日')}を削除`}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
               <DayPicker
-                mode="single"
+                mode="multiple"
                 locale={ja}
-                selected={nextVisitDate ? parse(nextVisitDate, 'yyyy-MM-dd', new Date()) : undefined}
-                onSelect={(day) => {
-                  if (day) {
-                    setNextVisitDate(format(day, 'yyyy-MM-dd'))
+                selected={nextVisitDates.map(d => parse(d, 'yyyy-MM-dd', new Date()))}
+                onSelect={(days) => {
+                  if (days && days.length > 0) {
+                    setNextVisitDates(days.map(d => format(d, 'yyyy-MM-dd')))
                   } else {
-                    setNextVisitDate('')
+                    setNextVisitDates([])
                   }
                 }}
+                max={10}
                 style={{
                   '--rdp-accent-color': '#1E40AF',
                   '--rdp-accent-background-color': '#DBEAFE',
@@ -507,8 +526,11 @@ export function ExerciseMenu() {
                   '--rdp-day-height': '48px',
                   fontSize: '16px',
                 } as React.CSSProperties}
-                aria-label="次回来院日を選択"
+                aria-label="次回来院日を選択（複数選択可）"
               />
+              <p className="text-sm text-gray-500 mt-2">
+                カレンダーをタップして複数の日付を選択できます（最大10日）
+              </p>
             </div>
 
             {/* Submit Button */}

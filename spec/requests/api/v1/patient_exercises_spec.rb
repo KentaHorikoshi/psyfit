@@ -87,7 +87,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
           expect(audit.staff_id).to eq(manager.id)
         end
 
-        context 'with next_visit_date' do
+        context 'with next_visit_date (singular legacy parameter)' do
           let(:params_with_date) do
             {
               assignments: [
@@ -122,6 +122,101 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
             post "/api/v1/patients/#{patient.id}/exercises", params: valid_params, as: :json
 
             expect(patient.reload.next_visit_date).to eq(Date.parse('2026-02-01'))
+          end
+        end
+
+        context 'with next_visit_dates (plural parameter)' do
+          let(:params_with_dates) do
+            {
+              assignments: [
+                { exercise_id: exercise.id, sets: 3, reps: 10 }
+              ],
+              pain_flag: false,
+              reason: "",
+              next_visit_dates: [ "2026-04-01", "2026-04-15" ]
+            }
+          end
+
+          it 'saves all provided dates as NextVisitDate records' do
+            expect {
+              post "/api/v1/patients/#{patient.id}/exercises", params: params_with_dates, as: :json
+            }.to change(NextVisitDate, :count).by(2)
+
+            expect(response).to have_http_status(:created)
+
+            saved_dates = patient.next_visit_dates.ordered.pluck(:visit_date)
+            expect(saved_dates).to eq([ Date.parse('2026-04-01'), Date.parse('2026-04-15') ])
+          end
+
+          it 'sets the legacy next_visit_date column to the earliest future date' do
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_dates, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(patient.reload.next_visit_date).to eq(Date.parse('2026-04-01'))
+          end
+
+          it 'replaces any previously registered NextVisitDate records' do
+            create(:next_visit_date, user: patient, visit_date: Date.current + 3.days)
+
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_dates, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(patient.next_visit_dates.count).to eq(2)
+            expect(patient.next_visit_dates.ordered.pluck(:visit_date)).to eq(
+              [ Date.parse('2026-04-01'), Date.parse('2026-04-15') ]
+            )
+          end
+
+          it 'saves the current next_visit_date as previous_visit_date' do
+            patient.update!(next_visit_date: Date.parse('2026-03-01'))
+
+            post "/api/v1/patients/#{patient.id}/exercises", params: params_with_dates, as: :json
+
+            expect(patient.reload.previous_visit_date).to eq(Date.parse('2026-03-01'))
+          end
+
+          it 'deduplicates dates that appear more than once' do
+            params_with_duplicate = {
+              assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
+              next_visit_dates: [ "2026-04-01", "2026-04-01", "2026-04-15" ]
+            }
+
+            expect {
+              post "/api/v1/patients/#{patient.id}/exercises",
+                params: params_with_duplicate, as: :json
+            }.to change(NextVisitDate, :count).by(2)
+          end
+        end
+
+        context 'backward compatibility: singular next_visit_date still works alongside plural' do
+          it 'accepts next_visit_date (singular) and does not create NextVisitDate records' do
+            params = {
+              assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
+              next_visit_date: "2026-05-01"
+            }
+
+            post "/api/v1/patients/#{patient.id}/exercises", params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(patient.reload.next_visit_date).to eq(Date.parse('2026-05-01'))
+            # Singular param should NOT create NextVisitDate association records
+            expect(patient.next_visit_dates.count).to eq(0)
+          end
+
+          it 'prefers next_visit_dates (plural) when both parameters are sent' do
+            params = {
+              assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
+              next_visit_date: "2026-05-01",
+              next_visit_dates: [ "2026-06-01", "2026-06-15" ]
+            }
+
+            post "/api/v1/patients/#{patient.id}/exercises", params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            patient.reload
+            # The plural parameter takes precedence; legacy column is set to earliest future date
+            expect(patient.next_visit_dates.count).to eq(2)
+            expect(patient.next_visit_date).to eq(Date.parse('2026-06-01'))
           end
         end
 

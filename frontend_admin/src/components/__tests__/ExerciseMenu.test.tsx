@@ -115,7 +115,7 @@ describe('S-06 ExerciseMenu', () => {
     })
     mockGetPatientDetail.mockResolvedValue({
       status: 'success',
-      data: { next_visit_date: '2026-03-15' },
+      data: { next_visit_dates: ['2026-03-15'] },
     })
   })
 
@@ -477,7 +477,7 @@ describe('S-06 ExerciseMenu', () => {
       })
     })
 
-    it('should pre-populate with existing next visit date', async () => {
+    it('should pre-populate with existing next visit dates as a list', async () => {
       renderExerciseMenu()
 
       await waitFor(() => {
@@ -485,7 +485,34 @@ describe('S-06 ExerciseMenu', () => {
       })
     })
 
-    it('should include next_visit_date in submission', async () => {
+    it('should pre-populate with multiple next visit dates when next_visit_dates array is provided', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { next_visit_dates: ['2026-03-15', '2026-03-22'] },
+      })
+
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByText('2026年3月15日')).toBeInTheDocument()
+        expect(screen.getByText('2026年3月22日')).toBeInTheDocument()
+      })
+    })
+
+    it('should fall back to next_visit_date (singular) when next_visit_dates is absent', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { next_visit_date: '2026-03-15' },
+      })
+
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByText('2026年3月15日')).toBeInTheDocument()
+      })
+    })
+
+    it('should include next_visit_dates array in submission', async () => {
       const user = userEvent.setup()
       renderExerciseMenu()
 
@@ -499,9 +526,71 @@ describe('S-06 ExerciseMenu', () => {
       await waitFor(() => {
         expect(mockAssignExercises).toHaveBeenCalledWith(
           mockPatientId,
-          expect.objectContaining({ next_visit_date: '2026-03-15' })
+          expect.objectContaining({ next_visit_dates: ['2026-03-15'] })
         )
       })
+    })
+
+    it('should show clear-all button when dates are selected', async () => {
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /全てクリア/ })).toBeInTheDocument()
+      })
+    })
+
+    it('should clear all dates when "全てクリア" button is clicked', async () => {
+      const user = userEvent.setup()
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByText('2026年3月15日')).toBeInTheDocument()
+      })
+
+      const clearAllButton = screen.getByRole('button', { name: /全てクリア/ })
+      await user.click(clearAllButton)
+
+      await waitFor(() => {
+        expect(screen.queryByText('2026年3月15日')).not.toBeInTheDocument()
+      })
+    })
+
+    it('should remove individual date when its delete button is clicked', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { next_visit_dates: ['2026-03-15', '2026-03-22'] },
+      })
+
+      const user = userEvent.setup()
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByText('2026年3月15日')).toBeInTheDocument()
+        expect(screen.getByText('2026年3月22日')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getByRole('button', { name: '2026年3月15日を削除' })
+      await user.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.queryByText('2026年3月15日')).not.toBeInTheDocument()
+        expect(screen.getByText('2026年3月22日')).toBeInTheDocument()
+      })
+    })
+
+    it('should not show "全てクリア" button when no dates are selected', async () => {
+      mockGetPatientDetail.mockResolvedValue({
+        status: 'success',
+        data: { next_visit_dates: [] },
+      })
+
+      renderExerciseMenu()
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/次回来院日/)).toBeInTheDocument()
+      })
+
+      expect(screen.queryByRole('button', { name: /全てクリア/ })).not.toBeInTheDocument()
     })
   })
 

@@ -7,6 +7,8 @@ module Api
     class MeasurementsController < BaseController
       before_action :authenticate_staff!
       before_action :set_patient
+      before_action :authorize_patient_access!
+      before_action :set_measurement, only: [ :show, :update, :destroy ]
 
       # GET /api/v1/patients/:patient_id/measurements
       # Returns measurement history for a patient with optional date filtering
@@ -15,8 +17,15 @@ module Api
 
         measurements = apply_date_filters(measurements)
 
-        log_audit_read_success
+        log_audit("read")
         render_success({ measurements: measurements.map { |m| measurement_response(m) } })
+      end
+
+      # GET /api/v1/patients/:patient_id/measurements/:id
+      # Returns a single measurement record
+      def show
+        log_audit("read", @measurement.id)
+        render_success(measurement_response(@measurement))
       end
 
       # POST /api/v1/patients/:patient_id/measurements
@@ -26,7 +35,7 @@ module Api
         @measurement.measured_by_staff = current_staff
 
         if @measurement.save
-          log_audit_success
+          log_audit("create", @measurement.id)
           render_success(measurement_response(@measurement), status: :created)
         else
           render_error(
@@ -37,10 +46,45 @@ module Api
         end
       end
 
+      # PATCH /api/v1/patients/:patient_id/measurements/:id
+      # Updates an existing measurement record
+      def update
+        if @measurement.update(measurement_params)
+          log_audit("update", @measurement.id)
+          render_success(measurement_response(@measurement))
+        else
+          render_error(
+            "バリデーションエラー",
+            errors: @measurement.errors.to_hash,
+            status: :unprocessable_content
+          )
+        end
+      end
+
+      # DELETE /api/v1/patients/:patient_id/measurements/:id
+      # Deletes a measurement record
+      def destroy
+        @measurement.destroy!
+        log_audit("delete", @measurement.id)
+
+        render_success({ message: "測定値データを削除しました" })
+      end
+
       private
 
       def set_patient
         @patient = User.active.find(params[:patient_id])
+      end
+
+      def set_measurement
+        @measurement = @patient.measurements.find(params[:id])
+      end
+
+      def authorize_patient_access!
+        return if current_staff.manager?
+        return if @patient.patient_staff_assignments.exists?(staff_id: current_staff.id)
+
+        render_forbidden("この患者へのアクセス権限がありません")
       end
 
       def measurement_params
@@ -78,30 +122,16 @@ module Api
         }
       end
 
-      def log_audit_success
+      def log_audit(action, resource_id = nil)
         AuditLog.log_action(
-          action: "create",
+          action: action,
           status: "success",
           staff: current_staff,
           ip_address: client_ip,
           user_agent: user_agent,
           additional_info: {
             resource_type: "Measurement",
-            resource_id: @measurement.id,
-            patient_id: @patient.id
-          }.to_json
-        )
-      end
-
-      def log_audit_read_success
-        AuditLog.log_action(
-          action: "read",
-          status: "success",
-          staff: current_staff,
-          ip_address: client_ip,
-          user_agent: user_agent,
-          additional_info: {
-            resource_type: "Measurement",
+            resource_id: resource_id,
             patient_id: @patient.id
           }.to_json
         )

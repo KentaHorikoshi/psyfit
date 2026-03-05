@@ -45,7 +45,7 @@ Rails.application.routes.draw do
 
       # Staff endpoints (patients management)
       resources :patients, only: [ :index, :show, :create, :update, :destroy ] do
-        resources :measurements, only: [ :index, :create ], controller: "measurements"
+        resources :measurements, only: [ :index, :show, :create, :update, :destroy ], controller: "measurements"
         resources :exercises, only: [ :index, :create ], controller: "patient_exercises"
         resources :daily_conditions, only: [ :index, :show, :create, :update, :destroy ], controller: "patient_daily_conditions"
         resources :exercise_records, only: [ :index ], controller: "patient_exercise_records"

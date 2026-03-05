@@ -26,7 +26,10 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
     end
 
     context 'when staff is authenticated' do
-      before { staff_login(staff) }
+      before do
+        staff_login(staff)
+        create(:patient_staff_assignment, user: patient, staff: staff, is_primary: true)
+      end
 
       context 'with valid parameters' do
         it 'creates a new measurement' do
@@ -256,6 +259,16 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
       end
     end
 
+    context 'when non-assigned staff is authenticated' do
+      before { staff_login(staff) }
+
+      it 'returns forbidden' do
+        post "/api/v1/patients/#{patient.id}/measurements", params: valid_params
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
     context 'when user (patient) is authenticated instead of staff' do
       before { sign_in_as_user(patient) }
 
@@ -276,6 +289,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
 
     context 'when session is expired' do
       before do
+        create(:patient_staff_assignment, user: patient, staff: staff, is_primary: true)
         staff_login(staff)
         # Simulate session expiry (15 minutes for staff)
         Timecop.travel(16.minutes.from_now)
@@ -300,7 +314,10 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
     end
 
     context 'when staff is authenticated' do
-      before { staff_login(staff) }
+      before do
+        staff_login(staff)
+        create(:patient_staff_assignment, user: patient, staff: staff, is_primary: true)
+      end
 
       context 'without date filters' do
         it 'returns all measurements for the patient' do
@@ -387,6 +404,10 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
       context 'when patient has no measurements' do
         let(:other_patient) { create(:user) }
 
+        before do
+          create(:patient_staff_assignment, user: other_patient, staff: staff, is_primary: true)
+        end
+
         it 'returns empty array' do
           get "/api/v1/patients/#{other_patient.id}/measurements"
 
@@ -399,6 +420,7 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
         let(:other_patient) { create(:user) }
 
         before do
+          create(:patient_staff_assignment, user: other_patient, staff: staff, is_primary: true)
           create(:measurement, user: other_patient, measured_by_staff: staff, measured_date: Date.current)
         end
 
@@ -433,6 +455,16 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
       end
     end
 
+    context 'when non-assigned staff is authenticated' do
+      before { staff_login(staff) }
+
+      it 'returns forbidden' do
+        get "/api/v1/patients/#{patient.id}/measurements"
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
     context 'when user (patient) is authenticated instead of staff' do
       before { sign_in_as_user(patient) }
 
@@ -452,7 +484,10 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
     end
 
     context 'creates audit log entry' do
-      before { staff_login(staff) }
+      before do
+        staff_login(staff)
+        create(:patient_staff_assignment, user: patient, staff: staff, is_primary: true)
+      end
 
       it 'logs the read action' do
         expect {
@@ -467,6 +502,158 @@ RSpec.describe 'Api::V1::Measurements', type: :request do
         expect(audit.action).to eq('read')
         expect(audit.status).to eq('success')
         expect(audit.staff_id).to eq(staff.id)
+      end
+    end
+  end
+
+  describe 'PATCH /api/v1/patients/:patient_id/measurements/:id' do
+    let!(:measurement) do
+      create(:measurement, user: patient, measured_by_staff: staff, measured_date: Date.current,
+             weight_kg: 65.5, nrs_pain_score: 3, mmt_score: 4)
+    end
+    let(:update_params) { { weight_kg: 70.0, nrs_pain_score: 2, notes: '改善傾向' } }
+
+    context 'when not authenticated' do
+      it 'returns unauthorized status' do
+        patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: update_params
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when authenticated as manager' do
+      before { staff_login(manager) }
+
+      it 'updates the measurement' do
+        patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: update_params
+
+        expect(response).to have_http_status(:ok)
+        data = json_response['data']
+        expect(data['weight_kg']).to eq('70.0')
+        expect(data['nrs_pain_score']).to eq(2)
+        expect(data['notes']).to eq('改善傾向')
+      end
+
+      it 'creates an audit log with action update' do
+        expect {
+          patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: update_params
+        }.to change(AuditLog, :count).by(1)
+
+        audit = AuditLog.order(:created_at).last
+        expect(audit.action).to eq('update')
+        expect(audit.status).to eq('success')
+      end
+
+      it 'returns validation error for invalid values' do
+        patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: { weight_kg: -1 }
+
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it 'returns not found for non-existent measurement' do
+        patch "/api/v1/patients/#{patient.id}/measurements/00000000-0000-0000-0000-000000000000", params: update_params
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'can update only notes' do
+        patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: { notes: '備考のみ更新' }
+
+        expect(response).to have_http_status(:ok)
+        data = json_response['data']
+        expect(data['notes']).to eq('備考のみ更新')
+        expect(data['weight_kg']).to eq('65.5')
+      end
+    end
+
+    context 'when authenticated as assigned staff' do
+      before do
+        staff_login(staff)
+        create(:patient_staff_assignment, user: patient, staff: staff, is_primary: true)
+      end
+
+      it 'updates the measurement for assigned patient' do
+        patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: update_params
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when authenticated as non-assigned staff' do
+      before { staff_login(staff) }
+
+      it 'returns forbidden status' do
+        patch "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}", params: update_params
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'DELETE /api/v1/patients/:patient_id/measurements/:id' do
+    let!(:measurement) do
+      create(:measurement, user: patient, measured_by_staff: staff, measured_date: Date.current)
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized status' do
+        delete "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}"
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when authenticated as manager' do
+      before { staff_login(manager) }
+
+      it 'deletes the measurement' do
+        expect {
+          delete "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}"
+        }.to change(Measurement, :count).by(-1)
+
+        expect(response).to have_http_status(:ok)
+        expect(json_response['data']['message']).to eq('測定値データを削除しました')
+      end
+
+      it 'creates an audit log with action delete' do
+        expect {
+          delete "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}"
+        }.to change(AuditLog, :count).by(1)
+
+        audit = AuditLog.order(:created_at).last
+        expect(audit.action).to eq('delete')
+        expect(audit.status).to eq('success')
+      end
+
+      it 'returns not found for non-existent measurement' do
+        delete "/api/v1/patients/#{patient.id}/measurements/00000000-0000-0000-0000-000000000000"
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context 'when authenticated as assigned staff' do
+      before do
+        staff_login(staff)
+        create(:patient_staff_assignment, user: patient, staff: staff, is_primary: true)
+      end
+
+      it 'deletes the measurement for assigned patient' do
+        expect {
+          delete "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}"
+        }.to change(Measurement, :count).by(-1)
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when authenticated as non-assigned staff' do
+      before { staff_login(staff) }
+
+      it 'returns forbidden status' do
+        delete "/api/v1/patients/#{patient.id}/measurements/#{measurement.id}"
+
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end

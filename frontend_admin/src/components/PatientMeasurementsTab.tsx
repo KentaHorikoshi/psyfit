@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../lib/api'
-import { Ruler } from 'lucide-react'
+import { Ruler, Pencil, Trash2 } from 'lucide-react'
 import type { Measurement } from '../lib/api-types'
+import { MeasurementEditDialog } from './MeasurementEditDialog'
+import { DeleteMeasurementConfirmDialog } from './DeleteMeasurementConfirmDialog'
 
 interface PatientMeasurementsTabProps {
   patientId: string
@@ -35,6 +37,9 @@ export function PatientMeasurementsTab({ patientId }: PatientMeasurementsTabProp
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedMeasurement, setSelectedMeasurement] = useState<Measurement | null>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
@@ -60,6 +65,20 @@ export function PatientMeasurementsTab({ patientId }: PatientMeasurementsTabProp
   useEffect(() => {
     fetchMeasurements()
   }, [fetchMeasurements])
+
+  const handleEdit = (measurement: Measurement) => {
+    setSelectedMeasurement(measurement)
+    setIsEditOpen(true)
+  }
+
+  const handleDeleteClick = (measurement: Measurement) => {
+    setSelectedMeasurement(measurement)
+    setIsDeleteOpen(true)
+  }
+
+  const handleCrudSuccess = () => {
+    fetchMeasurements()
+  }
 
   const formatValue = (measurement: Measurement, col: MeasurementColumn): string => {
     const val = measurement[col.key]
@@ -167,6 +186,9 @@ export function PatientMeasurementsTab({ patientId }: PatientMeasurementsTabProp
                   <th scope="col" className="text-left py-3 px-2 font-medium text-gray-700 whitespace-nowrap">
                     備考
                   </th>
+                  <th scope="col" className="text-center py-3 px-2 font-medium text-gray-700 whitespace-nowrap">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -183,6 +205,26 @@ export function PatientMeasurementsTab({ patientId }: PatientMeasurementsTabProp
                     <td className="py-3 px-2 text-gray-600 max-w-[200px] truncate">
                       {m.notes ?? '-'}
                     </td>
+                    <td className="py-3 px-2 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(m)}
+                          className="p-2 text-gray-500 hover:text-[#1E40AF] hover:bg-blue-50 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          aria-label={`${m.measured_date}の測定値を編集`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteClick(m)}
+                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          aria-label={`${m.measured_date}の測定値を削除`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -190,6 +232,22 @@ export function PatientMeasurementsTab({ patientId }: PatientMeasurementsTabProp
           </div>
         </>
       )}
+
+      <MeasurementEditDialog
+        isOpen={isEditOpen}
+        patientId={patientId}
+        measurement={selectedMeasurement}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={handleCrudSuccess}
+      />
+
+      <DeleteMeasurementConfirmDialog
+        isOpen={isDeleteOpen}
+        patientId={patientId}
+        measurement={selectedMeasurement}
+        onClose={() => setIsDeleteOpen(false)}
+        onSuccess={handleCrudSuccess}
+      />
     </div>
   )
 }

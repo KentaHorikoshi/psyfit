@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { Celebration } from '../Celebration'
+import { getLocalDateString } from '../../lib/utils'
 
 // Mock useNavigate
 const mockNavigate = vi.fn()
@@ -66,7 +67,7 @@ function setupApiMocks({
       conditions: Array.from({ length: conditionCount }, (_, i) => ({
         id: `cond-${i}`,
         user_id: 'user-1',
-        recorded_date: new Date().toISOString().split('T')[0],
+        recorded_date: getLocalDateString(),
         pain_level: 3,
         body_condition: 7,
         created_at: new Date().toISOString(),
@@ -249,7 +250,7 @@ describe('U-13 Celebration', () => {
     })
 
     it('should call API with today date filter', async () => {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getLocalDateString()
       renderCelebration()
 
       await vi.advanceTimersByTimeAsync(0)

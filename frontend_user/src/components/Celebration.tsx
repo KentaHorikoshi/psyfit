@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Trophy, Star, Sparkles } from 'lucide-react'
 import { apiClient } from '../lib/api-client'
+import { getLocalDateString } from '../lib/utils'
 
 interface CelebrationState {
   exerciseName?: string
@@ -36,7 +37,7 @@ export function Celebration() {
   useEffect(() => {
     async function determineTarget() {
       try {
-        const today = new Date().toISOString().split('T')[0]
+        const today = getLocalDateString()
         const [recordsRes, conditionsRes] = await Promise.all([
           apiClient.getExerciseRecords({ start_date: today, end_date: today }),
           apiClient.getMyDailyConditions({ start_date: today, end_date: today }),

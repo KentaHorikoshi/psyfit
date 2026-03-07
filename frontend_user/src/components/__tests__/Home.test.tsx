@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { Home } from '../Home'
 import type { Exercise } from '../../lib/api-types'
+import { getLocalDateString } from '../../lib/utils'
 
 // Mock the AuthContext
 const mockLogout = vi.fn()
@@ -702,7 +703,7 @@ describe('U-02 Home', () => {
           conditions: [{
             id: 'cond-1',
             user_id: '1',
-            recorded_date: new Date().toISOString().split('T')[0],
+            recorded_date: getLocalDateString(),
             pain_level: 3,
             body_condition: 7,
             created_at: new Date().toISOString(),
@@ -729,7 +730,7 @@ describe('U-02 Home', () => {
           conditions: [{
             id: 'cond-1',
             user_id: '1',
-            recorded_date: new Date().toISOString().split('T')[0],
+            recorded_date: getLocalDateString(),
             pain_level: 3,
             body_condition: 7,
             created_at: new Date().toISOString(),

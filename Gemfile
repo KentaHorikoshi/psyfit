@@ -74,7 +74,7 @@ group :development, :test do
 
   # TDD dependencies
   gem "factory_bot_rails", "~> 6.4"
-  gem "faker", "~> 3.2"
+  gem "faker", "~> 3.6"
 end
 
 group :development do

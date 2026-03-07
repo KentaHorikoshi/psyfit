@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { MeasurementInput as MeasurementInputType } from '../lib/api-types'
+import { getLocalDateString } from '../lib/utils'
 
 interface FormErrors {
   measured_date?: string
@@ -28,7 +29,7 @@ export function MeasurementInput() {
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState<Partial<MeasurementInputType>>({
-    measured_date: new Date().toISOString().split('T')[0],
+    measured_date: getLocalDateString(),
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)

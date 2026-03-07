@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
+import { getLocalDateString } from '../lib/utils'
 import type { Exercise, ExerciseType, ExerciseRecordWithExercise } from '../lib/api-types'
 import { ArrowLeft, Play, CheckCircle2 } from 'lucide-react'
 
@@ -71,7 +72,6 @@ function ExerciseCardItem({ exercise, onClick, isCompleted, completedCount }: Ex
           </p>
           <p className="text-gray-500 text-sm">
             {exercise.sets}セット × {exercise.reps}回
-            {exercise.duration_seconds && ` (${exercise.duration_seconds}秒)`}
           </p>
           {showProgress && (
             <div className="flex items-center gap-2 mt-1">
@@ -128,7 +128,7 @@ export function ExerciseMenu() {
       try {
         setIsLoading(true)
         setError(null)
-        const today = new Date().toISOString().split('T')[0]
+        const today = getLocalDateString()
 
         const [exercisesRes, recordsRes] = await Promise.all([
           apiClient.getUserExercises(),

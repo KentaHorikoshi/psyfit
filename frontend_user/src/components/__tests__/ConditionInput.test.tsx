@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { ConditionInput } from '../ConditionInput'
+import { getLocalDateString } from '../../lib/utils'
 
 // Mock the AuthContext
 const mockUseAuth = vi.fn()
@@ -351,7 +352,7 @@ describe('U-14 ConditionInput', () => {
           conditions: [
             {
               id: 'existing-1',
-              recorded_date: new Date().toISOString().split('T')[0],
+              recorded_date: getLocalDateString(),
               pain_level: 3,
               body_condition: 8,
               notes: '朝から腰が痛い',
@@ -400,7 +401,7 @@ describe('U-14 ConditionInput', () => {
           conditions: [
             {
               id: 'existing-1',
-              recorded_date: new Date().toISOString().split('T')[0],
+              recorded_date: getLocalDateString(),
               pain_level: 3,
               body_condition: 8,
               notes: '',

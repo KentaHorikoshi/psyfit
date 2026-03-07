@@ -2,15 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
+import { getLocalDateString } from '../lib/utils'
 import { ChevronLeft } from 'lucide-react'
-
-function getLocalDateString(): string {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 export function ConditionInput() {
   const navigate = useNavigate()

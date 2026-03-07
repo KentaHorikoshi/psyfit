@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
+import { getLocalDateString } from '../lib/utils'
 import type { Exercise, ExerciseRecordWithExercise } from '../lib/api-types'
 import { Dumbbell, Edit, History, TrendingUp, Flame, Sun, Moon, CloudSun, Home as HomeIcon, User, ClipboardEdit, CheckCircle2, Calendar } from 'lucide-react'
 
@@ -65,7 +66,7 @@ export function Home() {
 
       try {
         setExercisesLoading(true)
-        const today = new Date().toISOString().split('T')[0]
+        const today = getLocalDateString()
 
         const [exercisesRes, recordsRes, conditionsRes] = await Promise.all([
           apiClient.getUserExercises().catch(() => null),

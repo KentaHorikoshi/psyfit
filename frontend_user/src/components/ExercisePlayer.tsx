@@ -280,7 +280,6 @@ export function ExercisePlayer() {
           </div>
           <p className="text-center text-gray-500 mt-1">
             {exercise.reps}回 × {exercise.sets}セット
-            {exercise.duration_seconds && ` (${exercise.duration_seconds}秒)`}
           </p>
         </div>
 

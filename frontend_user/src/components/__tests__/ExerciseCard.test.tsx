@@ -52,12 +52,6 @@ describe('U-11 ExerciseCard', () => {
       expect(screen.getByText(/10回/)).toBeInTheDocument()
     })
 
-    it('should render duration when provided', () => {
-      render(<ExerciseCard exercise={mockExerciseWithDuration} onStart={vi.fn()} />)
-
-      expect(screen.getByText(/30秒/)).toBeInTheDocument()
-    })
-
     it('should render thumbnail image when provided', () => {
       render(<ExerciseCard exercise={mockExercise} onStart={vi.fn()} />)
 

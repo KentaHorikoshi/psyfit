@@ -41,9 +41,7 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false, completed
     ? `${completedCount}/${dailyFrequency}回実施${allCompleted ? ' 達成' : ''}`
     : isCompleted ? ' 完了' : ''
 
-  const ariaLabel = `${exercise.name} ${exercise.sets}セット${exercise.reps}回${
-    exercise.duration_seconds ? ` ${exercise.duration_seconds}秒` : ''
-  }${completionLabel}`
+  const ariaLabel = `${exercise.name} ${exercise.sets}セット${exercise.reps}回${completionLabel}`
 
   return (
     <article
@@ -137,12 +135,6 @@ export function ExerciseCard({ exercise, onStart, isCompleted = false, completed
             <span>{exercise.sets}セット</span>
             <span>×</span>
             <span>{exercise.reps}回</span>
-            {exercise.duration_seconds && (
-              <>
-                <span>·</span>
-                <span>{exercise.duration_seconds}秒</span>
-              </>
-            )}
           </div>
 
           <button

@@ -20,7 +20,8 @@ set +a
 
 # Pull latest code
 echo "--- Pulling latest code ---"
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
 
 # ============================================================
 # Phase 1: Docker Deployment (PRIMARY - serves production traffic)

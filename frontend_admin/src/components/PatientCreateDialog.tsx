@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { X, Check, Eye, EyeOff } from 'lucide-react'
 import { api } from '../lib/api'
 import type { CreatePatientRequest, PatientStatus, StaffOption } from '../lib/api-types'
+import { useEmailDomainSuggestion } from '../hooks/useEmailDomainSuggestion'
+import { EmailDomainSuggestion } from './ui/EmailDomainSuggestion'
 
 interface PatientCreateDialogProps {
   isOpen: boolean
@@ -56,6 +58,7 @@ export function PatientCreateDialog({
   const [staffOptions, setStaffOptions] = useState<StaffOption[]>([])
   const [staffLoading, setStaffLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const domainSuggestion = useEmailDomainSuggestion()
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -173,6 +176,20 @@ export function PatientCreateDialog({
     // Clear field error when user starts typing
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
+    }
+    if (name === 'email') {
+      domainSuggestion.dismissSuggestion()
+    }
+  }
+
+  const handleEmailBlur = () => {
+    domainSuggestion.checkEmail(formData.email)
+  }
+
+  const handleApplyDomainSuggestion = () => {
+    const corrected = domainSuggestion.applySuggestion()
+    if (corrected) {
+      setFormData((prev) => ({ ...prev, email: corrected }))
     }
   }
 
@@ -301,6 +318,7 @@ export function PatientCreateDialog({
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleEmailBlur}
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent text-base min-h-[44px] ${
                     errors.email ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -308,6 +326,13 @@ export function PatientCreateDialog({
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                )}
+                {domainSuggestion.suggestedEmail && (
+                  <EmailDomainSuggestion
+                    suggestedEmail={domainSuggestion.suggestedEmail}
+                    onApply={handleApplyDomainSuggestion}
+                    onDismiss={domainSuggestion.dismissSuggestion}
+                  />
                 )}
               </div>
 

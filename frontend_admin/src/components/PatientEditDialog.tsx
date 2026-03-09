@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { PatientDetail, UpdatePatientRequest, PatientStatus } from '../lib/api-types'
+import { useEmailDomainSuggestion } from '../hooks/useEmailDomainSuggestion'
+import { EmailDomainSuggestion } from './ui/EmailDomainSuggestion'
 
 interface FormErrors {
   name?: string
@@ -22,6 +24,7 @@ export function PatientEditDialog({ isOpen, onClose, onSuccess, patient }: Patie
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const domainSuggestion = useEmailDomainSuggestion()
 
   useEffect(() => {
     if (patient && isOpen) {
@@ -71,6 +74,20 @@ export function PatientEditDialog({ isOpen, onClose, onSuccess, patient }: Patie
         delete newErrors[field as keyof FormErrors]
         return newErrors
       })
+    }
+    if (field === 'email') {
+      domainSuggestion.dismissSuggestion()
+    }
+  }
+
+  const handleEmailBlur = () => {
+    domainSuggestion.checkEmail(formData.email || '')
+  }
+
+  const handleApplyDomainSuggestion = () => {
+    const corrected = domainSuggestion.applySuggestion()
+    if (corrected) {
+      setFormData((prev) => ({ ...prev, email: corrected }))
     }
   }
 
@@ -176,6 +193,7 @@ export function PatientEditDialog({ isOpen, onClose, onSuccess, patient }: Patie
               type="email"
               value={formData.email || ''}
               onChange={(e) => handleChange('email', e.target.value)}
+              onBlur={handleEmailBlur}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? 'patient-edit-email-error' : undefined}
@@ -184,6 +202,13 @@ export function PatientEditDialog({ isOpen, onClose, onSuccess, patient }: Patie
               <p id="patient-edit-email-error" role="alert" className="mt-1 text-sm text-red-600">
                 {errors.email}
               </p>
+            )}
+            {domainSuggestion.suggestedEmail && (
+              <EmailDomainSuggestion
+                suggestedEmail={domainSuggestion.suggestedEmail}
+                onApply={handleApplyDomainSuggestion}
+                onDismiss={domainSuggestion.dismissSuggestion}
+              />
             )}
           </div>
 

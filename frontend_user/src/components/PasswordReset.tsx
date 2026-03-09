@@ -2,8 +2,10 @@ import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
+import { EmailDomainSuggestion } from './ui/EmailDomainSuggestion'
 import { Eye, EyeOff, Heart, Mail, CheckCircle } from 'lucide-react'
 import { z } from 'zod'
+import { useEmailDomainSuggestion } from '../hooks/useEmailDomainSuggestion'
 
 // Validation schemas
 const emailSchema = z.object({
@@ -53,6 +55,7 @@ export function PasswordReset() {
   // Common state
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  const domainSuggestion = useEmailDomainSuggestion()
 
   // Email form handlers
   const validateEmail = (): boolean => {
@@ -107,11 +110,23 @@ export function PasswordReset() {
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
+    domainSuggestion.dismissSuggestion()
     if (apiError) {
       setApiError(null)
     }
     if (emailValidationErrors.email) {
       setEmailValidationErrors((prev) => ({ ...prev, email: undefined }))
+    }
+  }
+
+  const handleEmailBlur = () => {
+    domainSuggestion.checkEmail(email)
+  }
+
+  const handleApplyDomainSuggestion = () => {
+    const corrected = domainSuggestion.applySuggestion()
+    if (corrected) {
+      setEmail(corrected)
     }
   }
 
@@ -362,16 +377,26 @@ export function PasswordReset() {
         </p>
 
         <form onSubmit={handleEmailSubmit} className="w-full max-w-sm space-y-4">
-          <Input
-            type="email"
-            label="メールアドレス"
-            placeholder="example@mail.com"
-            value={email}
-            onChange={(e) => handleEmailChange(e.target.value)}
-            error={emailValidationErrors.email}
-            disabled={isLoading}
-            autoComplete="email"
-          />
+          <div>
+            <Input
+              type="email"
+              label="メールアドレス"
+              placeholder="example@mail.com"
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              onBlur={handleEmailBlur}
+              error={emailValidationErrors.email}
+              disabled={isLoading}
+              autoComplete="email"
+            />
+            {domainSuggestion.suggestedEmail && (
+              <EmailDomainSuggestion
+                suggestedEmail={domainSuggestion.suggestedEmail}
+                onApply={handleApplyDomainSuggestion}
+                onDismiss={domainSuggestion.dismissSuggestion}
+              />
+            )}
+          </div>
 
           {/* API error */}
           {apiError && (

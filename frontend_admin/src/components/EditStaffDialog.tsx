@@ -3,6 +3,8 @@ import { X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { StaffMember, UpdateStaffRequest, AssignedPatientSummary } from '../lib/api-types'
 import { PatientAssignmentSelector } from './PatientAssignmentSelector'
+import { useEmailDomainSuggestion } from '../hooks/useEmailDomainSuggestion'
+import { EmailDomainSuggestion } from './ui/EmailDomainSuggestion'
 
 type TabKey = 'info' | 'patients'
 
@@ -29,6 +31,7 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
   const [assignedPatients, setAssignedPatients] = useState<AssignedPatientSummary[]>([])
   const [isSavingPatients, setIsSavingPatients] = useState(false)
   const [patientSaveSuccess, setPatientSaveSuccess] = useState(false)
+  const domainSuggestion = useEmailDomainSuggestion()
 
   useEffect(() => {
     if (staff && isOpen) {
@@ -89,6 +92,20 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
         delete newErrors[field as keyof FormErrors]
         return newErrors
       })
+    }
+    if (field === 'email') {
+      domainSuggestion.dismissSuggestion()
+    }
+  }
+
+  const handleEmailBlur = () => {
+    domainSuggestion.checkEmail(formData.email || '')
+  }
+
+  const handleApplyDomainSuggestion = () => {
+    const corrected = domainSuggestion.applySuggestion()
+    if (corrected) {
+      setFormData((prev) => ({ ...prev, email: corrected }))
     }
   }
 
@@ -264,6 +281,7 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
                 type="email"
                 value={formData.email || ''}
                 onChange={(e) => handleChange('email', e.target.value)}
+                onBlur={handleEmailBlur}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E40AF] focus:border-transparent text-base min-h-[44px]"
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'edit-email-error' : undefined}
@@ -272,6 +290,13 @@ export function EditStaffDialog({ isOpen, onClose, onSuccess, staff }: EditStaff
                 <p id="edit-email-error" role="alert" className="mt-1 text-sm text-red-600">
                   {errors.email}
                 </p>
+              )}
+              {domainSuggestion.suggestedEmail && (
+                <EmailDomainSuggestion
+                  suggestedEmail={domainSuggestion.suggestedEmail}
+                  onApply={handleApplyDomainSuggestion}
+                  onDismiss={domainSuggestion.dismissSuggestion}
+                />
               )}
             </div>
 

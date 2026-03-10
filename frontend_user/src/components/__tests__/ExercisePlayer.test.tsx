@@ -227,7 +227,8 @@ describe('U-04 ExercisePlayer', () => {
       const playButton = screen.getByRole('button', { name: /再生/ })
       await user.click(playButton)
 
-      // Should now show pause button
+      // Should enter fullscreen and show pause button
+      expect(screen.getByTestId('fullscreen-overlay')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /一時停止/ })).toBeInTheDocument()
     })
 
@@ -243,7 +244,7 @@ describe('U-04 ExercisePlayer', () => {
       expect(overlayButton).not.toHaveClass('opacity-0')
     })
 
-    it('should hide overlay when video is playing', async () => {
+    it('should enter fullscreen mode when play is clicked', async () => {
       const user = userEvent.setup()
       renderExercisePlayer()
 
@@ -254,13 +255,13 @@ describe('U-04 ExercisePlayer', () => {
       const playButton = screen.getByRole('button', { name: /再生/ })
       await user.click(playButton)
 
-      // Overlay should become hidden (opacity-0, pointer-events-none)
-      const overlayButton = screen.getByRole('button', { name: /一時停止/ })
-      expect(overlayButton).toHaveClass('opacity-0')
-      expect(overlayButton).toHaveClass('pointer-events-none')
+      // Fullscreen overlay should be shown with controls
+      expect(screen.getByTestId('fullscreen-overlay')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /フルスクリーンを終了/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /一時停止/ })).toBeInTheDocument()
     })
 
-    it('should show overlay again when video area is tapped during playback', async () => {
+    it('should exit fullscreen when close button is clicked', async () => {
       const user = userEvent.setup()
       renderExercisePlayer()
 
@@ -268,21 +269,16 @@ describe('U-04 ExercisePlayer', () => {
         expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
       })
 
-      // Start playing
+      // Enter fullscreen
       const playButton = screen.getByRole('button', { name: /再生/ })
       await user.click(playButton)
+      expect(screen.getByTestId('fullscreen-overlay')).toBeInTheDocument()
 
-      // Verify overlay is hidden
-      const overlayButton = screen.getByRole('button', { name: /一時停止/ })
-      expect(overlayButton).toHaveClass('opacity-0')
+      // Exit fullscreen
+      const closeButton = screen.getByRole('button', { name: /フルスクリーンを終了/ })
+      await user.click(closeButton)
 
-      // Click the video element to pause (overlay has pointer-events-none)
-      const video = screen.getByTestId('exercise-video')
-      await user.click(video)
-
-      // Should pause and show overlay again
-      const pausedOverlay = screen.getByRole('button', { name: /再生/ })
-      expect(pausedOverlay).not.toHaveClass('opacity-0')
+      expect(screen.queryByTestId('fullscreen-overlay')).not.toBeInTheDocument()
     })
 
     it('should have CSS transition for smooth fade', async () => {

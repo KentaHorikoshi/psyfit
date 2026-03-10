@@ -5,6 +5,8 @@ import { apiClient } from '../lib/api-client'
 import type { Exercise } from '../lib/api-types'
 import { ArrowLeft, Play, Pause, Check, ChevronRight } from 'lucide-react'
 import { ExerciseNoteSlider } from './ExerciseNoteSlider'
+import { ExercisePlayerFullscreenOverlay } from './ExercisePlayerFullscreenOverlay'
+import { useFullscreenPlayer } from '../hooks/useFullscreenPlayer'
 
 export function ExercisePlayer() {
   const navigate = useNavigate()
@@ -26,6 +28,7 @@ export function ExercisePlayer() {
   const [videoError, setVideoError] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenPlayer()
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -83,9 +86,20 @@ export function ExercisePlayer() {
     if (isPlaying) {
       videoRef.current.pause()
     } else {
+      if (!isFullscreen) {
+        enterFullscreen()
+      }
       videoRef.current.play()
     }
     setIsPlaying(!isPlaying)
+  }
+
+  const handleExitFullscreen = () => {
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause()
+      setIsPlaying(false)
+    }
+    exitFullscreen()
   }
 
   const handleNextSet = () => {
@@ -114,6 +128,7 @@ export function ExercisePlayer() {
       const count = (response.data as { today_count?: number })?.today_count
       setTodayCount(count ?? 1)
       setIsCompleted(true)
+      exitFullscreen()
 
       // Navigate to celebration after short delay
       setTimeout(() => {
@@ -210,62 +225,85 @@ export function ExercisePlayer() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{ maxWidth: '390px', margin: '0 auto' }}>
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center">
-          <button
-            onClick={() => navigate('/exercise-menu')}
-            className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
-            aria-label="戻る"
-          >
-            <ArrowLeft size={24} className="text-gray-700" />
-          </button>
-          <h1 className="text-xl font-bold text-gray-900 ml-2 truncate">{exercise.name}</h1>
-        </div>
-      </header>
-
-      {/* Video section */}
-      <div className="relative bg-black aspect-video">
-        <video
-          ref={videoRef}
-          data-testid="exercise-video"
-          src={videoStreamUrl ?? undefined}
-          poster={exercise.thumbnail_url}
-          className="w-full h-full object-contain cursor-pointer"
-          aria-label={`${exercise.name}の動画`}
-          playsInline
-          onClick={handlePlayPause}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
+      {/* Fullscreen overlay */}
+      {isFullscreen && !isCompleted && (
+        <ExercisePlayerFullscreenOverlay
+          exerciseName={exercise.name}
+          videoRef={videoRef}
+          videoStreamUrl={videoStreamUrl}
+          thumbnailUrl={exercise.thumbnail_url}
+          currentSet={currentSet}
+          totalSets={exercise.sets}
+          isLastSet={isLastSet}
+          isPlaying={isPlaying}
+          isCompleting={isCompleting}
+          onPlayPause={handlePlayPause}
+          onNextSet={handleNextSet}
+          onComplete={handleComplete}
+          onClose={handleExitFullscreen}
         />
+      )}
 
-        {/* Play/Pause overlay button */}
-        <button
-          onClick={handlePlayPause}
-          className={`
-            absolute inset-0 flex items-center justify-center
-            transition-opacity duration-300
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset
-            ${isPlaying
-              ? 'opacity-0 pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto'
-              : 'opacity-100 bg-black/20 hover:bg-black/30'
-            }
-          `}
-          aria-label={isPlaying ? '一時停止' : '再生'}
-        >
-          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-            {isPlaying ? (
-              <Pause size={32} className="text-[#1E40AF]" />
-            ) : (
-              <Play size={32} className="text-[#1E40AF] ml-1" />
-            )}
+      {/* Header */}
+      {!isFullscreen && (
+        <header className="bg-white border-b border-gray-200 px-4 py-4">
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate('/exercise-menu')}
+              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+              aria-label="戻る"
+            >
+              <ArrowLeft size={24} className="text-gray-700" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-900 ml-2 truncate">{exercise.name}</h1>
           </div>
-        </button>
-      </div>
+        </header>
+      )}
 
-      {/* Exercise info */}
-      <main className="flex-1 bg-white">
+      {/* Video section (inline, hidden when fullscreen) */}
+      {!isFullscreen && (
+        <div className="relative bg-black aspect-video">
+          <video
+            ref={!isFullscreen ? videoRef : undefined}
+            data-testid="exercise-video"
+            src={videoStreamUrl ?? undefined}
+            poster={exercise.thumbnail_url}
+            className="w-full h-full object-contain cursor-pointer"
+            aria-label={`${exercise.name}の動画`}
+            playsInline
+            onClick={handlePlayPause}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnded={() => setIsPlaying(false)}
+          />
+
+          {/* Play/Pause overlay button */}
+          <button
+            onClick={handlePlayPause}
+            className={`
+              absolute inset-0 flex items-center justify-center
+              transition-opacity duration-300
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset
+              ${isPlaying
+                ? 'opacity-0 pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto'
+                : 'opacity-100 bg-black/20 hover:bg-black/30'
+              }
+            `}
+            aria-label={isPlaying ? '一時停止' : '再生'}
+          >
+            <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+              {isPlaying ? (
+                <Pause size={32} className="text-[#1E40AF]" />
+              ) : (
+                <Play size={32} className="text-[#1E40AF] ml-1" />
+              )}
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* Exercise info (hidden when fullscreen) */}
+      <main className={`flex-1 bg-white ${isFullscreen ? 'hidden' : ''}`}>
         {/* Set counter with live region */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div
@@ -321,8 +359,8 @@ export function ExercisePlayer() {
         )}
       </main>
 
-      {/* Bottom actions */}
-      {!isCompleted && (
+      {/* Bottom actions (hidden when fullscreen) */}
+      {!isCompleted && !isFullscreen && (
         <div className="bg-white border-t border-gray-200 p-4 space-y-3">
           {!isLastSet && (
             <button

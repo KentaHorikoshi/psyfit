@@ -81,18 +81,42 @@ export function ExercisePlayer() {
   }, [exercise, isAuthenticated])
 
   const handlePlayPause = () => {
-    if (!videoRef.current) return
-
     if (isPlaying) {
-      videoRef.current.pause()
+      videoRef.current?.pause()
+      setIsPlaying(false)
     } else {
       if (!isFullscreen) {
+        // フルスクリーン移行時: play()はuseEffectで新しい動画要素に対して呼ぶ
         enterFullscreen()
+        setIsPlaying(true)
+      } else {
+        // すでにフルスクリーン: 直接 play()
+        videoRef.current?.play().catch(() => setIsPlaying(false))
+        setIsPlaying(true)
       }
-      videoRef.current.play()
     }
-    setIsPlaying(!isPlaying)
   }
+
+  // フルスクリーン移行時、新しいvideo要素がマウントされた後に再生を開始する
+  useEffect(() => {
+    if (!isFullscreen || !isPlaying || !videoRef.current) return
+
+    const video = videoRef.current
+
+    const tryPlay = () => {
+      video.play().catch(() => setIsPlaying(false))
+    }
+
+    // 動画が再生可能な状態なら即再生、そうでなければ canplay を待つ
+    if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+      tryPlay()
+    } else {
+      video.addEventListener('canplay', tryPlay, { once: true })
+      return () => video.removeEventListener('canplay', tryPlay)
+    }
+  // isFullscreen の変化にのみ反応（isPlayingの変化はボタン操作で処理済み）
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen])
 
   const handleExitFullscreen = () => {
     if (videoRef.current && !videoRef.current.paused) {

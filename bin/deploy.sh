@@ -174,13 +174,20 @@ fi
 
 # Step 6: Switch kamal-proxy to new container
 echo "--- Switching kamal-proxy to new container ---"
-docker exec kamal-proxy kamal-proxy deploy psyfit-web \
-  --target "${NEW_IP}:3000" --host psytech.jp
+DEPLOY_OUTPUT=$(docker exec kamal-proxy kamal-proxy deploy psyfit-web \
+  --target "${NEW_IP}:3000" \
+  --host psytech.jp \
+  --health-check-path /api/v1/health 2>&1) || true
+echo "kamal-proxy deploy output: ${DEPLOY_OUTPUT:-<empty>}"
 
-# Step 7: Verify through kamal-proxy (retry up to 10 times)
+# Diagnostics: show kamal-proxy routing state
+echo "--- kamal-proxy routing state ---"
+docker exec kamal-proxy kamal-proxy list 2>&1 || true
+
+# Step 7: Verify through kamal-proxy (retry up to 15 times)
 echo "--- Verifying through kamal-proxy ---"
 PROXY_OK=false
-for j in $(seq 1 10); do
+for j in $(seq 1 15); do
   sleep 2
   if curl -sf --max-time 5 -H "Host: psytech.jp" \
     "http://127.0.0.1:8080/api/v1/health" > /dev/null 2>&1; then
@@ -188,7 +195,7 @@ for j in $(seq 1 10); do
     PROXY_OK=true
     break
   fi
-  echo "Waiting for kamal-proxy health check... (${j}/10)"
+  echo "Waiting for kamal-proxy health check... (${j}/15)"
 done
 
 if [ "$PROXY_OK" = true ]; then
@@ -208,7 +215,9 @@ else
     OLD_IP=$(docker inspect "$CURRENT_CONTAINER" \
       --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
     docker exec kamal-proxy kamal-proxy deploy psyfit-web \
-      --target "${OLD_IP}:3000" --host psytech.jp
+      --target "${OLD_IP}:3000" \
+      --host psytech.jp \
+      --health-check-path /api/v1/health 2>&1 || true
     echo "ROLLBACK: Reverted to ${CURRENT_CONTAINER}"
   fi
 

@@ -177,10 +177,21 @@ echo "--- Switching kamal-proxy to new container ---"
 docker exec kamal-proxy kamal-proxy deploy psyfit-web \
   --target "${NEW_IP}:3000" --host psytech.jp
 
-# Step 7: Verify through kamal-proxy
-sleep 2
-if curl -sf --max-time 5 -H "Host: psytech.jp" \
-  "http://127.0.0.1:8080/api/v1/health" > /dev/null 2>&1; then
+# Step 7: Verify through kamal-proxy (retry up to 10 times)
+echo "--- Verifying through kamal-proxy ---"
+PROXY_OK=false
+for j in $(seq 1 10); do
+  sleep 2
+  if curl -sf --max-time 5 -H "Host: psytech.jp" \
+    "http://127.0.0.1:8080/api/v1/health" > /dev/null 2>&1; then
+    echo "Production health check passed through kamal-proxy (attempt ${j})"
+    PROXY_OK=true
+    break
+  fi
+  echo "Waiting for kamal-proxy health check... (${j}/10)"
+done
+
+if [ "$PROXY_OK" = true ]; then
   echo "Production health check passed through kamal-proxy"
 
   # Stop old container

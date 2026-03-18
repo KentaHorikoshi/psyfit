@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
@@ -86,8 +87,12 @@ export function ExercisePlayer() {
       setIsPlaying(false)
     } else {
       if (!isFullscreen) {
-        // フルスクリーン移行時: play()はuseEffectで新しい動画要素に対して呼ぶ
-        enterFullscreen()
+        // flushSyncでフルスクリーンオーバーレイのDOMマウントを同期的に完了させ、
+        // play()をユーザージェスチャーのコンテキスト内で呼ぶ（自動再生ポリシー対策）
+        flushSync(() => {
+          enterFullscreen()
+        })
+        videoRef.current?.play().catch(() => setIsPlaying(false))
         setIsPlaying(true)
       } else {
         // すでにフルスクリーン: 直接 play()
@@ -96,27 +101,6 @@ export function ExercisePlayer() {
       }
     }
   }
-
-  // フルスクリーン移行時、新しいvideo要素がマウントされた後に再生を開始する
-  useEffect(() => {
-    if (!isFullscreen || !isPlaying || !videoRef.current) return
-
-    const video = videoRef.current
-
-    const tryPlay = () => {
-      video.play().catch(() => setIsPlaying(false))
-    }
-
-    // 動画が再生可能な状態なら即再生、そうでなければ canplay を待つ
-    if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
-      tryPlay()
-    } else {
-      video.addEventListener('canplay', tryPlay, { once: true })
-      return () => video.removeEventListener('canplay', tryPlay)
-    }
-  // isFullscreen の変化にのみ反応（isPlayingの変化はボタン操作で処理済み）
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFullscreen])
 
   const handleExitFullscreen = () => {
     if (videoRef.current && !videoRef.current.paused) {

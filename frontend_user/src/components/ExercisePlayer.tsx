@@ -276,6 +276,7 @@ export function ExercisePlayer() {
             data-testid="exercise-video"
             src={videoStreamUrl ?? undefined}
             poster={exercise.thumbnail_url}
+            preload="metadata"
             className="w-full h-full object-contain cursor-pointer"
             aria-label={`${exercise.name}の動画`}
             playsInline

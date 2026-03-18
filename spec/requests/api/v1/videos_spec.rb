@@ -339,6 +339,69 @@ RSpec.describe 'Api::V1::Videos', type: :request do
     end
   end
 
+  describe 'X-Accel-Redirect mode (production)' do
+    let(:valid_token) { VideoAccessToken.generate_for(user: user, exercise: exercise) }
+
+    before do
+      sign_in_as_user(user)
+      allow_any_instance_of(Api::V1::VideosController)
+        .to receive(:use_x_accel_redirect?).and_return(true)
+    end
+
+    it 'returns X-Accel-Redirect header instead of file content' do
+      video.update!(video_url: '/storage/videos/test_video.mp4')
+      video_path = Rails.root.join('storage', 'videos', 'test_video.mp4')
+      FileUtils.mkdir_p(File.dirname(video_path))
+      File.write(video_path, 'dummy video content for testing')
+
+      get "/api/v1/videos/#{exercise.id}/stream", params: { token: valid_token.token }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.headers['X-Accel-Redirect']).to eq('/internal-videos/test_video.mp4')
+      expect(response.headers['Content-Type']).to include('video/mp4')
+      expect(response.headers['Cache-Control']).to include('private')
+      expect(response.body).to be_empty
+
+      FileUtils.rm_f(video_path)
+    end
+
+    it 'still performs token validation before X-Accel-Redirect' do
+      get "/api/v1/videos/#{exercise.id}/stream", params: { token: 'invalid-token' }
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.headers['X-Accel-Redirect']).to be_nil
+    end
+
+    it 'still records audit log with X-Accel-Redirect' do
+      video.update!(video_url: '/storage/videos/test_video.mp4')
+      video_path = Rails.root.join('storage', 'videos', 'test_video.mp4')
+      FileUtils.mkdir_p(File.dirname(video_path))
+      File.write(video_path, 'dummy video content for testing')
+
+      expect {
+        get "/api/v1/videos/#{exercise.id}/stream", params: { token: valid_token.token }
+      }.to change { AuditLog.where(action: 'video_access').count }.by(1)
+
+      FileUtils.rm_f(video_path)
+    end
+
+    it 'delegates Range requests to Nginx' do
+      video.update!(video_url: '/storage/videos/test_video.mp4')
+      video_path = Rails.root.join('storage', 'videos', 'test_video.mp4')
+      FileUtils.mkdir_p(File.dirname(video_path))
+      File.write(video_path, 'a' * 100)
+
+      get "/api/v1/videos/#{exercise.id}/stream",
+          params: { token: valid_token.token },
+          headers: { 'Range' => 'bytes=0-49' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.headers['X-Accel-Redirect']).to eq('/internal-videos/test_video.mp4')
+
+      FileUtils.rm_f(video_path)
+    end
+  end
+
   describe 'security tests' do
     describe 'token binding to user' do
       let(:other_user) { create(:user) }

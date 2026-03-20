@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiClient } from '../lib/api-client'
@@ -19,6 +19,7 @@ export function ExercisePlayer() {
   const [notFound, setNotFound] = useState(false)
 
   const [currentSet, setCurrentSet] = useState(1)
+  const [loopCount, setLoopCount] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
@@ -126,9 +127,18 @@ export function ExercisePlayer() {
     exitFullscreen()
   }
 
+  const handleVideoEnded = useCallback(() => {
+    setLoopCount(prev => prev + 1)
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0
+      videoRef.current.play().catch(() => setIsPlaying(false))
+    }
+  }, [])
+
   const handleNextSet = () => {
     if (exercise && currentSet < exercise.sets) {
       setCurrentSet(prev => prev + 1)
+      setLoopCount(0)
       // Reset video to beginning for next set
       if (videoRef.current) {
         videoRef.current.currentTime = 0
@@ -259,12 +269,15 @@ export function ExercisePlayer() {
           currentSet={currentSet}
           totalSets={exercise.sets}
           isLastSet={isLastSet}
+          loopCount={loopCount}
+          totalReps={exercise.reps}
           isPlaying={isPlaying}
           isCompleting={isCompleting}
           onPlayPause={handlePlayPause}
           onNextSet={handleNextSet}
           onComplete={handleComplete}
           onClose={handleExitFullscreen}
+          onVideoEnded={handleVideoEnded}
         />
       )}
 
@@ -298,7 +311,7 @@ export function ExercisePlayer() {
             onClick={handlePlayPause}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
+            onEnded={handleVideoEnded}
           />
 
           {/* Play/Pause overlay button */}
@@ -343,6 +356,16 @@ export function ExercisePlayer() {
           <p className="text-center text-gray-500 mt-1">
             {exercise.reps}回 × {exercise.sets}セット
           </p>
+          <div
+            role="status"
+            aria-live="polite"
+            aria-label={`実施回数 ${loopCount}回`}
+            className="flex items-center justify-center gap-2 mt-3"
+          >
+            <span className="text-gray-500 text-sm">実施回数</span>
+            <span className="text-2xl font-bold text-[#10B981]">{loopCount}</span>
+            <span className="text-gray-400 text-sm">/ {exercise.reps}回</span>
+          </div>
         </div>
 
         {/* Exercise Notes */}

@@ -9,12 +9,15 @@ interface ExercisePlayerFullscreenOverlayProps {
   currentSet: number
   totalSets: number
   isLastSet: boolean
+  loopCount: number
+  totalReps: number
   isPlaying: boolean
   isCompleting: boolean
   onPlayPause: () => void
   onNextSet: () => void
   onComplete: () => void
   onClose: () => void
+  onVideoEnded: () => void
 }
 
 const AUTO_HIDE_DELAY = 3000
@@ -27,12 +30,15 @@ export function ExercisePlayerFullscreenOverlay({
   currentSet,
   totalSets,
   isLastSet,
+  loopCount,
+  totalReps,
   isPlaying,
   isCompleting,
   onPlayPause,
   onNextSet,
   onComplete,
   onClose,
+  onVideoEnded,
 }: ExercisePlayerFullscreenOverlayProps) {
   const [showControls, setShowControls] = useState(true)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -113,7 +119,7 @@ export function ExercisePlayerFullscreenOverlay({
         onClick={handleScreenTap}
         onPlay={() => resetHideTimer()}
         onPause={() => setShowControls(true)}
-        onEnded={() => setShowControls(true)}
+        onEnded={onVideoEnded}
       />
 
       {/* Tap area for toggling controls (covers video) */}
@@ -180,16 +186,23 @@ export function ExercisePlayerFullscreenOverlay({
           ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
       >
-        {/* Set counter */}
+        {/* Set counter + loop count */}
         <div
           role="status"
           aria-live="polite"
-          className="flex items-center gap-2 mb-3"
+          className="flex items-center gap-4 mb-3"
         >
-          <span className="text-white/80 text-base">セット</span>
-          <span className="text-2xl font-bold text-white">
-            {currentSet} / {totalSets}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-white/80 text-base">セット</span>
+            <span className="text-2xl font-bold text-white">
+              {currentSet} / {totalSets}
+            </span>
+          </div>
+          <div className="w-px h-6 bg-white/30" />
+          <div className="flex items-center gap-1" aria-label={`実施回数 ${loopCount}回`}>
+            <span className="text-[#10B981] text-2xl font-bold">{loopCount}</span>
+            <span className="text-white/60 text-sm">/ {totalReps}回</span>
+          </div>
         </div>
 
         {/* Action buttons */}

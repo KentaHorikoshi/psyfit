@@ -18,7 +18,7 @@ gem "stimulus-rails"
 gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.22"
 
 # PII encryption with AES-256-GCM
 gem "attr_encrypted", "~> 4.0"

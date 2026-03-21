@@ -113,6 +113,7 @@ export function ExercisePlayerFullscreenOverlay({
         data-testid="fullscreen-video"
         src={videoStreamUrl ?? undefined}
         poster={thumbnailUrl}
+        preload="metadata"
         className="absolute inset-0 w-full h-full object-contain"
         aria-label={`${exerciseName}の動画`}
         playsInline

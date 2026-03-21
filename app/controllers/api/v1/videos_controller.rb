@@ -100,18 +100,30 @@ module Api
       end
 
       def stream_video(video_path)
-        file_size = File.size(video_path)
-        content_type = "video/mp4"
-
-        # Set common headers
-        response.headers["Accept-Ranges"] = "bytes"
-        response.headers["Content-Type"] = content_type
-
-        if request.headers["Range"].present?
-          stream_partial_content(video_path, file_size)
+        if use_x_accel_redirect?
+          # Production: delegate file serving to Nginx via X-Accel-Redirect
+          filename = File.basename(video_path)
+          response.headers["X-Accel-Redirect"] = "/internal-videos/#{filename}"
+          response.headers["Content-Type"] = "video/mp4"
+          response.headers["Content-Disposition"] = "inline"
+          response.headers["Cache-Control"] = "private, max-age=86400, must-revalidate"
+          head :ok
         else
-          stream_full_content(video_path, file_size)
+          # Development: serve file directly via Rails
+          file_size = File.size(video_path)
+          response.headers["Accept-Ranges"] = "bytes"
+          response.headers["Content-Type"] = "video/mp4"
+
+          if request.headers["Range"].present?
+            stream_partial_content(video_path, file_size)
+          else
+            stream_full_content(video_path, file_size)
+          end
         end
+      end
+
+      def use_x_accel_redirect?
+        Rails.env.production? || ENV["USE_X_ACCEL_REDIRECT"] == "true"
       end
 
       def stream_partial_content(video_path, file_size)

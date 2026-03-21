@@ -131,8 +131,7 @@ describe('U-04 ExercisePlayer', () => {
       renderExercisePlayer()
 
       await waitFor(() => {
-        expect(screen.getByText(/3セット/)).toBeInTheDocument()
-        expect(screen.getByText(/10回/)).toBeInTheDocument()
+        expect(screen.getByText(/10回 × 3セット/)).toBeInTheDocument()
       })
     })
 
@@ -520,8 +519,8 @@ describe('U-04 ExercisePlayer', () => {
       await user.click(nextSetButton)
 
       // Should have aria-live region
-      const liveRegion = screen.getByRole('status')
-      expect(liveRegion).toBeInTheDocument()
+      const liveRegions = screen.getAllByRole('status')
+      expect(liveRegions.length).toBeGreaterThan(0)
     })
   })
 })

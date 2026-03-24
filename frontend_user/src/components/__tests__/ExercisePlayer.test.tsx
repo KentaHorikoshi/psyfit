@@ -49,6 +49,7 @@ const mockExercise: Exercise = {
   thumbnail_url: '/thumbnails/knee-extension.jpg',
   sets: 3,
   reps: 10,
+  reps_per_video: 1,
   daily_frequency: 1,
   exercise_type: 'training',
 }
@@ -131,8 +132,7 @@ describe('U-04 ExercisePlayer', () => {
       renderExercisePlayer()
 
       await waitFor(() => {
-        expect(screen.getByText(/3セット/)).toBeInTheDocument()
-        expect(screen.getByText(/10回/)).toBeInTheDocument()
+        expect(screen.getByText(/10回 × 3セット/)).toBeInTheDocument()
       })
     })
 
@@ -519,9 +519,9 @@ describe('U-04 ExercisePlayer', () => {
       const nextSetButton = screen.getByRole('button', { name: /次のセット/ })
       await user.click(nextSetButton)
 
-      // Should have aria-live region
-      const liveRegion = screen.getByRole('status')
-      expect(liveRegion).toBeInTheDocument()
+      // Should have aria-live region (複数のstatusロール要素が存在する)
+      const liveRegions = screen.getAllByRole('status')
+      expect(liveRegions.length).toBeGreaterThan(0)
     })
   })
 })

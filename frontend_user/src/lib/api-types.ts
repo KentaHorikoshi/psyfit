@@ -45,6 +45,7 @@ export interface Exercise {
   thumbnail_url?: string
   sets: number
   reps: number
+  reps_per_video: number
   daily_frequency: number
   duration_seconds?: number
   exercise_type: ExerciseType

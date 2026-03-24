@@ -172,14 +172,6 @@ export function ExercisePlayer() {
     }
   }
 
-  const handleVideoEnded = useCallback(() => {
-    setLoopCount(prev => prev + 1)
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0
-      videoRef.current.play().catch(() => setIsPlaying(false))
-    }
-  }, [])
-
   const handleNextSet = () => {
     if (exercise && currentSet < exercise.sets) {
       setCurrentSet(prev => prev + 1)
@@ -325,6 +317,7 @@ export function ExercisePlayer() {
           onClose={handleExitFullscreen}
           onVideoEnded={handleVideoEnded}
           onTimeUpdate={handleTimeUpdate}
+          isLooping={isLooping}
         />
       )}
 

@@ -19,6 +19,7 @@ interface ExercisePlayerFullscreenOverlayProps {
   onClose: () => void
   onVideoEnded: () => void
   onTimeUpdate: () => void
+  isLooping: React.MutableRefObject<boolean>
 }
 
 const AUTO_HIDE_DELAY = 3000
@@ -41,6 +42,7 @@ export function ExercisePlayerFullscreenOverlay({
   onClose,
   onVideoEnded,
   onTimeUpdate,
+  isLooping,
 }: ExercisePlayerFullscreenOverlayProps) {
   // 種目名・再生ボタンのみ auto-hide
   const [showTopControls, setShowTopControls] = useState(true)
@@ -92,7 +94,13 @@ export function ExercisePlayerFullscreenOverlay({
         aria-label={`${exerciseName}の動画`}
         playsInline
         onClick={handleScreenTap}
-        onPlay={() => resetHideTimer()}
+        onPlay={() => {
+          if (isLooping.current) {
+            isLooping.current = false
+          } else {
+            resetHideTimer()
+          }
+        }}
         onEnded={() => onVideoEnded()}
         onTimeUpdate={onTimeUpdate}
       />

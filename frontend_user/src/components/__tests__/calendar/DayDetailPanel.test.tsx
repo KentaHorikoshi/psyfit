@@ -13,6 +13,7 @@ const makeExercise = (id: string, name: string): Exercise => ({
   video_url: '/videos/test.mp4',
   sets: 3,
   reps: 10,
+  reps_per_video: 1,
   daily_frequency: 1,
   exercise_type: 'training',
 })
@@ -171,6 +172,7 @@ describe('DayDetailPanel - daily_frequency対応', () => {
     video_url: '/videos/test.mp4',
     sets: 3,
     reps: 10,
+    reps_per_video: 1,
     daily_frequency: freq,
     exercise_type: 'training',
   })

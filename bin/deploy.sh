@@ -142,6 +142,7 @@ echo "--- Starting new container: ${NEW_CONTAINER_NAME} ---"
 docker run -d \
   --name "$NEW_CONTAINER_NAME" \
   --network kamal \
+  --restart unless-stopped \
   --env-file "$ENV_FILE" \
   -v psyfit_storage:/rails/storage \
   psyfit-local:latest

@@ -30,6 +30,11 @@ export function ExercisePlayer() {
   const [videoError, setVideoError] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const isLooping = useRef(false)
+  const loopCountRef = useRef(0)
+  const targetRepsRef = useRef(1)
+  const repsPerVideoRef = useRef(1)
+  const countedThresholdsRef = useRef<Set<number>>(new Set())
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenPlayer()
 
   useEffect(() => {
@@ -62,6 +67,12 @@ export function ExercisePlayer() {
     fetchExercise()
   }, [isAuthenticated, id])
 
+  // targetReps と repsPerVideo を ref に同期
+  useEffect(() => {
+    targetRepsRef.current = exercise?.reps ?? 1
+    repsPerVideoRef.current = exercise?.reps_per_video ?? 1
+  }, [exercise])
+
   // Fetch video token after exercise is loaded
   useEffect(() => {
     async function fetchVideoToken() {
@@ -81,6 +92,50 @@ export function ExercisePlayer() {
 
     fetchVideoToken()
   }, [exercise, isAuthenticated])
+
+  const handleTimeUpdate = useCallback(() => {
+    if (!videoRef.current) return
+    const { currentTime, duration } = videoRef.current
+    if (!duration) return
+    const repsPerVideo = repsPerVideoRef.current
+    if (repsPerVideo <= 1) return
+    const progress = currentTime / duration
+    for (let i = 1; i < repsPerVideo; i++) {
+      const threshold = i / repsPerVideo
+      if (progress >= threshold && !countedThresholdsRef.current.has(i)) {
+        countedThresholdsRef.current.add(i)
+        const newCount = loopCountRef.current + 1
+        loopCountRef.current = newCount
+        setLoopCount(newCount)
+        if (newCount >= targetRepsRef.current) {
+          videoRef.current.pause()
+          setIsPlaying(false)
+        }
+      }
+    }
+  }, [])
+
+  const handleVideoEnded = useCallback(() => {
+    const newCount = loopCountRef.current + 1
+    loopCountRef.current = newCount
+    setLoopCount(newCount)
+    countedThresholdsRef.current = new Set()
+
+    if (newCount >= targetRepsRef.current) {
+      // 目標回数到達: 停止
+      setIsPlaying(false)
+    } else {
+      // 未到達: 次のループへ
+      if (videoRef.current) {
+        isLooping.current = true
+        videoRef.current.currentTime = 0
+        videoRef.current.play().catch(() => {
+          isLooping.current = false
+          setIsPlaying(false)
+        })
+      }
+    }
+  }, [])
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -109,6 +164,12 @@ export function ExercisePlayer() {
       setIsPlaying(false)
     }
     exitFullscreen()
+    loopCountRef.current = 0
+    setLoopCount(0)
+    countedThresholdsRef.current = new Set()
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0
+    }
   }
 
   const handleVideoEnded = useCallback(() => {
@@ -122,8 +183,9 @@ export function ExercisePlayer() {
   const handleNextSet = () => {
     if (exercise && currentSet < exercise.sets) {
       setCurrentSet(prev => prev + 1)
+      loopCountRef.current = 0
       setLoopCount(0)
-      // Reset video to beginning for next set
+      countedThresholdsRef.current = new Set()
       if (videoRef.current) {
         videoRef.current.currentTime = 0
       }
@@ -262,6 +324,7 @@ export function ExercisePlayer() {
           onComplete={handleComplete}
           onClose={handleExitFullscreen}
           onVideoEnded={handleVideoEnded}
+          onTimeUpdate={handleTimeUpdate}
         />
       )}
 
@@ -294,8 +357,8 @@ export function ExercisePlayer() {
             aria-label={`${exercise.name}の動画`}
             playsInline
             onClick={handlePlayPause}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
+            onPlay={() => { isLooping.current = false; setIsPlaying(true) }}
+            onPause={() => { if (!isLooping.current) setIsPlaying(false) }}
             onEnded={handleVideoEnded}
           />
 

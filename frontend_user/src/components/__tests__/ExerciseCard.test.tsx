@@ -12,6 +12,7 @@ const mockExercise: Exercise = {
   thumbnail_url: '/thumbnails/knee-extension.jpg',
   sets: 3,
   reps: 10,
+  reps_per_video: 1,
   daily_frequency: 1,
   exercise_type: 'training',
 }

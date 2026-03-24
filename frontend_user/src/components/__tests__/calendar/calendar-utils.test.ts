@@ -205,6 +205,7 @@ describe('calendar-utils', () => {
       video_url: '',
       sets: 3,
       reps: 10,
+      reps_per_video: 1,
       daily_frequency: dailyFrequency,
       exercise_type: 'training',
     })

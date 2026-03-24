@@ -49,6 +49,7 @@ const mockExercise: Exercise = {
   thumbnail_url: '/thumbnails/knee-extension.jpg',
   sets: 3,
   reps: 10,
+  reps_per_video: 1,
   daily_frequency: 1,
   exercise_type: 'training',
 }
@@ -518,7 +519,7 @@ describe('U-04 ExercisePlayer', () => {
       const nextSetButton = screen.getByRole('button', { name: /次のセット/ })
       await user.click(nextSetButton)
 
-      // Should have aria-live region
+      // Should have aria-live region (複数のstatusロール要素が存在する)
       const liveRegions = screen.getAllByRole('status')
       expect(liveRegions.length).toBeGreaterThan(0)
     })

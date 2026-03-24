@@ -34,6 +34,7 @@ class Exercise < ApplicationRecord
   validates :body_part_minor, inclusion: { in: ALL_BODY_PART_MINORS }, allow_nil: true
   validates :recommended_reps, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :recommended_sets, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  validates :reps_per_video, numericality: { only_integer: true, greater_than: 0 }
   validates :duration_seconds, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :video_url, length: { maximum: 255 }, allow_nil: true
   validates :thumbnail_url, length: { maximum: 255 }, allow_nil: true

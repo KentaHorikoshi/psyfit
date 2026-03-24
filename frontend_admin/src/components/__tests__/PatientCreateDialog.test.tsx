@@ -480,21 +480,12 @@ describe('PatientCreateDialog', () => {
 
   describe('loading state', () => {
     it('should show loading state during submission', async () => {
-      const user = userEvent.setup()
+      let resolveCreatePatient: (value: unknown) => void
       vi.mocked(api.createPatient).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({
-          status: 'success',
-          data: {
-            id: 'new-patient-id',
-            user_code: 'USR001',
-            name: 'テスト 太郎',
-            email: 'test@example.com',
-            status: '維持期',
-            message: '患者を登録しました。',
-          },
-        }), 1000))
+        () => new Promise((resolve) => { resolveCreatePatient = resolve })
       )
 
+      const user = userEvent.setup()
       renderPatientCreateDialog()
 
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
@@ -507,24 +498,31 @@ describe('PatientCreateDialog', () => {
       await waitFor(() => {
         expect(screen.getByText(/登録中/)).toBeInTheDocument()
       })
+
+      // Resolve the pending promise to prevent state update after unmount
+      resolveCreatePatient!({
+        status: 'success',
+        data: {
+          id: 'new-patient-id',
+          user_code: 'USR001',
+          name: 'テスト 太郎',
+          email: 'test@example.com',
+          status: '維持期',
+          message: '患者を登録しました。',
+        },
+      })
+      await waitFor(() => {
+        expect(screen.getByText('患者を登録しました')).toBeInTheDocument()
+      })
     })
 
     it('should disable submit button during submission', async () => {
-      const user = userEvent.setup()
+      let resolveCreatePatient: (value: unknown) => void
       vi.mocked(api.createPatient).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({
-          status: 'success',
-          data: {
-            id: 'new-patient-id',
-            user_code: 'USR001',
-            name: 'テスト 太郎',
-            email: 'test@example.com',
-            status: '維持期',
-            message: '患者を登録しました。',
-          },
-        }), 1000))
+        () => new Promise((resolve) => { resolveCreatePatient = resolve })
       )
 
+      const user = userEvent.setup()
       renderPatientCreateDialog()
 
       await user.type(screen.getByLabelText(/^氏名/), 'テスト 太郎')
@@ -537,6 +535,22 @@ describe('PatientCreateDialog', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /登録中/ })).toBeDisabled()
+      })
+
+      // Resolve the pending promise to prevent state update after unmount
+      resolveCreatePatient!({
+        status: 'success',
+        data: {
+          id: 'new-patient-id',
+          user_code: 'USR001',
+          name: 'テスト 太郎',
+          email: 'test@example.com',
+          status: '維持期',
+          message: '患者を登録しました。',
+        },
+      })
+      await waitFor(() => {
+        expect(screen.getByText('患者を登録しました')).toBeInTheDocument()
       })
     })
   })

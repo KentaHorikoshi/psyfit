@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { PatientCreateDialog } from '../PatientCreateDialog'
 import { AuthContext, type AuthContextType } from '../../contexts/AuthContext'
-import type { Staff } from '../../lib/api-types'
+import type { Staff, ApiResponse, CreatePatientResponse } from '../../lib/api-types'
 import { api } from '../../lib/api'
 
 // Mock API
@@ -480,7 +480,7 @@ describe('PatientCreateDialog', () => {
 
   describe('loading state', () => {
     it('should show loading state during submission', async () => {
-      let resolveCreatePatient: (value: unknown) => void
+      let resolveCreatePatient: (value: ApiResponse<CreatePatientResponse>) => void
       vi.mocked(api.createPatient).mockImplementation(
         () => new Promise((resolve) => { resolveCreatePatient = resolve })
       )
@@ -517,7 +517,7 @@ describe('PatientCreateDialog', () => {
     })
 
     it('should disable submit button during submission', async () => {
-      let resolveCreatePatient: (value: unknown) => void
+      let resolveCreatePatient: (value: ApiResponse<CreatePatientResponse>) => void
       vi.mocked(api.createPatient).mockImplementation(
         () => new Promise((resolve) => { resolveCreatePatient = resolve })
       )

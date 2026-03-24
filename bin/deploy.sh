@@ -173,6 +173,21 @@ if [ "$HEALTH_OK" != true ]; then
   exit 1
 fi
 
+# Step 5.5: Check /up endpoint (kamal-proxy default health check path)
+echo "--- Checking /up endpoint on new container ---"
+UP_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 5 "http://${NEW_IP}:3000/up" 2>&1) || true
+echo "/up returned HTTP ${UP_STATUS}"
+
+# Also check connectivity from kamal-proxy container
+echo "--- Checking connectivity from kamal-proxy to new container ---"
+PROXY_REACH=$(docker exec kamal-proxy wget -q -O /dev/null --timeout=5 \
+  "http://${NEW_IP}:3000/up" 2>&1) && echo "kamal-proxy can reach new container /up" \
+  || echo "kamal-proxy CANNOT reach new container /up: ${PROXY_REACH}"
+
+PROXY_REACH_HEALTH=$(docker exec kamal-proxy wget -q -O /dev/null --timeout=5 \
+  "http://${NEW_IP}:3000/api/v1/health" 2>&1) && echo "kamal-proxy can reach new container /api/v1/health" \
+  || echo "kamal-proxy CANNOT reach new container /api/v1/health: ${PROXY_REACH_HEALTH}"
+
 # Step 6: Switch kamal-proxy to new container
 echo "--- Switching kamal-proxy to new container ---"
 DEPLOY_OUTPUT=$(docker exec kamal-proxy kamal-proxy deploy psyfit-web \

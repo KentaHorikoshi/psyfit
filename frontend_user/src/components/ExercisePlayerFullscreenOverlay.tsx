@@ -9,12 +9,17 @@ interface ExercisePlayerFullscreenOverlayProps {
   currentSet: number
   totalSets: number
   isLastSet: boolean
+  loopCount: number
+  totalReps: number
   isPlaying: boolean
   isCompleting: boolean
   onPlayPause: () => void
   onNextSet: () => void
   onComplete: () => void
   onClose: () => void
+  onVideoEnded: () => void
+  onTimeUpdate: () => void
+  isLooping: React.MutableRefObject<boolean>
 }
 
 const AUTO_HIDE_DELAY = 3000
@@ -27,72 +32,49 @@ export function ExercisePlayerFullscreenOverlay({
   currentSet,
   totalSets,
   isLastSet,
+  loopCount,
+  totalReps,
   isPlaying,
   isCompleting,
   onPlayPause,
   onNextSet,
   onComplete,
   onClose,
+  onVideoEnded,
+  onTimeUpdate,
+  isLooping,
 }: ExercisePlayerFullscreenOverlayProps) {
-  const [showControls, setShowControls] = useState(true)
+  // 種目名・再生ボタンのみ auto-hide
+  const [showTopControls, setShowTopControls] = useState(true)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const resetHideTimer = useCallback(() => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current)
-    }
-    setShowControls(true)
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+    setShowTopControls(true)
     if (isPlaying) {
-      hideTimerRef.current = setTimeout(() => {
-        setShowControls(false)
-      }, AUTO_HIDE_DELAY)
+      hideTimerRef.current = setTimeout(() => setShowTopControls(false), AUTO_HIDE_DELAY)
     }
   }, [isPlaying])
 
-  // Show controls when paused, start auto-hide when playing
   useEffect(() => {
     if (!isPlaying) {
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current)
-      }
-      setShowControls(true)
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+      setShowTopControls(true)
     } else {
       resetHideTimer()
     }
   }, [isPlaying, resetHideTimer])
 
-  // Cleanup timer on unmount
   useEffect(() => {
-    return () => {
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current)
-      }
-    }
+    return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current) }
   }, [])
 
   const handleScreenTap = () => {
     if (isPlaying) {
-      if (showControls) {
-        // Controls visible + playing → hide controls
-        setShowControls(false)
-        if (hideTimerRef.current) {
-          clearTimeout(hideTimerRef.current)
-        }
-      } else {
-        // Controls hidden + playing → show controls with auto-hide
-        resetHideTimer()
-      }
+      resetHideTimer()
     } else {
-      // Paused → toggle play
       onPlayPause()
     }
-  }
-
-  const handleClose = () => {
-    if (videoRef.current && !videoRef.current.paused) {
-      videoRef.current.pause()
-    }
-    onClose()
   }
 
   return (
@@ -112,31 +94,37 @@ export function ExercisePlayerFullscreenOverlay({
         aria-label={`${exerciseName}の動画`}
         playsInline
         onClick={handleScreenTap}
-        onPlay={() => resetHideTimer()}
-        onPause={() => setShowControls(true)}
-        onEnded={() => setShowControls(true)}
+        onPlay={() => {
+          if (isLooping.current) {
+            isLooping.current = false
+          } else {
+            resetHideTimer()
+          }
+        }}
+        onEnded={() => onVideoEnded()}
+        onTimeUpdate={onTimeUpdate}
       />
 
-      {/* Tap area for toggling controls (covers video) */}
+      {/* Tap area */}
       <button
         className="absolute inset-0 w-full h-full z-[5] bg-transparent cursor-pointer"
         onClick={handleScreenTap}
-        aria-label={showControls ? 'コントロールを非表示' : 'コントロールを表示'}
+        aria-label={showTopControls ? 'コントロールを非表示' : 'コントロールを表示'}
         tabIndex={-1}
       />
 
-      {/* Top bar */}
+      {/* Top bar — 種目名・戻るボタン (auto-hide) */}
       <div
         className={`
           absolute top-0 inset-x-0 z-10 px-4 py-3
           bg-gradient-to-b from-black/60 to-transparent
           flex items-center gap-3
           transition-opacity duration-300
-          ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+          ${showTopControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
       >
         <button
-          onClick={handleClose}
+          onClick={onClose}
           className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           aria-label="フルスクリーンを終了"
         >
@@ -147,12 +135,12 @@ export function ExercisePlayerFullscreenOverlay({
         </h2>
       </div>
 
-      {/* Center play/pause button */}
+      {/* Center play/pause button (auto-hide) */}
       <div
         className={`
           absolute inset-0 z-[6] flex items-center justify-center
           transition-opacity duration-300 pointer-events-none
-          ${showControls ? 'opacity-100' : 'opacity-0'}
+          ${showTopControls ? 'opacity-100' : 'opacity-0'}
         `}
       >
         <button
@@ -172,25 +160,30 @@ export function ExercisePlayerFullscreenOverlay({
         </button>
       </div>
 
-      {/* Bottom bar */}
-      <div
-        className={`
-          absolute bottom-0 inset-x-0 z-10 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]
-          bg-gradient-to-t from-black/60 to-transparent
-          transition-opacity duration-300
-          ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-        `}
-      >
-        {/* Set counter */}
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex items-center gap-2 mb-3"
-        >
-          <span className="text-white/80 text-base">セット</span>
-          <span className="text-2xl font-bold text-white">
-            {currentSet} / {totalSets}
-          </span>
+      {/* Bottom bar — セット数・回数・ボタン (常時表示) */}
+      <div className="absolute bottom-0 inset-x-0 z-10 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/70 to-transparent">
+        {/* カウンター */}
+        <div className="flex items-center gap-4 mb-3">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2"
+          >
+            <span className="text-white/80 text-base">セット</span>
+            <span className="text-2xl font-bold text-white">
+              {currentSet} / {totalSets}
+            </span>
+          </div>
+          <div
+            role="status"
+            aria-live="polite"
+            aria-label={`実施回数 ${loopCount}回`}
+            className="flex items-center gap-1"
+          >
+            <span className="text-white/80 text-sm">回数</span>
+            <span className="text-2xl font-bold text-[#10B981]">{loopCount}</span>
+            <span className="text-white/60 text-sm">/ {totalReps}</span>
+          </div>
         </div>
 
         {/* Action buttons */}
@@ -200,7 +193,6 @@ export function ExercisePlayerFullscreenOverlay({
               onClick={(e) => {
                 e.stopPropagation()
                 onNextSet()
-                resetHideTimer()
               }}
               className="flex-1 min-h-[48px] px-4 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white flex items-center justify-center gap-2"
               aria-label="次のセットへ進む"

@@ -53,7 +53,8 @@ module Api
           exercise_type: EXERCISE_TYPE_MAP[exercise.exercise_type] || "training",
           body_part_major: exercise.body_part_major,
           body_part_minor: exercise.body_part_minor,
-          daily_frequency: patient_exercise&.daily_frequency || 1
+          daily_frequency: patient_exercise&.daily_frequency || 1,
+          reps_per_video: exercise.reps_per_video || 1
         }
       end
 

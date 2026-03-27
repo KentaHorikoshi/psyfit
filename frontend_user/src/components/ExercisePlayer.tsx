@@ -8,6 +8,7 @@ import { ArrowLeft, Play, Pause, Check, ChevronRight } from 'lucide-react'
 import { ExerciseNoteSlider } from './ExerciseNoteSlider'
 import { ExercisePlayerFullscreenOverlay } from './ExercisePlayerFullscreenOverlay'
 import { useFullscreenPlayer } from '../hooks/useFullscreenPlayer'
+import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 
 export function ExercisePlayer() {
   const navigate = useNavigate()
@@ -36,6 +37,7 @@ export function ExercisePlayer() {
   const repsPerVideoRef = useRef(1)
   const countedThresholdsRef = useRef<Set<number>>(new Set())
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenPlayer()
+  const { speak, stop } = useSpeechSynthesis()
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -93,6 +95,11 @@ export function ExercisePlayer() {
     fetchVideoToken()
   }, [exercise, isAuthenticated])
 
+  // アンマウント時に読み上げを停止
+  useEffect(() => {
+    return () => { stop() }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return
     const { currentTime, duration } = videoRef.current
@@ -124,6 +131,7 @@ export function ExercisePlayer() {
     if (newCount >= targetRepsRef.current) {
       // 目標回数到達: 停止
       setIsPlaying(false)
+      stop()
     } else {
       // 未到達: 次のループへ
       if (videoRef.current) {
@@ -141,6 +149,7 @@ export function ExercisePlayer() {
     if (isPlaying) {
       videoRef.current?.pause()
       setIsPlaying(false)
+      stop()
     } else {
       if (!isFullscreen) {
         // flushSyncでフルスクリーンオーバーレイのDOMマウントを同期的に完了させ、
@@ -155,6 +164,10 @@ export function ExercisePlayer() {
         videoRef.current?.play().catch(() => setIsPlaying(false))
         setIsPlaying(true)
       }
+      // 再生開始時に読み上げ（iOS対策: ユーザージェスチャーのコールスタック内で呼ぶ）
+      if (exercise?.description) {
+        speak(exercise.description)
+      }
     }
   }
 
@@ -163,6 +176,7 @@ export function ExercisePlayer() {
       videoRef.current.pause()
       setIsPlaying(false)
     }
+    stop()
     exitFullscreen()
     loopCountRef.current = 0
     setLoopCount(0)
@@ -351,7 +365,7 @@ export function ExercisePlayer() {
             playsInline
             onClick={handlePlayPause}
             onPlay={() => { isLooping.current = false; setIsPlaying(true) }}
-            onPause={() => { if (!isLooping.current) setIsPlaying(false) }}
+            onPause={() => { if (!isLooping.current) { setIsPlaying(false); stop() } }}
             onEnded={handleVideoEnded}
           />
 

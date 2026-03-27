@@ -1,0 +1,45 @@
+import { useCallback, useEffect, useRef } from 'react'
+
+export function useSpeechSynthesis() {
+  const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null)
+
+  // ja-JP 音声を取得（onvoiceschanged でブラウザ準備完了後に再取得）
+  useEffect(() => {
+    if (!isSupported) return
+    const loadVoices = () => {
+      voiceRef.current = window.speechSynthesis.getVoices().find(v => v.lang === 'ja-JP') ?? null
+    }
+    loadVoices() // 一部ブラウザは初回同期で取得可能
+    window.speechSynthesis.onvoiceschanged = loadVoices
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null
+    }
+  }, [isSupported])
+
+  const speak = useCallback((text: string) => {
+    if (!isSupported) return
+    window.speechSynthesis.cancel()
+
+    // 箇条書き（・）を1文ずつ分割してキューに積む → モバイル途中停止バグ回避
+    const sentences = text
+      .split('\n')
+      .map(line => line.replace(/^・/, '').trim())
+      .filter(Boolean)
+
+    sentences.forEach(sentence => {
+      const utterance = new SpeechSynthesisUtterance(sentence)
+      utterance.lang = 'ja-JP'
+      utterance.rate = 0.9
+      if (voiceRef.current) utterance.voice = voiceRef.current
+      window.speechSynthesis.speak(utterance)
+    })
+  }, [isSupported])
+
+  const stop = useCallback(() => {
+    if (!isSupported) return
+    window.speechSynthesis.cancel()
+  }, [isSupported])
+
+  return { speak, stop, isSupported }
+}

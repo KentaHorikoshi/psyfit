@@ -465,6 +465,95 @@ describe('U-04 ExercisePlayer', () => {
     })
   })
 
+  describe('TTS (Text-to-Speech)', () => {
+    beforeEach(() => {
+      // SpeechSynthesisUtterance モック（jsdom環境では未定義）
+      class MockSpeechSynthesisUtterance {
+        text: string
+        lang: string = ''
+        rate: number = 1
+        voice: SpeechSynthesisVoice | null = null
+        constructor(text: string) { this.text = text }
+      }
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        value: MockSpeechSynthesisUtterance,
+        writable: true,
+        configurable: true,
+      })
+
+      // speechSynthesis モック
+      const mockSpeak = vi.fn()
+      const mockCancel = vi.fn()
+      const mockGetVoices = vi.fn().mockReturnValue([
+        { lang: 'ja-JP', name: 'Japanese Voice' } as SpeechSynthesisVoice,
+      ])
+      Object.defineProperty(window, 'speechSynthesis', {
+        value: {
+          speak: mockSpeak,
+          cancel: mockCancel,
+          getVoices: mockGetVoices,
+          onvoiceschanged: null,
+        },
+        writable: true,
+        configurable: true,
+      })
+    })
+
+    it('should call speechSynthesis.speak when play button is clicked', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      expect(window.speechSynthesis.speak).toHaveBeenCalled()
+    })
+
+    it('should call speechSynthesis.cancel when pause button is clicked', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // 再生開始
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // 一時停止
+      const pauseButton = screen.getByRole('button', { name: /一時停止/ })
+      await user.click(pauseButton)
+
+      // cancel は speak前のcancel + stopによるcancel
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled()
+    })
+
+    it('should call speechSynthesis.cancel when exiting fullscreen', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // フルスクリーンに入る
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+      expect(screen.getByTestId('fullscreen-overlay')).toBeInTheDocument()
+
+      // フルスクリーン終了
+      const closeButton = screen.getByRole('button', { name: /フルスクリーンを終了/ })
+      await user.click(closeButton)
+
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled()
+    })
+  })
+
   describe('accessibility', () => {
     it('should have proper heading structure', async () => {
       renderExercisePlayer()

@@ -16,6 +16,7 @@ class MockSpeechSynthesisUtterance {
   lang: string = ''
   rate: number = 1
   voice: SpeechSynthesisVoice | null = null
+  onend: (() => void) | null = null
 
   constructor(text: string) {
     this.text = text
@@ -23,7 +24,10 @@ class MockSpeechSynthesisUtterance {
 }
 
 function setupSpeechSynthesisMock(voices: SpeechSynthesisVoice[] = []) {
-  const mockSpeak = vi.fn()
+  // speak 呼び出し時に onend を即時発火 → チェーン読み上げのテストを可能にする
+  const mockSpeak = vi.fn().mockImplementation((utterance: MockSpeechSynthesisUtterance) => {
+    utterance.onend?.()
+  })
   const mockCancel = vi.fn()
   const mockGetVoices = vi.fn().mockReturnValue(voices)
 
@@ -68,14 +72,17 @@ describe('useSpeechSynthesis', () => {
 
   describe('speak()', () => {
     it('should call speechSynthesis.speak for each line of text', () => {
+      vi.useFakeTimers()
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('・膝をゆっくり伸ばす\n・10秒キープする\n・ゆっくり戻す')
       })
+      act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(3)
+      vi.useRealTimers()
     })
 
     it('should call cancel() before speaking to stop previous speech', () => {
@@ -93,29 +100,35 @@ describe('useSpeechSynthesis', () => {
     })
 
     it('should strip leading bullet (・) from each line', () => {
+      vi.useFakeTimers()
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('・膝をゆっくり伸ばす\n・10秒キープする')
       })
+      act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(2)
       const firstUtterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
       expect(firstUtterance.text).toBe('膝をゆっくり伸ばす')
       const secondUtterance = mockSpeak.mock.calls[1][0] as SpeechSynthesisUtterance
       expect(secondUtterance.text).toBe('10秒キープする')
+      vi.useRealTimers()
     })
 
     it('should filter out empty lines', () => {
+      vi.useFakeTimers()
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('最初の文\n\n三番目の文')
       })
+      act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(2)
+      vi.useRealTimers()
     })
 
     it('should set lang to ja-JP on each utterance', () => {
@@ -130,7 +143,7 @@ describe('useSpeechSynthesis', () => {
       expect(utterance.lang).toBe('ja-JP')
     })
 
-    it('should set rate to 0.9 on each utterance', () => {
+    it('should set rate to 0.75 on each utterance', () => {
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
@@ -139,7 +152,7 @@ describe('useSpeechSynthesis', () => {
       })
 
       const utterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
-      expect(utterance.rate).toBe(0.9)
+      expect(utterance.rate).toBe(0.75)
     })
   })
 

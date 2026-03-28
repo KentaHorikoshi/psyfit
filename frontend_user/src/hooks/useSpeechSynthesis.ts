@@ -21,19 +21,26 @@ export function useSpeechSynthesis() {
     if (!isSupported) return
     window.speechSynthesis.cancel()
 
-    // 箇条書き（・）を1文ずつ分割してキューに積む → モバイル途中停止バグ回避
+    // 箇条書き（・）を1文ずつ分割し、onend でチェーンして読み上げる
+    // → モバイル途中停止バグ回避 & 文間に間隔を設けてスムーズな読み上げを実現
     const sentences = text
       .split('\n')
       .map(line => line.replace(/^・/, '').trim())
       .filter(Boolean)
 
-    sentences.forEach(sentence => {
-      const utterance = new SpeechSynthesisUtterance(sentence)
+    let index = 0
+    const speakNext = () => {
+      if (index >= sentences.length) return
+      const utterance = new SpeechSynthesisUtterance(sentences[index++])
       utterance.lang = 'ja-JP'
-      utterance.rate = 0.9
+      utterance.rate = 0.75
       if (voiceRef.current) utterance.voice = voiceRef.current
+      utterance.onend = () => {
+        setTimeout(speakNext, 600)
+      }
       window.speechSynthesis.speak(utterance)
-    })
+    }
+    speakNext()
   }, [isSupported])
 
   const stop = useCallback(() => {

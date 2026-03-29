@@ -94,8 +94,8 @@ describe('useSpeechSynthesis', () => {
       })
 
       // cancel は speak より前に呼ばれる
-      const cancelCallOrder = mockCancel.mock.invocationCallOrder[0]
-      const speakCallOrder = mockSpeak.mock.invocationCallOrder[0]
+      const cancelCallOrder = mockCancel.mock.invocationCallOrder[0]!
+      const speakCallOrder = mockSpeak.mock.invocationCallOrder[0]!
       expect(cancelCallOrder).toBeLessThan(speakCallOrder)
     })
 
@@ -110,9 +110,9 @@ describe('useSpeechSynthesis', () => {
       act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(2)
-      const firstUtterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
+      const firstUtterance = mockSpeak.mock.calls[0]![0] as SpeechSynthesisUtterance
       expect(firstUtterance.text).toBe('膝をゆっくり伸ばす')
-      const secondUtterance = mockSpeak.mock.calls[1][0] as SpeechSynthesisUtterance
+      const secondUtterance = mockSpeak.mock.calls[1]![0] as SpeechSynthesisUtterance
       expect(secondUtterance.text).toBe('10秒キープする')
       vi.useRealTimers()
     })
@@ -139,7 +139,7 @@ describe('useSpeechSynthesis', () => {
         result.current.speak('テスト文章')
       })
 
-      const utterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
+      const utterance = mockSpeak.mock.calls[0]![0] as SpeechSynthesisUtterance
       expect(utterance.lang).toBe('ja-JP')
     })
 
@@ -151,7 +151,7 @@ describe('useSpeechSynthesis', () => {
         result.current.speak('テスト文章')
       })
 
-      const utterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
+      const utterance = mockSpeak.mock.calls[0]![0] as SpeechSynthesisUtterance
       expect(utterance.rate).toBe(0.75)
     })
   })
@@ -179,7 +179,7 @@ describe('useSpeechSynthesis', () => {
         result.current.speak('テスト')
       })
 
-      const utterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
+      const utterance = mockSpeak.mock.calls[0]![0] as SpeechSynthesisUtterance
       expect(utterance.voice).toBe(jaVoice)
     })
 
@@ -192,7 +192,7 @@ describe('useSpeechSynthesis', () => {
         result.current.speak('テスト')
       })
 
-      const utterance = mockSpeak.mock.calls[0][0] as SpeechSynthesisUtterance
+      const utterance = mockSpeak.mock.calls[0]![0] as SpeechSynthesisUtterance
       // voiceRef.current が null のまま → voice プロパティはデフォルト値
       expect(utterance.voice).toBeNull()
     })
@@ -229,7 +229,7 @@ describe('useSpeechSynthesis', () => {
         result.current.speak('テスト')
       })
 
-      const utterance = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls[0][0] as SpeechSynthesisUtterance
+      const utterance = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls[0]![0] as SpeechSynthesisUtterance
       expect(utterance.voice).toBe(jaVoice)
     })
   })

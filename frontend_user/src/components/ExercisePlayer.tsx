@@ -29,6 +29,9 @@ export function ExercisePlayer() {
   const [completionError, setCompletionError] = useState<string | null>(null)
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'video' | 'camera'>('video')
+  const [showVideoSkeleton, setShowVideoSkeleton] = useState(false)
+  const [showCameraSkeleton, setShowCameraSkeleton] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const isLooping = useRef(false)
@@ -171,6 +174,21 @@ export function ExercisePlayer() {
     }
   }
 
+  const handleViewModeToggle = useCallback(() => {
+    setViewMode(prev => {
+      if (prev === 'video') {
+        // カメラモードに切り替える時: 動画を一時停止（currentTimeはリセットしない）
+        if (videoRef.current && !videoRef.current.paused) {
+          videoRef.current.pause()
+          setIsPlaying(false)
+          stop()
+        }
+        return 'camera'
+      }
+      return 'video'
+    })
+  }, [stop])
+
   const handleExitFullscreen = () => {
     if (videoRef.current && !videoRef.current.paused) {
       videoRef.current.pause()
@@ -178,6 +196,7 @@ export function ExercisePlayer() {
     }
     stop()
     exitFullscreen()
+    setViewMode('video')
     loopCountRef.current = 0
     setLoopCount(0)
     countedThresholdsRef.current = new Set()
@@ -332,6 +351,12 @@ export function ExercisePlayer() {
           onVideoEnded={handleVideoEnded}
           onTimeUpdate={handleTimeUpdate}
           isLooping={isLooping}
+          viewMode={viewMode}
+          showVideoSkeleton={showVideoSkeleton}
+          showCameraSkeleton={showCameraSkeleton}
+          onViewModeToggle={handleViewModeToggle}
+          onVideoSkeletonToggle={() => setShowVideoSkeleton(prev => !prev)}
+          onCameraSkeletonToggle={() => setShowCameraSkeleton(prev => !prev)}
         />
       )}
 

@@ -554,6 +554,161 @@ describe('U-04 ExercisePlayer', () => {
     })
   })
 
+  describe('camera mode', () => {
+    it('フルスクリーン時にカメラ切り替えボタンが表示される', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // フルスクリーンに入る
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+      expect(screen.getByTestId('fullscreen-overlay')).toBeInTheDocument()
+
+      // カメラ切り替えボタンが存在する
+      expect(screen.getByRole('button', { name: 'カメラを起動' })).toBeInTheDocument()
+    })
+
+    it('カメラボタンクリックでカメラビューが表示される', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // フルスクリーンに入る
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // カメラ切り替えボタンをクリック
+      const cameraButton = screen.getByRole('button', { name: 'カメラを起動' })
+      await user.click(cameraButton)
+
+      // 「動画に戻る」ボタンが表示される（カメラモードに切り替わった）
+      expect(screen.getByRole('button', { name: '動画に戻る' })).toBeInTheDocument()
+    })
+
+    it('動画に戻るボタンでvideモードに戻る', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // フルスクリーンに入る
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // カメラに切り替え
+      const cameraButton = screen.getByRole('button', { name: 'カメラを起動' })
+      await user.click(cameraButton)
+
+      // 動画に戻る
+      const backToVideoButton = screen.getByRole('button', { name: '動画に戻る' })
+      await user.click(backToVideoButton)
+
+      // カメラボタンが再表示される（videoモードに戻った）
+      expect(screen.getByRole('button', { name: 'カメラを起動' })).toBeInTheDocument()
+    })
+
+    it('カメラモードに切り替えると動画モードが変わる（isPlaying 状態でも安全に切り替え）', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // フルスクリーンに入る
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+      expect(screen.getByTestId('fullscreen-overlay')).toBeInTheDocument()
+
+      // カメラに切り替え
+      const cameraButton = screen.getByRole('button', { name: 'カメラを起動' })
+      await user.click(cameraButton)
+
+      // 「動画に戻る」ボタンが表示される（cameraモードに遷移）
+      expect(screen.getByRole('button', { name: '動画に戻る' })).toBeInTheDocument()
+    })
+
+    it('フルスクリーン終了時に viewMode が video にリセットされる', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // フルスクリーンに入る
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // カメラに切り替え
+      const cameraButton = screen.getByRole('button', { name: 'カメラを起動' })
+      await user.click(cameraButton)
+
+      // フルスクリーンを閉じる
+      const closeButton = screen.getByRole('button', { name: 'フルスクリーンを終了' })
+      await user.click(closeButton)
+
+      // フルスクリーンが閉じられている
+      expect(screen.queryByTestId('fullscreen-overlay')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('skeleton toggle', () => {
+    it('骨格点トグルボタンがフルスクリーン時に表示される', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      expect(screen.getByTestId('skeleton-toggle-button')).toBeInTheDocument()
+    })
+
+    it('骨格点トグルボタンのaria-labelが「骨格点を表示」（初期状態）', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      expect(screen.getByLabelText('骨格点を表示')).toBeInTheDocument()
+    })
+
+    it('骨格点トグルボタンクリックでaria-labelが「骨格点を非表示」に変わる', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      const skeletonButton = screen.getByLabelText('骨格点を表示')
+      await user.click(skeletonButton)
+
+      expect(screen.getByLabelText('骨格点を非表示')).toBeInTheDocument()
+    })
+  })
+
   describe('accessibility', () => {
     it('should have proper heading structure', async () => {
       renderExercisePlayer()

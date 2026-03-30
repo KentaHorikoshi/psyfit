@@ -29,12 +29,14 @@ function setupSpeechSynthesisMock(voices: SpeechSynthesisVoice[] = []) {
     utterance.onend?.()
   })
   const mockCancel = vi.fn()
+  const mockResume = vi.fn()
   const mockGetVoices = vi.fn().mockReturnValue(voices)
 
   Object.defineProperty(window, 'speechSynthesis', {
     value: {
       speak: mockSpeak,
       cancel: mockCancel,
+      resume: mockResume,
       getVoices: mockGetVoices,
       onvoiceschanged: null,
     },
@@ -49,7 +51,7 @@ function setupSpeechSynthesisMock(voices: SpeechSynthesisVoice[] = []) {
     configurable: true,
   })
 
-  return { mockSpeak, mockCancel, mockGetVoices }
+  return { mockSpeak, mockCancel, mockResume, mockGetVoices }
 }
 
 describe('useSpeechSynthesis', () => {
@@ -114,6 +116,22 @@ describe('useSpeechSynthesis', () => {
       expect(firstUtterance.text).toBe('膝をゆっくり伸ばす')
       const secondUtterance = mockSpeak.mock.calls[1]![0] as SpeechSynthesisUtterance
       expect(secondUtterance.text).toBe('10秒キープする')
+      vi.useRealTimers()
+    })
+
+    it('should call speechSynthesis.resume() before each subsequent sentence (iOS pause bug fix)', () => {
+      vi.useFakeTimers()
+      const { mockSpeak, mockResume } = setupSpeechSynthesisMock()
+      const { result } = renderHook(() => useSpeechSynthesis())
+
+      act(() => {
+        result.current.speak('・文章1\n・文章2\n・文章3')
+      })
+      act(() => { vi.runAllTimers() })
+
+      // 3文 speak され、各文の onend タイマーごとに resume() が呼ばれる（文数と同数）
+      expect(mockSpeak).toHaveBeenCalledTimes(3)
+      expect(mockResume).toHaveBeenCalledTimes(3)
       vi.useRealTimers()
     })
 

@@ -36,7 +36,10 @@ export function useSpeechSynthesis() {
       utterance.rate = 0.75
       if (voiceRef.current) utterance.voice = voiceRef.current
       utterance.onend = () => {
-        setTimeout(speakNext, 600)
+        setTimeout(() => {
+          window.speechSynthesis.resume() // iOS pause バグ対策: onend 後に synthesis が paused 状態になる
+          speakNext()
+        }, 600)
       }
       window.speechSynthesis.speak(utterance)
     }

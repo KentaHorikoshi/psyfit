@@ -10,7 +10,8 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
               "http://127.0.0.1:5173",
               "http://127.0.0.1:5174",
               "http://localhost:3000",      # Rails default
-              "http://127.0.0.1:3000"
+              "http://127.0.0.1:3000",
+              /\Ahttp:\/\/192\.168\.\d+\.\d+(:\d+)?\z/  # LAN access (smartphone dev testing)
     end
 
     # Production origins from environment variable

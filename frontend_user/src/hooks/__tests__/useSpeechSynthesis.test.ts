@@ -24,10 +24,7 @@ class MockSpeechSynthesisUtterance {
 }
 
 function setupSpeechSynthesisMock(voices: SpeechSynthesisVoice[] = []) {
-  // speak 呼び出し時に onend を即時発火 → チェーン読み上げのテストを可能にする
-  const mockSpeak = vi.fn().mockImplementation((utterance: MockSpeechSynthesisUtterance) => {
-    utterance.onend?.()
-  })
+  const mockSpeak = vi.fn()
   const mockCancel = vi.fn()
   const mockResume = vi.fn()
   const mockGetVoices = vi.fn().mockReturnValue(voices)
@@ -39,6 +36,7 @@ function setupSpeechSynthesisMock(voices: SpeechSynthesisVoice[] = []) {
       resume: mockResume,
       getVoices: mockGetVoices,
       onvoiceschanged: null,
+      speaking: false,
     },
     writable: true,
     configurable: true,
@@ -65,7 +63,7 @@ describe('useSpeechSynthesis', () => {
     // speechSynthesis を復元（削除されていた場合）
     if (!('speechSynthesis' in window)) {
       Object.defineProperty(window, 'speechSynthesis', {
-        value: { speak: vi.fn(), cancel: vi.fn(), getVoices: vi.fn().mockReturnValue([]), onvoiceschanged: null },
+        value: { speak: vi.fn(), cancel: vi.fn(), getVoices: vi.fn().mockReturnValue([]), onvoiceschanged: null, speaking: false },
         writable: true,
         configurable: true,
       })
@@ -74,17 +72,14 @@ describe('useSpeechSynthesis', () => {
 
   describe('speak()', () => {
     it('should call speechSynthesis.speak for each line of text', () => {
-      vi.useFakeTimers()
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('・膝をゆっくり伸ばす\n・10秒キープする\n・ゆっくり戻す')
       })
-      act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(3)
-      vi.useRealTimers()
     })
 
     it('should call cancel() before speaking to stop previous speech', () => {
@@ -102,51 +97,41 @@ describe('useSpeechSynthesis', () => {
     })
 
     it('should strip leading bullet (・) from each line', () => {
-      vi.useFakeTimers()
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('・膝をゆっくり伸ばす\n・10秒キープする')
       })
-      act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(2)
       const firstUtterance = mockSpeak.mock.calls[0]![0] as SpeechSynthesisUtterance
       expect(firstUtterance.text).toBe('膝をゆっくり伸ばす')
       const secondUtterance = mockSpeak.mock.calls[1]![0] as SpeechSynthesisUtterance
       expect(secondUtterance.text).toBe('10秒キープする')
-      vi.useRealTimers()
     })
 
-    it('should call speechSynthesis.resume() before each subsequent sentence (iOS pause bug fix)', () => {
-      vi.useFakeTimers()
-      const { mockSpeak, mockResume } = setupSpeechSynthesisMock()
+    it('全文が遅延なしに同期的にキューに積まれる', () => {
+      const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('・文章1\n・文章2\n・文章3')
       })
-      act(() => { vi.runAllTimers() })
 
-      // 3文 speak され、各文の onend タイマーごとに resume() が呼ばれる（文数と同数）
+      // タイマーを進めなくても全文が即座にキューに積まれている
       expect(mockSpeak).toHaveBeenCalledTimes(3)
-      expect(mockResume).toHaveBeenCalledTimes(3)
-      vi.useRealTimers()
     })
 
     it('should filter out empty lines', () => {
-      vi.useFakeTimers()
       const { mockSpeak } = setupSpeechSynthesisMock()
       const { result } = renderHook(() => useSpeechSynthesis())
 
       act(() => {
         result.current.speak('最初の文\n\n三番目の文')
       })
-      act(() => { vi.runAllTimers() })
 
       expect(mockSpeak).toHaveBeenCalledTimes(2)
-      vi.useRealTimers()
     })
 
     it('should set lang to ja-JP on each utterance', () => {
@@ -184,6 +169,22 @@ describe('useSpeechSynthesis', () => {
       })
 
       expect(mockCancel).toHaveBeenCalledTimes(1)
+    })
+
+    it('stop() 後に speak() を呼ぶと最初から読み上げられる', () => {
+      const { mockSpeak } = setupSpeechSynthesisMock()
+      const { result } = renderHook(() => useSpeechSynthesis())
+
+      act(() => { result.current.speak('文1\n文2\n文3') })
+      act(() => { result.current.stop() })
+      mockSpeak.mockClear()
+
+      act(() => { result.current.speak('文1\n文2\n文3') })
+
+      // 最初の文から3文すべてが読み上げられる
+      expect(mockSpeak).toHaveBeenCalledTimes(3)
+      const firstUtterance = mockSpeak.mock.calls[0]![0] as MockSpeechSynthesisUtterance
+      expect(firstUtterance.text).toBe('文1')
     })
   })
 
@@ -228,6 +229,7 @@ describe('useSpeechSynthesis', () => {
           cancel: vi.fn(),
           getVoices: mockGetVoices,
           onvoiceschanged: null,
+          speaking: false,
         },
         writable: true,
         configurable: true,

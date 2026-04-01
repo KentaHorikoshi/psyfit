@@ -58,3 +58,6 @@ frontend_admin/dist/
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Local development overrides
+docker-compose.override.yml

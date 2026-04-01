@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ArrowLeft, Play, Pause, Check, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Play, Pause, Check, ChevronRight, Camera, Video } from 'lucide-react'
+import { CameraView } from './CameraView'
 
 interface ExercisePlayerFullscreenOverlayProps {
   exerciseName: string
@@ -20,6 +21,10 @@ interface ExercisePlayerFullscreenOverlayProps {
   onVideoEnded: () => void
   onTimeUpdate: () => void
   isLooping: React.MutableRefObject<boolean>
+  viewMode: 'video' | 'camera'
+  showCameraSkeleton: boolean
+  onViewModeToggle: () => void
+  onCameraSkeletonToggle: () => void
 }
 
 const AUTO_HIDE_DELAY = 3000
@@ -43,6 +48,10 @@ export function ExercisePlayerFullscreenOverlay({
   onVideoEnded,
   onTimeUpdate,
   isLooping,
+  viewMode,
+  showCameraSkeleton,
+  onViewModeToggle,
+  onCameraSkeletonToggle,
 }: ExercisePlayerFullscreenOverlayProps) {
   // 種目名・再生ボタンのみ auto-hide
   const [showTopControls, setShowTopControls] = useState(true)
@@ -83,14 +92,14 @@ export function ExercisePlayerFullscreenOverlay({
       style={{ height: '100dvh' }}
       data-testid="fullscreen-overlay"
     >
-      {/* Video */}
+      {/* Video（cameraモード時も非表示にしない: DOMに残してvideoRefを維持） */}
       <video
         ref={videoRef}
         data-testid="fullscreen-video"
         src={videoStreamUrl ?? undefined}
         poster={thumbnailUrl}
         preload="metadata"
-        className="absolute inset-0 w-full h-full object-contain"
+        className={`absolute inset-0 w-full h-full object-contain ${viewMode === 'camera' ? 'hidden' : ''}`}
         aria-label={`${exerciseName}の動画`}
         playsInline
         onClick={handleScreenTap}
@@ -105,6 +114,13 @@ export function ExercisePlayerFullscreenOverlay({
         onTimeUpdate={onTimeUpdate}
       />
 
+      {/* カメラビュー（cameraモード時） */}
+      {viewMode === 'camera' && (
+        <CameraView
+          showSkeleton={showCameraSkeleton}
+        />
+      )}
+
       {/* Tap area */}
       <button
         className="absolute inset-0 w-full h-full z-[5] bg-transparent cursor-pointer"
@@ -113,7 +129,7 @@ export function ExercisePlayerFullscreenOverlay({
         tabIndex={-1}
       />
 
-      {/* Top bar — 種目名・戻るボタン (auto-hide) */}
+      {/* Top bar — 種目名・戻るボタン・カメラ/骨格点ボタン (auto-hide) */}
       <div
         className={`
           absolute top-0 inset-x-0 z-10 px-4 py-3
@@ -133,32 +149,75 @@ export function ExercisePlayerFullscreenOverlay({
         <h2 className="text-white text-lg font-bold truncate flex-1">
           {exerciseName}
         </h2>
-      </div>
 
-      {/* Center play/pause button (auto-hide) */}
-      <div
-        className={`
-          absolute inset-0 z-[6] flex items-center justify-center
-          transition-opacity duration-300 pointer-events-none
-          ${showTopControls ? 'opacity-100' : 'opacity-0'}
-        `}
-      >
+        {/* 骨格点トグルボタン（カメラモード時のみ表示） */}
+        {viewMode === 'camera' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCameraSkeletonToggle() }}
+            aria-label={showCameraSkeleton ? '骨格点を非表示' : '骨格点を表示'}
+            className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+              showCameraSkeleton ? 'bg-green-500/60' : 'hover:bg-white/20'
+            }`}
+            data-testid="skeleton-toggle-button"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="4" r="2" />
+              <line x1="12" y1="6" x2="12" y2="14" />
+              <line x1="8" y1="9" x2="16" y2="9" />
+              <line x1="12" y1="14" x2="8" y2="20" />
+              <line x1="12" y1="14" x2="16" y2="20" />
+            </svg>
+          </button>
+        )}
+
+        {/* カメラ/動画切り替えボタン */}
         <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onPlayPause()
-            resetHideTimer()
-          }}
-          className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          aria-label={isPlaying ? '一時停止' : '再生'}
+          onClick={(e) => { e.stopPropagation(); onViewModeToggle() }}
+          aria-label={viewMode === 'video' ? 'カメラを起動' : '動画に戻る'}
+          className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          data-testid="view-mode-toggle-button"
         >
-          {isPlaying ? (
-            <Pause size={32} className="text-[#1E40AF]" />
+          {viewMode === 'video' ? (
+            <Camera size={22} className="text-white" />
           ) : (
-            <Play size={32} className="text-[#1E40AF] ml-1" />
+            <Video size={22} className="text-white" />
           )}
         </button>
       </div>
+
+      {/* Center play/pause button（videoモードのみ表示、auto-hide） */}
+      {viewMode === 'video' && (
+        <div
+          className={`
+            absolute inset-0 z-[6] flex items-center justify-center
+            transition-opacity duration-300 pointer-events-none
+            ${showTopControls ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onPlayPause()
+              resetHideTimer()
+            }}
+            className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label={isPlaying ? '一時停止' : '再生'}
+          >
+            {isPlaying ? (
+              <Pause size={32} className="text-[#1E40AF]" />
+            ) : (
+              <Play size={32} className="text-[#1E40AF] ml-1" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Bottom bar — セット数・回数・ボタン (常時表示) */}
       <div className="absolute bottom-0 inset-x-0 z-10 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/70 to-transparent">

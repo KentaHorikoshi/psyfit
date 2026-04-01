@@ -533,6 +533,72 @@ describe('U-04 ExercisePlayer', () => {
       expect(window.speechSynthesis.cancel).toHaveBeenCalled()
     })
 
+    it('カメラボタン押下で読み上げが停止される（動画一時停止中でも）', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // 再生開始
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+
+      // 一時停止
+      const pauseButton = screen.getByRole('button', { name: /一時停止/ })
+      await user.click(pauseButton)
+
+      const cancelCountBeforeCamera = (window.speechSynthesis.cancel as ReturnType<typeof vi.fn>).mock.calls.length
+
+      // 動画が停止中の状態でカメラボタンをクリック
+      const cameraButton = screen.getByRole('button', { name: 'カメラを起動' })
+      await user.click(cameraButton)
+
+      // cancel が追加で呼ばれている（stop() が実行された）
+      expect((window.speechSynthesis.cancel as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(cancelCountBeforeCamera)
+    })
+
+    it('次のセットボタン押下で読み上げが停止され最初から再開される', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      // 再生開始（speak が呼ばれる）
+      const playButton = screen.getByRole('button', { name: /再生/ })
+      await user.click(playButton)
+      const speakCountAfterPlay = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls.length
+      expect(speakCountAfterPlay).toBeGreaterThan(0)
+
+      // 次のセットボタン押下
+      const nextSetButton = screen.getByRole('button', { name: /次のセット/ })
+      await user.click(nextSetButton)
+
+      // cancel が呼ばれ（stop）、さらに speak が呼ばれる（再開）
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled()
+      expect((window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(speakCountAfterPlay)
+    })
+
+    it('完了ボタン押下で即座に読み上げが停止される', async () => {
+      const user = userEvent.setup()
+      renderExercisePlayer()
+
+      await waitFor(() => {
+        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+      })
+
+      const cancelCountBefore = (window.speechSynthesis.cancel as ReturnType<typeof vi.fn>).mock.calls.length
+
+      const completeButton = screen.getByRole('button', { name: /完了/ })
+      await user.click(completeButton)
+
+      // API 応答を待たず即座に cancel が呼ばれている
+      expect((window.speechSynthesis.cancel as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(cancelCountBefore)
+    })
+
     it('should call speechSynthesis.cancel when exiting fullscreen', async () => {
       const user = userEvent.setup()
       renderExercisePlayer()
@@ -659,53 +725,6 @@ describe('U-04 ExercisePlayer', () => {
 
       // フルスクリーンが閉じられている
       expect(screen.queryByTestId('fullscreen-overlay')).not.toBeInTheDocument()
-    })
-  })
-
-  describe('skeleton toggle', () => {
-    it('骨格点トグルボタンがフルスクリーン時に表示される', async () => {
-      const user = userEvent.setup()
-      renderExercisePlayer()
-
-      await waitFor(() => {
-        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
-      })
-
-      const playButton = screen.getByRole('button', { name: /再生/ })
-      await user.click(playButton)
-
-      expect(screen.getByTestId('skeleton-toggle-button')).toBeInTheDocument()
-    })
-
-    it('骨格点トグルボタンのaria-labelが「骨格点を表示」（初期状態）', async () => {
-      const user = userEvent.setup()
-      renderExercisePlayer()
-
-      await waitFor(() => {
-        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
-      })
-
-      const playButton = screen.getByRole('button', { name: /再生/ })
-      await user.click(playButton)
-
-      expect(screen.getByLabelText('骨格点を表示')).toBeInTheDocument()
-    })
-
-    it('骨格点トグルボタンクリックでaria-labelが「骨格点を非表示」に変わる', async () => {
-      const user = userEvent.setup()
-      renderExercisePlayer()
-
-      await waitFor(() => {
-        expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
-      })
-
-      const playButton = screen.getByRole('button', { name: /再生/ })
-      await user.click(playButton)
-
-      const skeletonButton = screen.getByLabelText('骨格点を表示')
-      await user.click(skeletonButton)
-
-      expect(screen.getByLabelText('骨格点を非表示')).toBeInTheDocument()
     })
   })
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { CameraView } from '../CameraView'
 
 // useCamera モック（vi.mock のファクトリ内でトップレベル変数を参照しない）
@@ -41,7 +41,7 @@ beforeEach(() => {
 
 describe('CameraView', () => {
   it('カメラ起動中はローディング表示が出る', () => {
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={false} />)
     expect(screen.getByTestId('camera-loading')).toBeInTheDocument()
     expect(screen.getByText('カメラを起動中...')).toBeInTheDocument()
   })
@@ -54,17 +54,17 @@ describe('CameraView', () => {
       isLoading: false,
       stopCamera: mockStopCamera,
     })
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={false} />)
     expect(screen.queryByTestId('camera-loading')).toBeNull()
   })
 
   it('video 要素が存在する', () => {
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={false} />)
     expect(screen.getByTestId('camera-video')).toBeInTheDocument()
   })
 
   it('ミラー表示の CSS が video に適用される', () => {
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={false} />)
     const video = screen.getByTestId('camera-video')
     expect(video).toHaveStyle({ transform: 'scaleX(-1)' })
   })
@@ -77,7 +77,7 @@ describe('CameraView', () => {
       isLoading: false,
       stopCamera: mockStopCamera,
     })
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={false} />)
     expect(screen.getByTestId('camera-error')).toBeInTheDocument()
     expect(screen.getByText(/カメラの使用が許可されていません/)).toBeInTheDocument()
   })
@@ -90,7 +90,7 @@ describe('CameraView', () => {
       isLoading: false,
       stopCamera: mockStopCamera,
     })
-    render(<CameraView showSkeleton={true} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={true} />)
     expect(screen.getByTestId('skeleton-canvas')).toBeInTheDocument()
   })
 
@@ -102,30 +102,8 @@ describe('CameraView', () => {
       isLoading: false,
       stopCamera: mockStopCamera,
     })
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={false} />)
     expect(screen.queryByTestId('skeleton-canvas')).toBeNull()
-  })
-
-  it('骨格点トグルボタンが存在する', () => {
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
-    expect(screen.getByTestId('skeleton-toggle-button')).toBeInTheDocument()
-  })
-
-  it('骨格点トグルボタンクリックで onSkeletonToggle が呼ばれる', () => {
-    const mockToggle = vi.fn()
-    render(<CameraView showSkeleton={false} onSkeletonToggle={mockToggle} />)
-    fireEvent.click(screen.getByTestId('skeleton-toggle-button'))
-    expect(mockToggle).toHaveBeenCalled()
-  })
-
-  it('showSkeleton: true の時にトグルボタンの aria-label が「骨格点を非表示」', () => {
-    render(<CameraView showSkeleton={true} onSkeletonToggle={vi.fn()} />)
-    expect(screen.getByLabelText('骨格点を非表示')).toBeInTheDocument()
-  })
-
-  it('showSkeleton: false の時にトグルボタンの aria-label が「骨格点を表示」', () => {
-    render(<CameraView showSkeleton={false} onSkeletonToggle={vi.fn()} />)
-    expect(screen.getByLabelText('骨格点を表示')).toBeInTheDocument()
   })
 
   it('骨格点モデルロード中の表示（showSkeleton: true, isModelLoading: true）', () => {
@@ -141,7 +119,7 @@ describe('CameraView', () => {
       error: null,
       isModelLoading: true,
     })
-    render(<CameraView showSkeleton={true} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={true} />)
     expect(screen.getByTestId('model-loading')).toBeInTheDocument()
     expect(screen.getByText('骨格点モデルを読み込み中...')).toBeInTheDocument()
   })
@@ -159,7 +137,7 @@ describe('CameraView', () => {
       error: null,
       isModelLoading: false,
     })
-    render(<CameraView showSkeleton={true} onSkeletonToggle={vi.fn()} />)
+    render(<CameraView showSkeleton={true} />)
     expect(screen.getByTestId('skeleton-not-detected')).toBeInTheDocument()
     expect(screen.getByText('全身が画面に映るよう調整してください')).toBeInTheDocument()
   })

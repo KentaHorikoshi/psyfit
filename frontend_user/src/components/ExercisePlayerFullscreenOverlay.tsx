@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowLeft, Play, Pause, Check, ChevronRight, Camera, Video } from 'lucide-react'
-import { usePoseDetection } from '../hooks/usePoseDetection'
-import { SkeletonCanvas } from './SkeletonCanvas'
 import { CameraView } from './CameraView'
 
 interface ExercisePlayerFullscreenOverlayProps {
@@ -24,10 +22,8 @@ interface ExercisePlayerFullscreenOverlayProps {
   onTimeUpdate: () => void
   isLooping: React.MutableRefObject<boolean>
   viewMode: 'video' | 'camera'
-  showVideoSkeleton: boolean
   showCameraSkeleton: boolean
   onViewModeToggle: () => void
-  onVideoSkeletonToggle: () => void
   onCameraSkeletonToggle: () => void
 }
 
@@ -53,24 +49,13 @@ export function ExercisePlayerFullscreenOverlay({
   onTimeUpdate,
   isLooping,
   viewMode,
-  showVideoSkeleton,
   showCameraSkeleton,
   onViewModeToggle,
-  onVideoSkeletonToggle,
   onCameraSkeletonToggle,
 }: ExercisePlayerFullscreenOverlayProps) {
   // 種目名・再生ボタンのみ auto-hide
   const [showTopControls, setShowTopControls] = useState(true)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // videoモード用骨格点検出
-  const { landmarks: videoLandmarks } = usePoseDetection(videoRef, {
-    enabled: showVideoSkeleton && viewMode === 'video',
-  })
-
-  // video要素のサイズ（SkeletonCanvas用）
-  const videoWidth = videoRef.current?.videoWidth ?? window.innerWidth
-  const videoHeight = videoRef.current?.videoHeight ?? window.innerHeight
 
   const resetHideTimer = useCallback(() => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
@@ -101,9 +86,6 @@ export function ExercisePlayerFullscreenOverlay({
     }
   }
 
-  const currentSkeletonVisible = viewMode === 'video' ? showVideoSkeleton : showCameraSkeleton
-  const handleSkeletonToggle = viewMode === 'video' ? onVideoSkeletonToggle : onCameraSkeletonToggle
-
   return (
     <div
       className="fixed inset-0 z-50 bg-black"
@@ -132,21 +114,10 @@ export function ExercisePlayerFullscreenOverlay({
         onTimeUpdate={onTimeUpdate}
       />
 
-      {/* 骨格点Canvas（videoモード時） */}
-      {viewMode === 'video' && (
-        <SkeletonCanvas
-          landmarks={videoLandmarks}
-          isVisible={showVideoSkeleton}
-          width={videoWidth}
-          height={videoHeight}
-        />
-      )}
-
       {/* カメラビュー（cameraモード時） */}
       {viewMode === 'camera' && (
         <CameraView
           showSkeleton={showCameraSkeleton}
-          onSkeletonToggle={onCameraSkeletonToggle}
         />
       )}
 
@@ -179,31 +150,32 @@ export function ExercisePlayerFullscreenOverlay({
           {exerciseName}
         </h2>
 
-        {/* 骨格点トグルボタン */}
-        <button
-          onClick={(e) => { e.stopPropagation(); handleSkeletonToggle() }}
-          aria-label={currentSkeletonVisible ? '骨格点を非表示' : '骨格点を表示'}
-          className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-            currentSkeletonVisible ? 'bg-green-500/40' : 'hover:bg-white/20'
-          }`}
-          data-testid="skeleton-toggle-button"
-        >
-          {/* 人体シルエットアイコン（インライン SVG） */}
-          <svg
-            viewBox="0 0 24 24"
-            className="w-6 h-6 text-white"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
+        {/* 骨格点トグルボタン（カメラモード時のみ表示） */}
+        {viewMode === 'camera' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCameraSkeletonToggle() }}
+            aria-label={showCameraSkeleton ? '骨格点を非表示' : '骨格点を表示'}
+            className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+              showCameraSkeleton ? 'bg-green-500/60' : 'hover:bg-white/20'
+            }`}
+            data-testid="skeleton-toggle-button"
           >
-            <circle cx="12" cy="4" r="2" />
-            <line x1="12" y1="6" x2="12" y2="14" />
-            <line x1="8" y1="9" x2="16" y2="9" />
-            <line x1="12" y1="14" x2="8" y2="20" />
-            <line x1="12" y1="14" x2="16" y2="20" />
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="4" r="2" />
+              <line x1="12" y1="6" x2="12" y2="14" />
+              <line x1="8" y1="9" x2="16" y2="9" />
+              <line x1="12" y1="14" x2="8" y2="20" />
+              <line x1="12" y1="14" x2="16" y2="20" />
+            </svg>
+          </button>
+        )}
 
         {/* カメラ/動画切り替えボタン */}
         <button

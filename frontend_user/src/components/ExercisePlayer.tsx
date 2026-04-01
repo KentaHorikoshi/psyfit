@@ -30,7 +30,6 @@ export function ExercisePlayer() {
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'video' | 'camera'>('video')
-  const [showVideoSkeleton, setShowVideoSkeleton] = useState(false)
   const [showCameraSkeleton, setShowCameraSkeleton] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -181,8 +180,8 @@ export function ExercisePlayer() {
         if (videoRef.current && !videoRef.current.paused) {
           videoRef.current.pause()
           setIsPlaying(false)
-          stop()
         }
+        stop()
         return 'camera'
       }
       return 'video'
@@ -214,11 +213,16 @@ export function ExercisePlayer() {
       if (videoRef.current) {
         videoRef.current.currentTime = 0
       }
+      if (exercise.description) {
+        speak(exercise.description)
+      }
     }
   }
 
   const handleComplete = async () => {
     if (!exercise || isCompleting) return
+
+    stop()
 
     try {
       setIsCompleting(true)
@@ -352,10 +356,8 @@ export function ExercisePlayer() {
           onTimeUpdate={handleTimeUpdate}
           isLooping={isLooping}
           viewMode={viewMode}
-          showVideoSkeleton={showVideoSkeleton}
           showCameraSkeleton={showCameraSkeleton}
           onViewModeToggle={handleViewModeToggle}
-          onVideoSkeletonToggle={() => setShowVideoSkeleton(prev => !prev)}
           onCameraSkeletonToggle={() => setShowCameraSkeleton(prev => !prev)}
         />
       )}

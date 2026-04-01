@@ -185,6 +185,60 @@ describe('useSpeechSynthesis', () => {
 
       expect(mockCancel).toHaveBeenCalledTimes(1)
     })
+
+    it('stop() 後に onend が発火しても次の文が読み上げられない', () => {
+      vi.useFakeTimers()
+
+      let capturedOnend: (() => void) | null = null
+      const mockSpeak = vi.fn().mockImplementation((utterance: MockSpeechSynthesisUtterance) => {
+        capturedOnend = utterance.onend
+      })
+      const mockCancel = vi.fn()
+      const mockResume = vi.fn()
+
+      Object.defineProperty(window, 'speechSynthesis', {
+        value: { speak: mockSpeak, cancel: mockCancel, resume: mockResume, getVoices: vi.fn().mockReturnValue([]), onvoiceschanged: null },
+        writable: true, configurable: true,
+      })
+
+      const { result } = renderHook(() => useSpeechSynthesis())
+
+      act(() => { result.current.speak('文1\n文2\n文3') })
+      expect(mockSpeak).toHaveBeenCalledTimes(1)
+
+      act(() => { result.current.stop() })
+
+      // stop() 後に古い onend が発火（ブラウザが cancel 後に onend を呼ぶ場合）
+      act(() => {
+        capturedOnend?.()
+        vi.runAllTimers()
+      })
+
+      // 次の文は読み上げられない
+      expect(mockSpeak).toHaveBeenCalledTimes(1)
+
+      vi.useRealTimers()
+    })
+
+    it('stop() 後に speak() を呼ぶと最初から読み上げられる', () => {
+      vi.useFakeTimers()
+      const { mockSpeak } = setupSpeechSynthesisMock()
+      const { result } = renderHook(() => useSpeechSynthesis())
+
+      act(() => { result.current.speak('文1\n文2\n文3') })
+      act(() => { result.current.stop() })
+      mockSpeak.mockClear()
+
+      act(() => { result.current.speak('文1\n文2\n文3') })
+      act(() => { vi.runAllTimers() })
+
+      // 最初の文から3文すべてが読み上げられる
+      expect(mockSpeak).toHaveBeenCalledTimes(3)
+      const firstUtterance = mockSpeak.mock.calls[0]![0] as MockSpeechSynthesisUtterance
+      expect(firstUtterance.text).toBe('文1')
+
+      vi.useRealTimers()
+    })
   })
 
   describe('ja-JP voice selection', () => {

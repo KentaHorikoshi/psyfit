@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 export function useSpeechSynthesis() {
   const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null)
-  const generationRef = useRef(0)
+  const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ja-JP 音声を取得（onvoiceschanged でブラウザ準備完了後に再取得）
   useEffect(() => {
@@ -18,42 +18,56 @@ export function useSpeechSynthesis() {
     }
   }, [isSupported])
 
+  // アンマウント時に keepAlive を確実にクリア
+  useEffect(() => {
+    return () => {
+      if (keepAliveRef.current) clearInterval(keepAliveRef.current)
+    }
+  }, [])
+
   const speak = useCallback((text: string) => {
     if (!isSupported) return
     window.speechSynthesis.cancel()
+    if (keepAliveRef.current) {
+      clearInterval(keepAliveRef.current)
+      keepAliveRef.current = null
+    }
 
-    const generation = ++generationRef.current
-
-    // 箇条書き（・）を1文ずつ分割し、onend でチェーンして読み上げる
-    // → モバイル途中停止バグ回避 & 文間に間隔を設けてスムーズな読み上げを実現
+    // 箇条書き（・）を1文ずつ分割し、まとめてキューに積む
+    // onend チェーン + setTimeout 方式は iOS で断続感が出るため廃止
     const sentences = text
       .split('\n')
       .map(line => line.replace(/^・/, '').trim())
       .filter(Boolean)
 
-    let index = 0
-    const speakNext = () => {
-      if (generationRef.current !== generation) return
-      if (index >= sentences.length) return
-      const utterance = new SpeechSynthesisUtterance(sentences[index++])
+    if (sentences.length === 0) return
+
+    sentences.forEach(sentence => {
+      const utterance = new SpeechSynthesisUtterance(sentence)
       utterance.lang = 'ja-JP'
       utterance.rate = 0.75
       if (voiceRef.current) utterance.voice = voiceRef.current
-      utterance.onend = () => {
-        setTimeout(() => {
-          if (generationRef.current !== generation) return
-          window.speechSynthesis.resume() // iOS pause バグ対策: onend 後に synthesis が paused 状態になる
-          speakNext()
-        }, 600)
-      }
       window.speechSynthesis.speak(utterance)
-    }
-    speakNext()
+    })
+
+    // iOS: speechSynthesis が約15秒後に自動で pause 状態になるバグ対策
+    // 14秒ごとに resume() を呼んでスリープを防ぐ
+    keepAliveRef.current = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        clearInterval(keepAliveRef.current!)
+        keepAliveRef.current = null
+        return
+      }
+      window.speechSynthesis.resume()
+    }, 14000)
   }, [isSupported])
 
   const stop = useCallback(() => {
     if (!isSupported) return
-    generationRef.current++
+    if (keepAliveRef.current) {
+      clearInterval(keepAliveRef.current)
+      keepAliveRef.current = null
+    }
     window.speechSynthesis.cancel()
   }, [isSupported])
 

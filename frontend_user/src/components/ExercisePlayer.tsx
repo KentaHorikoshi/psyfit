@@ -38,6 +38,8 @@ export function ExercisePlayer() {
   const targetRepsRef = useRef(1)
   const repsPerVideoRef = useRef(1)
   const countedThresholdsRef = useRef<Set<number>>(new Set())
+  const advicesRef = useRef<string[]>([])
+  const adviceIndexRef = useRef(0)
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenPlayer()
   const { speak, stop } = useSpeechSynthesis()
 
@@ -71,10 +73,13 @@ export function ExercisePlayer() {
     fetchExercise()
   }, [isAuthenticated, id])
 
-  // targetReps と repsPerVideo を ref に同期
+  // targetReps と repsPerVideo と advices を ref に同期
   useEffect(() => {
     targetRepsRef.current = exercise?.reps ?? 1
     repsPerVideoRef.current = exercise?.reps_per_video ?? 1
+    advicesRef.current = exercise?.description
+      ? exercise.description.split('\n').map(l => l.replace(/^・/, '').trim()).filter(Boolean)
+      : []
   }, [exercise])
 
   // Fetch video token after exercise is loaded
@@ -139,13 +144,19 @@ export function ExercisePlayer() {
       if (videoRef.current) {
         isLooping.current = true
         videoRef.current.currentTime = 0
+        // 音声をリセットして次のアドバイスを読む
+        stop()
+        adviceIndexRef.current++
+        if (advicesRef.current.length > 0) {
+          speak(advicesRef.current[adviceIndexRef.current % advicesRef.current.length] ?? '')
+        }
         videoRef.current.play().catch(() => {
           isLooping.current = false
           setIsPlaying(false)
         })
       }
     }
-  }, [])
+  }, [stop, speak])
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -166,9 +177,9 @@ export function ExercisePlayer() {
         videoRef.current?.play().catch(() => setIsPlaying(false))
         setIsPlaying(true)
       }
-      // 再生開始時に読み上げ（iOS対策: ユーザージェスチャーのコールスタック内で呼ぶ）
-      if (exercise?.description) {
-        speak(exercise.description)
+      // 再生開始時に現在のアドバイスを読み上げ（iOS対策: ユーザージェスチャーのコールスタック内で呼ぶ）
+      if (advicesRef.current.length > 0) {
+        speak(advicesRef.current[adviceIndexRef.current % advicesRef.current.length] ?? '')
       }
     }
   }
@@ -199,6 +210,7 @@ export function ExercisePlayer() {
     loopCountRef.current = 0
     setLoopCount(0)
     countedThresholdsRef.current = new Set()
+    adviceIndexRef.current = 0
     if (videoRef.current) {
       videoRef.current.currentTime = 0
     }
@@ -213,8 +225,9 @@ export function ExercisePlayer() {
       if (videoRef.current) {
         videoRef.current.currentTime = 0
       }
-      if (exercise.description) {
-        speak(exercise.description)
+      adviceIndexRef.current = 0
+      if (advicesRef.current.length > 0) {
+        speak(advicesRef.current[0] ?? '')
       }
     }
   }

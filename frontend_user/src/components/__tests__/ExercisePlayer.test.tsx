@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ExercisePlayer } from '../ExercisePlayer'
@@ -617,6 +617,106 @@ describe('U-04 ExercisePlayer', () => {
       await user.click(closeButton)
 
       expect(window.speechSynthesis.cancel).toHaveBeenCalled()
+    })
+
+    describe('アドバイスサイクリング', () => {
+      const multiAdviceExercise: Exercise = {
+        ...mockExercise,
+        description: '・アドバイス1\n・アドバイス2\n・アドバイス3',
+        reps: 5,
+      }
+
+      beforeEach(() => {
+        mockGetExercise.mockResolvedValue({
+          status: 'success',
+          data: multiAdviceExercise,
+        })
+      })
+
+      it('初回再生時にアドバイス1が読み上げられる', async () => {
+        const user = userEvent.setup()
+        renderExercisePlayer()
+
+        await waitFor(() => {
+          expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+        })
+
+        const playButton = screen.getByRole('button', { name: /再生/ })
+        await user.click(playButton)
+
+        const calls = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls
+        const texts = calls.map((c: unknown[]) => (c[0] as { text: string }).text)
+        expect(texts).toContain('アドバイス1')
+        expect(texts).not.toContain('アドバイス2')
+      })
+
+      it('動画1回目終了後にアドバイス2が読み上げられる', async () => {
+        const user = userEvent.setup()
+        renderExercisePlayer()
+
+        await waitFor(() => {
+          expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+        })
+
+        const playButton = screen.getByRole('button', { name: /再生/ })
+        await user.click(playButton)
+
+        // 1回目のループ完了
+        const video = screen.getByTestId('fullscreen-video')
+        fireEvent(video, new Event('ended'))
+
+        const calls = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls
+        const texts = calls.map((c: unknown[]) => (c[0] as { text: string }).text)
+        expect(texts).toContain('アドバイス2')
+      })
+
+      it('動画3回目終了後（アドバイスが3つ）にアドバイス1に循環する', async () => {
+        const user = userEvent.setup()
+        renderExercisePlayer()
+
+        await waitFor(() => {
+          expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+        })
+
+        const playButton = screen.getByRole('button', { name: /再生/ })
+        await user.click(playButton)
+
+        const video = screen.getByTestId('fullscreen-video')
+        // 3回ループ（アドバイス1→2→3→1に循環）
+        fireEvent(video, new Event('ended')) // adviceIndex: 1 → advice2
+        fireEvent(video, new Event('ended')) // adviceIndex: 2 → advice3
+        fireEvent(video, new Event('ended')) // adviceIndex: 3 % 3 = 0 → advice1
+
+        const calls = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1]
+        const lastText = lastCall ? (lastCall[0] as { text: string }).text : ''
+        expect(lastText).toBe('アドバイス1')
+      })
+
+      it('次のセットへ遷移するとアドバイスインデックスが0にリセットされる', async () => {
+        const user = userEvent.setup()
+        renderExercisePlayer()
+
+        await waitFor(() => {
+          expect(screen.getByText('膝伸展運動')).toBeInTheDocument()
+        })
+
+        const playButton = screen.getByRole('button', { name: /再生/ })
+        await user.click(playButton)
+
+        // ループしてアドバイス2になる
+        const video = screen.getByTestId('fullscreen-video')
+        fireEvent(video, new Event('ended'))
+
+        // 次のセットへ（インデックスリセット → アドバイス1）
+        const nextSetButton = screen.getByRole('button', { name: /次のセット/ })
+        await user.click(nextSetButton)
+
+        const calls = (window.speechSynthesis.speak as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1]
+        const lastText = lastCall ? (lastCall[0] as { text: string }).text : ''
+        expect(lastText).toBe('アドバイス1')
+      })
     })
   })
 

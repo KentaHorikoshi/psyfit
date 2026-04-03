@@ -31,6 +31,7 @@ export function ExercisePlayer() {
   const [videoError, setVideoError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'video' | 'camera'>('video')
   const [showCameraSkeleton, setShowCameraSkeleton] = useState(false)
+  const [currentAdvice, setCurrentAdvice] = useState<string>('')
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const isLooping = useRef(false)
@@ -80,6 +81,7 @@ export function ExercisePlayer() {
     advicesRef.current = exercise?.description
       ? exercise.description.split('\n').map(l => l.replace(/^・/, '').trim()).filter(Boolean)
       : []
+    setCurrentAdvice(advicesRef.current[0] ?? '')
   }, [exercise])
 
   // Fetch video token after exercise is loaded
@@ -148,7 +150,9 @@ export function ExercisePlayer() {
         stop()
         adviceIndexRef.current++
         if (advicesRef.current.length > 0) {
-          speak(advicesRef.current[adviceIndexRef.current % advicesRef.current.length] ?? '')
+          const nextAdvice = advicesRef.current[adviceIndexRef.current % advicesRef.current.length] ?? ''
+          speak(nextAdvice)
+          setCurrentAdvice(nextAdvice)
         }
         videoRef.current.play().catch(() => {
           isLooping.current = false
@@ -179,7 +183,9 @@ export function ExercisePlayer() {
       }
       // 再生開始時に現在のアドバイスを読み上げ（iOS対策: ユーザージェスチャーのコールスタック内で呼ぶ）
       if (advicesRef.current.length > 0) {
-        speak(advicesRef.current[adviceIndexRef.current % advicesRef.current.length] ?? '')
+        const advice = advicesRef.current[adviceIndexRef.current % advicesRef.current.length] ?? ''
+        speak(advice)
+        setCurrentAdvice(advice)
       }
     }
   }
@@ -211,6 +217,7 @@ export function ExercisePlayer() {
     setLoopCount(0)
     countedThresholdsRef.current = new Set()
     adviceIndexRef.current = 0
+    setCurrentAdvice(advicesRef.current[0] ?? '')
     if (videoRef.current) {
       videoRef.current.currentTime = 0
     }
@@ -227,7 +234,9 @@ export function ExercisePlayer() {
       }
       adviceIndexRef.current = 0
       if (advicesRef.current.length > 0) {
-        speak(advicesRef.current[0] ?? '')
+        const firstAdvice = advicesRef.current[0] ?? ''
+        speak(firstAdvice)
+        setCurrentAdvice(firstAdvice)
       }
     }
   }
@@ -372,6 +381,7 @@ export function ExercisePlayer() {
           showCameraSkeleton={showCameraSkeleton}
           onViewModeToggle={handleViewModeToggle}
           onCameraSkeletonToggle={() => setShowCameraSkeleton(prev => !prev)}
+          currentAdvice={currentAdvice}
         />
       )}
 
@@ -438,6 +448,11 @@ export function ExercisePlayer() {
       <main className={`flex-1 bg-white ${isFullscreen ? 'hidden' : ''}`}>
         {/* Set counter with live region */}
         <div className="px-4 py-4 border-b border-gray-100">
+          {currentAdvice && (
+            <p className="text-center text-[#1E40AF] text-lg font-medium mb-3">
+              {currentAdvice}
+            </p>
+          )}
           <div
             role="status"
             aria-live="polite"

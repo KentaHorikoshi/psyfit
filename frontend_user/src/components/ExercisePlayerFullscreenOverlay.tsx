@@ -25,6 +25,7 @@ interface ExercisePlayerFullscreenOverlayProps {
   showCameraSkeleton: boolean
   onViewModeToggle: () => void
   onCameraSkeletonToggle: () => void
+  currentAdvice?: string
 }
 
 const AUTO_HIDE_DELAY = 3000
@@ -52,6 +53,7 @@ export function ExercisePlayerFullscreenOverlay({
   showCameraSkeleton,
   onViewModeToggle,
   onCameraSkeletonToggle,
+  currentAdvice,
 }: ExercisePlayerFullscreenOverlayProps) {
   // 種目名・再生ボタンのみ auto-hide
   const [showTopControls, setShowTopControls] = useState(true)
@@ -221,6 +223,12 @@ export function ExercisePlayerFullscreenOverlay({
 
       {/* Bottom bar — セット数・回数・ボタン (常時表示) */}
       <div className="absolute bottom-0 inset-x-0 z-10 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/70 to-transparent">
+        {/* アドバイス文章 */}
+        {currentAdvice && (
+          <p className="text-white/90 text-lg font-medium text-center mb-2">
+            {currentAdvice}
+          </p>
+        )}
         {/* カウンター */}
         <div className="flex items-center gap-4 mb-3">
           <div

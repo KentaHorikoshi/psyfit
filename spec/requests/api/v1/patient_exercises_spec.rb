@@ -126,6 +126,8 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
         end
 
         context 'with next_visit_dates (plural parameter)' do
+          let(:near_date) { Date.tomorrow }
+          let(:far_date) { Date.today + 15.days }
           let(:params_with_dates) do
             {
               assignments: [
@@ -133,7 +135,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
               ],
               pain_flag: false,
               reason: "",
-              next_visit_dates: [ "2026-04-01", "2026-04-15" ]
+              next_visit_dates: [ near_date.to_s, far_date.to_s ]
             }
           end
 
@@ -145,14 +147,14 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
             expect(response).to have_http_status(:created)
 
             saved_dates = patient.next_visit_dates.ordered.pluck(:visit_date)
-            expect(saved_dates).to eq([ Date.parse('2026-04-01'), Date.parse('2026-04-15') ])
+            expect(saved_dates).to eq([ near_date, far_date ])
           end
 
           it 'sets the legacy next_visit_date column to the earliest future date' do
             post "/api/v1/patients/#{patient.id}/exercises", params: params_with_dates, as: :json
 
             expect(response).to have_http_status(:created)
-            expect(patient.reload.next_visit_date).to eq(Date.parse('2026-04-01'))
+            expect(patient.reload.next_visit_date).to eq(near_date)
           end
 
           it 'replaces any previously registered NextVisitDate records' do
@@ -163,7 +165,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
             expect(response).to have_http_status(:created)
             expect(patient.next_visit_dates.count).to eq(2)
             expect(patient.next_visit_dates.ordered.pluck(:visit_date)).to eq(
-              [ Date.parse('2026-04-01'), Date.parse('2026-04-15') ]
+              [ near_date, far_date ]
             )
           end
 
@@ -178,7 +180,7 @@ RSpec.describe 'Api::V1::PatientExercises', type: :request do
           it 'deduplicates dates that appear more than once' do
             params_with_duplicate = {
               assignments: [ { exercise_id: exercise.id, sets: 3, reps: 10 } ],
-              next_visit_dates: [ "2026-04-01", "2026-04-01", "2026-04-15" ]
+              next_visit_dates: [ near_date.to_s, near_date.to_s, far_date.to_s ]
             }
 
             expect {

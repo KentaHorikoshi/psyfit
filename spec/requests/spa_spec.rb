@@ -4,7 +4,12 @@ require "rails_helper"
 
 # NOTE: サービス終了につき、SpaController は両SPAに替えて
 # service_ended テンプレートを返す。復帰時はこのテストも元の内容に戻すこと。
+#
+# host! "localhost" を指定しているのは config.hosts に localhost が含まれており、
+# テストのデフォルトホスト www.example.com だと 403 になるため。
 RSpec.describe "SPA routing", type: :request do
+  before { host! "localhost" }
+
   shared_examples "renders service ended page" do
     it "returns 200 with the service ended message" do
       expect(response).to have_http_status(:ok)

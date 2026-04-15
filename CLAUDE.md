@@ -393,7 +393,7 @@ tail -30 /var/log/psyfit-monitor.log
 
 ### 実装の仕組み
 
-**フロントエンド (React) のルートを差し替え + Rails のキャッチオールも差し替え** の二段構えで実装している。片方だけだと以下の抜けが発生する:
+**フロントエンド (React) のルートを差し替え + Rails のキャッチオールも差し替え + `ActionDispatch::Static` の directory index 解決を無効化** の三段構えで実装している。片方だけだと以下の抜けが発生する:
 
 - **Railsのみ**: `ActionDispatch::Static` が `/` と `/admin` に対して `public/index.html` / `public/admin/index.html` を直接配信してしまい、`SpaController` を経由しない（Rails 8.1 の [actionpack/lib/action_dispatch/middleware/static.rb](../../.local/share/mise/installs/ruby/3.4.8/lib/ruby/gems/3.4.0/gems/actionpack-8.1.3/lib/action_dispatch/middleware/static.rb) の `each_candidate_filepath` が `/path/index.html` もマッチ対象にする仕様）
 - **フロントエンドのみ**: Railsが直接レンダリングするビュー経路が残る
@@ -405,6 +405,7 @@ tail -30 /var/log/psyfit-monitor.log
 - `frontend_user/src/components/ServiceEnded.tsx` - 利用者向けお礼画面コンポーネント
 - `frontend_admin/src/App.tsx` - 全ルーティングを削除し `<ServiceEnded />` のみ返す
 - `frontend_admin/src/components/ServiceEnded.tsx` - 職員向けお礼画面コンポーネント
+- `config/application.rb` - `config.public_file_server.index_name = "__disabled__"` で `/` `/admin` の `index.html` 直配信を無効化
 - `app/controllers/spa_controller.rb` - `user_index` / `admin_index` が `service_ended` テンプレートをレンダリング（防御的対応）
 - `app/views/spa/service_ended.html.erb` - Railsが直接返す場合のお礼画面HTML
 - `spec/requests/spa_spec.rb` - サービス終了状態を検証するテスト
@@ -439,16 +440,19 @@ tail -30 /var/log/psyfit-monitor.log
    ```
    クラスコメントも元の説明文に戻す。
 
-3. **`spec/requests/spa_spec.rb` を元に戻す**（SPA index.html を配信することを検証する内容に）。git 履歴から復元可能。
+3. **`config/application.rb` の `config.public_file_server.index_name = "__disabled__"` を削除する**:
+   `ActionDispatch::Static` が再び `public/index.html` / `public/admin/index.html` を通常どおり返せる状態に戻す。
 
-4. **（任意）以下の新規追加ファイルを削除**:
+4. **`spec/requests/spa_spec.rb` を元に戻す**（SPA index.html を配信することを検証する内容に）。git 履歴から復元可能。
+
+5. **（任意）以下の新規追加ファイルを削除**:
    - `app/views/spa/service_ended.html.erb`
    - `frontend_user/src/components/ServiceEnded.tsx`
    - `frontend_admin/src/components/ServiceEnded.tsx`
 
    再び終了状態にする可能性があれば残しておいても問題ない。
 
-5. **PR → マージ → 自動デプロイ**で本番反映完了。
+6. **PR → マージ → 自動デプロイ**で本番反映完了。
 
 `SpaController` は `no-cache` ヘッダーを送出しているため、復帰後ユーザー側で強制リロード不要。Vite 側は通常のビルドで新しい `App.tsx` が反映される。
 

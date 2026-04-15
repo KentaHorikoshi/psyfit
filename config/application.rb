@@ -23,6 +23,10 @@ module Psyfit
     config.i18n.default_locale = :ja
     config.i18n.available_locales = [ :ja, :en ]
 
+    # Disable /index.html directory lookup so root SPA paths always reach SpaController.
+    # This keeps the service-ended screen and no-cache headers consistent for / and /admin.
+    config.public_file_server.index_name = "__disabled__"
+
     # Generators configuration
     config.generators do |g|
       g.orm :active_record, primary_key_type: :uuid

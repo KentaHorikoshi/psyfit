@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * パスワードリセット申請フロー
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の利用者フローE2Eは実行しない')
+
 test.describe('パスワードリセットフロー', () => {
   test.use({ storageState: { cookies: [], origins: [] } }) // 未認証状態
 

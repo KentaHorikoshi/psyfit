@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 // テスト用認証情報（シードデータに合わせたデフォルト値）
 const TEST_STAFF_ID = process.env.E2E_STAFF_ID || 'STF001'
@@ -8,6 +9,8 @@ const TEST_PASSWORD = process.env.E2E_STAFF_PASSWORD || 'Staff123!'
  * S-01: 職員ログイン・ログアウトフロー
  * ログイン → ダッシュボード表示 → ログアウト
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の職員フローE2Eは実行しない')
+
 test.describe('職員ログイン・ログアウトフロー', () => {
   test.describe('ログイン', () => {
     test.use({ storageState: { cookies: [], origins: [] } }) // 未認証状態

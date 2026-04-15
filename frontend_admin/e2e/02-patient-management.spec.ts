@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * 患者一覧から最初の患者の詳細画面に遷移するヘルパー
@@ -28,6 +29,8 @@ async function navigateToFirstPatient(page: Page): Promise<string | null> {
  * S-03, S-04: 患者管理フロー
  * ダッシュボード → 患者一覧 → 患者詳細表示
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の職員フローE2Eは実行しない')
+
 test.describe('患者管理フロー', () => {
   test('患者一覧画面が表示される', async ({ page }) => {
     await page.goto('/patients')

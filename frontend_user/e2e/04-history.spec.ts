@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * U-07, U-08: 履歴表示フロー
  * ホーム → 履歴一覧表示 → 測定値グラフ表示
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の利用者フローE2Eは実行しない')
+
 test.describe('履歴表示フロー', () => {
   test('履歴一覧画面が表示される', async ({ page }) => {
     await page.goto('/history')

@@ -2,52 +2,39 @@
 
 require "rails_helper"
 
+# NOTE: サービス終了につき、SpaController は両SPAに替えて
+# service_ended テンプレートを返す。復帰時はこのテストも元の内容に戻すこと。
 RSpec.describe "SPA routing", type: :request do
-  let(:index_html) { "<html><body>app</body></html>" }
-  let(:admin_index_html) { "<html><body>admin</body></html>" }
+  shared_examples "renders service ended page" do
+    it "returns 200 with the service ended message" do
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("本サービスの提供は終了いたしました")
+      expect(response.body).to include("お使いいただきありがとうございました")
+    end
 
-  before do
-    # Create temporary public/index.html and public/admin/index.html for testing
-    FileUtils.mkdir_p(Rails.public_path.join("admin"))
-    File.write(Rails.public_path.join("index.html"), index_html)
-    File.write(Rails.public_path.join("admin", "index.html"), admin_index_html)
-  end
-
-  after do
-    FileUtils.rm_f(Rails.public_path.join("index.html"))
-    FileUtils.rm_f(Rails.public_path.join("admin", "index.html"))
+    it "sets no-cache headers" do
+      expect(response.headers["Cache-Control"]).to include("no-cache")
+    end
   end
 
   describe "GET /" do
-    it "serves user SPA index.html" do
-      get "/"
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("app")
-    end
-  end
-
-  describe "GET /admin" do
-    it "serves admin SPA index.html" do
-      get "/admin"
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("admin")
-    end
-  end
-
-  describe "GET /admin/dashboard" do
-    it "serves admin SPA index.html for nested admin paths" do
-      get "/admin/dashboard"
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("admin")
-    end
+    before { get "/" }
+    include_examples "renders service ended page"
   end
 
   describe "GET /home" do
-    it "serves user SPA index.html for user paths" do
-      get "/home"
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("app")
-    end
+    before { get "/home" }
+    include_examples "renders service ended page"
+  end
+
+  describe "GET /admin" do
+    before { get "/admin" }
+    include_examples "renders service ended page"
+  end
+
+  describe "GET /admin/dashboard" do
+    before { get "/admin/dashboard" }
+    include_examples "renders service ended page"
   end
 
   describe "API routes" do

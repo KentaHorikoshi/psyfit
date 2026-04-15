@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * U-14: 体調入力フロー
  * ホーム → 体調入力 → 保存
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の利用者フローE2Eは実行しない')
+
 test.describe('体調入力フロー', () => {
   test('体調入力画面が表示される', async ({ page }) => {
     await page.goto('/condition-input')

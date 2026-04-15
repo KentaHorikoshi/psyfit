@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 // テスト用認証情報（シードデータに合わせたデフォルト値）
 const TEST_EMAIL = process.env.E2E_USER_EMAIL || 'tanaka@example.com'
@@ -8,6 +9,8 @@ const TEST_PASSWORD = process.env.E2E_USER_PASSWORD || 'Patient1!'
  * U-01: ログイン・ログアウトフロー
  * ログイン → ホーム表示 → ログアウト
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の利用者フローE2Eは実行しない')
+
 test.describe('ログイン・ログアウトフロー', () => {
   test.describe('ログイン', () => {
     test.use({ storageState: { cookies: [], origins: [] } }) // 未認証状態

@@ -387,6 +387,75 @@ tail -30 /var/log/psyfit-monitor.log
 - `SMTP_PASSWORD` - SendGrid API キー（既存の設定を共用）
 - `MAILER_FROM_ADDRESS` - 送信元アドレス（デフォルト: noreply@psytech.jp）
 
+## サービス終了メッセージ（現在適用中）
+
+本サービスは現在終了状態となっており、`psytech.jp` 配下のすべての画面アクセスで「本サービスの提供は終了いたしました。お使いいただきありがとうございました。」というお礼メッセージを表示している。
+
+### 実装の仕組み
+
+**フロントエンド (React) のルートを差し替え + Rails のキャッチオールも差し替え + `ActionDispatch::Static` の directory index 解決を無効化** の三段構えで実装している。片方だけだと以下の抜けが発生する:
+
+- **Railsのみ**: `ActionDispatch::Static` が `/` と `/admin` に対して `public/index.html` / `public/admin/index.html` を直接配信してしまい、`SpaController` を経由しない（Rails 8.1 の [actionpack/lib/action_dispatch/middleware/static.rb](../../.local/share/mise/installs/ruby/3.4.8/lib/ruby/gems/3.4.0/gems/actionpack-8.1.3/lib/action_dispatch/middleware/static.rb) の `each_candidate_filepath` が `/path/index.html` もマッチ対象にする仕様）
+- **フロントエンドのみ**: Railsが直接レンダリングするビュー経路が残る
+
+両方を差し替えることで、どの経路でアクセスしても必ずお礼画面が返る。
+
+関連ファイル:
+- `frontend_user/src/App.tsx` - 全ルーティングを削除し `<ServiceEnded />` のみ返す
+- `frontend_user/src/components/ServiceEnded.tsx` - 利用者向けお礼画面コンポーネント
+- `frontend_admin/src/App.tsx` - 全ルーティングを削除し `<ServiceEnded />` のみ返す
+- `frontend_admin/src/components/ServiceEnded.tsx` - 職員向けお礼画面コンポーネント
+- `config/application.rb` - `config.public_file_server.index_name = "__disabled__"` で `/` `/admin` の `index.html` 直配信を無効化
+- `app/controllers/spa_controller.rb` - `user_index` / `admin_index` が `service_ended` テンプレートをレンダリング（防御的対応）
+- `app/views/spa/service_ended.html.erb` - Railsが直接返す場合のお礼画面HTML
+- `spec/requests/spa_spec.rb` - サービス終了状態を検証するテスト
+
+**保持されているもの（何も削除していない）:**
+- `frontend_user/src/components/` 配下の全コンポーネント（Login, Home, ExerciseMenu 等）
+- `frontend_admin/src/components/` 配下の全コンポーネント（Dashboard, PatientList 等）
+- `config/routes.rb`（ルーティング定義）
+- API (`/api/v1/*`) は影響を受けず従来通り動作
+
+### サービス終了メッセージからの復帰手順
+
+サービスを再開する場合、以下の手順で元の状態に戻せる。既存UIはすべて保存されているため git 履歴から完全復元可能。
+
+1. **フロントエンドの `App.tsx` を git 履歴から復元**:
+   ```bash
+   # サービス終了変更が入った直前のコミットから復元（<pre-shutdown-SHA> は実際のSHAに置換）
+   git show <pre-shutdown-SHA>:frontend_user/src/App.tsx > frontend_user/src/App.tsx
+   git show <pre-shutdown-SHA>:frontend_admin/src/App.tsx > frontend_admin/src/App.tsx
+   ```
+   もしくは `git log --oneline frontend_user/src/App.tsx` で該当コミットを特定し、その直前を参照。
+
+2. **`app/controllers/spa_controller.rb` を元に戻す**:
+   ```ruby
+   def user_index
+     render file: Rails.public_path.join("index.html"), layout: false
+   end
+
+   def admin_index
+     render file: Rails.public_path.join("admin", "index.html"), layout: false
+   end
+   ```
+   クラスコメントも元の説明文に戻す。
+
+3. **`config/application.rb` の `config.public_file_server.index_name = "__disabled__"` を削除する**:
+   `ActionDispatch::Static` が再び `public/index.html` / `public/admin/index.html` を通常どおり返せる状態に戻す。
+
+4. **`spec/requests/spa_spec.rb` を元に戻す**（SPA index.html を配信することを検証する内容に）。git 履歴から復元可能。
+
+5. **（任意）以下の新規追加ファイルを削除**:
+   - `app/views/spa/service_ended.html.erb`
+   - `frontend_user/src/components/ServiceEnded.tsx`
+   - `frontend_admin/src/components/ServiceEnded.tsx`
+
+   再び終了状態にする可能性があれば残しておいても問題ない。
+
+6. **PR → マージ → 自動デプロイ**で本番反映完了。
+
+`SpaController` は `no-cache` ヘッダーを送出しているため、復帰後ユーザー側で強制リロード不要。Vite 側は通常のビルドで新しい `App.tsx` が反映される。
+
 ## File Structure
 
 ```

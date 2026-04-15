@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * 患者一覧から最初の患者のレポート画面に遷移するヘルパー
@@ -33,6 +34,8 @@ async function navigateToReport(page: Page): Promise<boolean> {
  * S-07: レポート出力フロー
  * 患者一覧 → 患者詳細 → レポート出力 → ダウンロード
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の職員フローE2Eは実行しない')
+
 test.describe('レポート出力フロー', () => {
   test('レポート画面が表示される', async ({ page }) => {
     const navigated = await navigateToReport(page)

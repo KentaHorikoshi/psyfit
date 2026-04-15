@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * U-02〜U-04: 運動実施フロー
  * ホーム → 運動メニュー選択 → 運動実施 → 記録保存
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の利用者フローE2Eは実行しない')
+
 test.describe('運動実施フロー', () => {
   test('運動メニューが表示される', async ({ page }) => {
     await page.goto('/exercise-menu')

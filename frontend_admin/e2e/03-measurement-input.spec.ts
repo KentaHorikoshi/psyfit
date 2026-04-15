@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { SERVICE_ENDED_MODE } from './support/service-ended'
 
 /**
  * 患者一覧から最初の患者の測定値入力画面に遷移するヘルパー
@@ -33,6 +34,8 @@ async function navigateToMeasurementInput(page: Page): Promise<boolean> {
  * S-05: 測定値入力フロー
  * 患者一覧 → 患者詳細 → 測定値入力 → 保存
  */
+test.skip(SERVICE_ENDED_MODE, 'サービス終了状態では通常の職員フローE2Eは実行しない')
+
 test.describe('測定値入力フロー', () => {
   test('測定値入力画面が表示される', async ({ page }) => {
     const navigated = await navigateToMeasurementInput(page)

@@ -31,6 +31,7 @@ env:
     - REDIS_PASSWORD
     - SMTP_USERNAME
     - SMTP_PASSWORD
+    - ANTHROPIC_API_KEY
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     SOLID_QUEUE_IN_PUMA: true

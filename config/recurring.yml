@@ -13,3 +13,13 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # 昼間のみワーカー稼働: 平日・休日ともに 8:00〜20:00 JST のみジョブを処理する
+  # JST (UTC+9) → UTC 換算: 8:00 JST = 23:00 UTC(前日), 20:00 JST = 11:00 UTC
+  daytime_worker_resume:
+    command: "SolidQueue::Queue.all.each(&:resume)"
+    schedule: "0 23 * * *"  # 8:00 JST (23:00 UTC)
+
+  daytime_worker_pause:
+    command: "SolidQueue::Queue.all.each(&:pause)"
+    schedule: "0 11 * * *"  # 20:00 JST (11:00 UTC)

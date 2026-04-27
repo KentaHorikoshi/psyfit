@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# =============================================================================
+# PsyFit - 昼間のみワーカー稼働スクリプト
+# =============================================================================
+# 用途: Solid Queue のキューを一時停止/再開することで、
+#       ワーカーの実行時間帯を昼間（8:00〜20:00 JST）に限定する。
+#
+# 使用方法:
+#   bin/worker-schedule start    # 全キューを再開（朝8時）
+#   bin/worker-schedule stop     # 全キューを一時停止（夜20時）
+#   bin/worker-schedule status   # 現在のキュー状態を確認
+#
+# crontab 設定例（本番サーバーで実行）:
+#   # 毎日 8:00 JST にワーカーを再開
+#   0 8 * * * /var/www/psyfit/bin/worker-schedule start >> /var/log/psyfit-worker.log 2>&1
+#   # 毎日 20:00 JST にワーカーを一時停止
+#   0 20 * * * /var/www/psyfit/bin/worker-schedule stop >> /var/log/psyfit-worker.log 2>&1
+# =============================================================================
+
+set -uo pipefail
+
+LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
+
+log_info() { echo "${LOG_PREFIX} [INFO] $1"; }
+log_error() { echo "${LOG_PREFIX} [ERROR] $1" >&2; }
+
+# 稼働中の psyfit-web コンテナを取得
+get_container() {
+  docker ps --filter "name=psyfit-web-" --format "{{.Names}}" | head -1
+}
+
+ACTION="${1:-status}"
+
+CONTAINER=$(get_container)
+if [ -z "$CONTAINER" ]; then
+  log_error "稼働中の psyfit-web コンテナが見つかりません"
+  exit 1
+fi
+
+case "$ACTION" in
+  start)
+    log_info "Solid Queue ワーカーを再開します (コンテナ: ${CONTAINER})"
+    docker exec "$CONTAINER" bin/rails runner \
+      "SolidQueue::Queue.all.each { |q| q.resume; puts \"Resumed: #{q.name}\" }; puts 'Done.'"
+    log_info "ワーカー再開完了"
+    ;;
+
+  stop)
+    log_info "Solid Queue ワーカーを一時停止します (コンテナ: ${CONTAINER})"
+    docker exec "$CONTAINER" bin/rails runner \
+      "active = SolidQueue::Queue.all.reject(&:paused?); active.each { |q| q.pause; puts \"Paused: #{q.name}\" }; puts \"Done. #{active.size} queue(s) paused.\""
+    log_info "ワーカー一時停止完了"
+    ;;
+
+  status)
+    log_info "Solid Queue キュー状態 (コンテナ: ${CONTAINER})"
+    docker exec "$CONTAINER" bin/rails runner \
+      "queues = SolidQueue::Queue.all; if queues.empty?; puts 'No queues found (no jobs enqueued yet).'; else; queues.each { |q| puts \"  #{q.name}: #{q.paused? ? 'PAUSED' : 'active'}\" }; end"
+    ;;
+
+  *)
+    echo "使用方法: $0 [start|stop|status]"
+    echo ""
+    echo "  start   全キューを再開（朝8時の cron で使用）"
+    echo "  stop    全キューを一時停止（夜20時の cron で使用）"
+    echo "  status  現在のキュー状態を表示"
+    exit 1
+    ;;
+esac

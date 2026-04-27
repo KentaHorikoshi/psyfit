@@ -86,4 +86,19 @@ Rails.application.configure do
 
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Content Security Policy
+  config.content_security_policy do |policy|
+    policy.default_src :self
+    policy.font_src    :self, :data
+    policy.img_src     :self, :data, :blob
+    policy.object_src  :none
+    policy.script_src  :self
+    policy.style_src   :self, :unsafe_inline
+    policy.connect_src :self, "wss://psytech.jp"
+    policy.frame_ancestors :none
+    policy.base_uri    :self
+    policy.form_action :self
+  end
+  config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
 end

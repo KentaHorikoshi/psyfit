@@ -94,7 +94,7 @@ group :test do
   gem "simplecov", require: false
 
   # Better test output formatting
-  gem "minitest-reporters", "~> 1.6"
+  gem "minitest-reporters", "~> 1.8"
 
   # Clean test database between runs
   gem "database_cleaner-active_record", "~> 2.1"
